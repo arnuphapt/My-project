@@ -81,6 +81,7 @@ const S = SEED;
 
 function freshState(){
   return {
+    fx: S.FX,
     route:'dashboard',
     player: {...S.player},
     settings: {...S.settings},
@@ -156,7 +157,7 @@ function useOffice(){
 /* ---------- portfolio math ---------- */
 function px(sym){ const m=state.market[sym]; return m? m.price : 0; }
 function valuation(){
-  const FX = S.FX;
+  const FX = state.fx;
   let mvUSD=0, costUSD=0, dayPnlUSD=0;
   const rows = state.holdings.map(h=>{
     const m = state.market[h.symbol];
@@ -259,6 +260,16 @@ async function fetchMarketData() {
     });
     const results = await Promise.all(fetchPromises);
     results.forEach(r => { if(r) realPrices[r.sym] = r; });
+    
+    // Fetch FX
+    try {
+      const fxRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/THB=X`);
+      if (fxRes.ok) {
+        const data = await fxRes.json();
+        const meta = data?.chart?.result?.[0]?.meta;
+        if(meta && meta.regularMarketPrice > 0) realPrices['FX'] = meta.regularMarketPrice;
+      }
+    } catch(e){}
   } catch(e) { console.error('Yahoo Finance error', e); }
   isFetching = false;
 }
@@ -287,7 +298,10 @@ function startTicker(){
         }
         market[k]=m;
       });
-      return {...s, market};
+      
+      const nextState = { ...s, market };
+      if (realPrices['FX']) nextState.fx = realPrices['FX'];
+      return nextState;
     });
   }, 2000);
 }
@@ -323,7 +337,7 @@ function restoreDefaultMarket(){
   }, {now:true});
 }
 
-const OfficeStore = { getState, setState, subscribe, valuation, buy, sell, deposit, setCash, addFavorite, removeFavorite, clearAllMarket, restoreDefaultMarket, startTicker, clock, FX:S.FX };
+const OfficeStore = { getState, setState, subscribe, valuation, buy, sell, deposit, setCash, addFavorite, removeFavorite, clearAllMarket, restoreDefaultMarket, startTicker, clock, get FX(){ return getState().fx; } };
 
 
 /* number helpers */
