@@ -18,13 +18,8 @@ export default function TestGemini() {
 
   const testGemini = async () => {
     if (!apiKey) {
-      alert('กรุณาใส่ API Key');
+      alert('กรุณาตั้งค่า API Key ในหน้า Settings ก่อนใช้งาน');
       return;
-    }
-
-    // Save the API key securely
-    if (window.electronAPI) {
-      window.electronAPI.saveSetting('gemini_api_key', apiKey);
     }
 
     setLoading(true);
@@ -55,13 +50,7 @@ export default function TestGemini() {
     <div style={{ padding: '20px', background: 'rgba(20,24,36,.9)', border: '1px solid #3a6bff', borderRadius: '10px', marginTop: '20px', color: '#fff', fontFamily: 'var(--thai)' }}>
       <h3 style={{ margin: '0 0 15px 0', color: '#46b6ff' }}>🧪 ทดสอบ Gemini API</h3>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-        <input
-          type="password"
-          placeholder="ใส่ Gemini API Key ที่นี่..."
-          value={apiKey}
-          onChange={e => setApiKey(e.target.value)}
-          style={{ padding: '10px', borderRadius: '5px', border: '1px solid #33406a', background: '#0c0f18', color: '#fff' }}
-        />
+
         <input
           type="text"
           placeholder="ข้อความ Prompt"

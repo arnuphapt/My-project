@@ -39,28 +39,10 @@ const market = {
 };
 
 // ---- Starting portfolio ----
-const holdings = [
-  { symbol:'NVDA', qty:8,    avgCost:120.50 },
-  { symbol:'AOT',  qty:500,  avgCost:55.00 },
-  { symbol:'BTC',  qty:0.05, avgCost:68000 },
-  { symbol:'SCBSET', qty:1200, avgCost:17.80 },
-];
+const holdings = [];
 
 // ---- Projects (resume/CV data) ----
-const projects = [
-  { id:'p1', title:'AI Agent Office', role:'Founder / Builder', status:'กำลังทำ', progress:72,
-    period:'2026 – ปัจจุบัน', tags:['React','UX','Automation','Product'], cover:'proj-1',
-    summary:'ระบบจัดการชีวิตส่วนตัวรูปแบบออฟฟิศจำลอง มีพนักงาน AI ช่วยงานแต่ละด้าน',
-    highlights:['ออกแบบ flow ทั้งระบบ 6 หน้า','พอร์ตลงทุนจำลองเรียลไทม์','เลขา AI สั่งงานทีมได้'] },
-  { id:'p2', title:'Crypto Grid Bot', role:'Developer', status:'เสร็จแล้ว', progress:100,
-    period:'2025', tags:['Python','Trading','API'], cover:'proj-2',
-    summary:'บอทเทรดแบบ grid เชื่อม API ตลาด คอยจับช่วงราคาอัตโนมัติ',
-    highlights:['ทำกำไรเฉลี่ย 4% ต่อเดือน','ระบบแจ้งเตือนผ่านไลน์','backtest 2 ปี'] },
-  { id:'p3', title:'Pixel Portfolio Site', role:'Designer / Dev', status:'เสร็จแล้ว', progress:100,
-    period:'2024', tags:['HTML','Pixel Art','Web'], cover:'proj-3',
-    summary:'เว็บพอร์ตโฟลิโอสไตล์พิกเซลอาร์ต โชว์ผลงานและทักษะ',
-    highlights:['ยอดเข้าชม 12k+','โหลดไว < 1s','responsive ครบ'] },
-];
+const projects = [];
 
 // ---- Assets ----
 const assetGroups = [
@@ -70,19 +52,10 @@ const assetGroups = [
   { id:'doc',  name:'DOCS',    th:'เอกสาร / สเปก', count:4 },
 ];
 
-const player = { name:'BOSS', level:24, xp:1200, xpMax:2000, coins:12450, gems:320, company:'MY OFFICE' };
+const player = { name:'BOSS', level:1, xp:0, xpMax:2000, coins:0, gems:0, company:'MY OFFICE' };
 
 // ---- Warroom character token positions (% of stage) ----
-const warroomPos = {
-  mira:   {x:50, y:34},
-  quant:  {x:34, y:44},
-  devin:  {x:62, y:42},
-  pixel:  {x:26, y:60},
-  echo:   {x:72, y:56},
-  ledger: {x:44, y:62},
-  scout:  {x:64, y:70},
-  tidy:   {x:38, y:74},
-};
+const warroomPos = {};
 
 // ---- Settings (system identity + owner profile for CV) ----
 const settings = {
@@ -103,7 +76,7 @@ const SEED = { FX, agents, market, holdings, projects, assetGroups, player, sett
 
 
 /* ============ GLOBAL STORE ============ */
-const LS = 'ai-office-v2';
+const LS = 'ai-office-v3';
 const S = SEED;
 
 function freshState(){

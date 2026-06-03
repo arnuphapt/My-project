@@ -18,6 +18,18 @@ function Settings(){
   const upd=patch=>OfficeStore.setState(st=>({...st,settings:{...st.settings,...patch}}),{now:true});
   const F=(key,val)=>upd({[key]:val});
 
+  const [geminiKey, setGeminiKey] = useS('');
+  useE(() => {
+    if (window.electronAPI) {
+      window.electronAPI.getSetting('gemini_api_key').then(k => setGeminiKey(k||''));
+    }
+  }, []);
+
+  const handleKeySave = (val) => {
+    setGeminiKey(val);
+    if (window.electronAPI) window.electronAPI.saveSetting('gemini_api_key', val);
+  };
+
   const filled = ['ownerName','ownerRole','email','bio'].filter(k=>(cfg[k]||'').trim()).length;
   const pct = Math.round(filled/4*100);
 
@@ -33,51 +45,64 @@ function Settings(){
 
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
 
-        {/* ---------- SYSTEM IDENTITY ---------- */}
-        <Win title="SYSTEM IDENTITY" bodyStyle={{padding:18}}>
-          <SecTitle>ตัวตนของระบบ</SecTitle>
+        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+          {/* ---------- SYSTEM IDENTITY ---------- */}
+          <Win title="SYSTEM IDENTITY" bodyStyle={{padding:18}}>
+            <SecTitle>ตัวตนของระบบ</SecTitle>
 
-          <div style={{display:'flex',gap:16,alignItems:'flex-start',marginBottom:16}}>
-            <div style={{flex:'none'}}>
-              <label className="lbl">โลโก้</label>
-              <div style={{width:88,height:88,borderRadius:12,position:'relative',overflow:'hidden',
-                border:'1px solid #2f456e',background:'linear-gradient(135deg,#2f4ea8,#6a4cb8)'}}>
-                <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
-                  pointerEvents:'none',fontFamily:'var(--pixel)',fontSize:30,color:'#fff'}}>
-                  {(cfg.sysName1||'M').trim()[0]||'M'}</div>
-                <image-slot id="sys-logo" shape="rounded" radius="12"
-                  style={{position:'absolute',inset:0,width:'88px',height:'88px'}}></image-slot>
+            <div style={{display:'flex',gap:16,alignItems:'flex-start',marginBottom:16}}>
+              <div style={{flex:'none'}}>
+                <label className="lbl">โลโก้</label>
+                <div style={{width:88,height:88,borderRadius:12,position:'relative',overflow:'hidden',
+                  border:'1px solid #2f456e',background:'linear-gradient(135deg,#2f4ea8,#6a4cb8)'}}>
+                  <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
+                    pointerEvents:'none',fontFamily:'var(--pixel)',fontSize:30,color:'#fff'}}>
+                    {(cfg.sysName1||'M').trim()[0]||'M'}</div>
+                  <image-slot id="sys-logo" shape="rounded" radius="12"
+                    style={{position:'absolute',inset:0,width:'88px',height:'88px'}}></image-slot>
+                </div>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:6,textAlign:'center',width:88}}>ลากรูปมาวาง</div>
               </div>
-              <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:6,textAlign:'center',width:88}}>ลากรูปมาวาง</div>
+
+              <div style={{flex:1}}>
+                <label className="lbl">ชื่อระบบ</label>
+                <div style={{display:'flex',gap:8}}>
+                  <input className="fld" value={cfg.sysName1||''} maxLength={10}
+                    onChange={e=>F('sysName1',e.target.value)} placeholder="MY" style={{textTransform:'uppercase'}}/>
+                  <input className="fld" value={cfg.sysName2||''} maxLength={12}
+                    onChange={e=>F('sysName2',e.target.value)} placeholder="OFFICE" style={{textTransform:'uppercase'}}/>
+                </div>
+                <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>2 บรรทัด — โชว์มุมซ้ายบน</div>
+                <label className="lbl" style={{marginTop:13}}>คำโปรย (Tagline)</label>
+                <input className="fld" value={cfg.tagline||''} onChange={e=>F('tagline',e.target.value)}
+                  placeholder="ระบบจัดการชีวิตของฉัน"/>
+              </div>
             </div>
 
-            <div style={{flex:1}}>
-              <label className="lbl">ชื่อระบบ</label>
-              <div style={{display:'flex',gap:8}}>
-                <input className="fld" value={cfg.sysName1||''} maxLength={10}
-                  onChange={e=>F('sysName1',e.target.value)} placeholder="MY" style={{textTransform:'uppercase'}}/>
-                <input className="fld" value={cfg.sysName2||''} maxLength={12}
-                  onChange={e=>F('sysName2',e.target.value)} placeholder="OFFICE" style={{textTransform:'uppercase'}}/>
-              </div>
-              <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>2 บรรทัด — โชว์มุมซ้ายบน</div>
-              <label className="lbl" style={{marginTop:13}}>คำโปรย (Tagline)</label>
-              <input className="fld" value={cfg.tagline||''} onChange={e=>F('tagline',e.target.value)}
-                placeholder="ระบบจัดการชีวิตของฉัน"/>
+            <label className="lbl">สีหลักของระบบ (Accent)</label>
+            <div style={{display:'flex',gap:9,marginTop:4}}>
+              {ACCENTS.map(([id,hex,th])=>(
+                <button key={id} onClick={()=>F('accent',id)} title={th}
+                  style={{width:38,height:38,borderRadius:9,cursor:'pointer',background:hex,
+                    border:cfg.accent===id?'2px solid #fff':'2px solid transparent',
+                    boxShadow:cfg.accent===id?'0 0 0 2px '+hex:'0 2px 6px rgba(0,0,0,.4)',
+                    display:'flex',alignItems:'center',justifyContent:'center',color:'#0b0e16',fontWeight:900}}>
+                  {cfg.accent===id?'✓':''}</button>
+              ))}
             </div>
-          </div>
+          </Win>
 
-          <label className="lbl">สีหลักของระบบ (Accent)</label>
-          <div style={{display:'flex',gap:9,marginTop:4}}>
-            {ACCENTS.map(([id,hex,th])=>(
-              <button key={id} onClick={()=>F('accent',id)} title={th}
-                style={{width:38,height:38,borderRadius:9,cursor:'pointer',background:hex,
-                  border:cfg.accent===id?'2px solid #fff':'2px solid transparent',
-                  boxShadow:cfg.accent===id?'0 0 0 2px '+hex:'0 2px 6px rgba(0,0,0,.4)',
-                  display:'flex',alignItems:'center',justifyContent:'center',color:'#0b0e16',fontWeight:900}}>
-                {cfg.accent===id?'✓':''}</button>
-            ))}
-          </div>
-        </Win>
+          {/* ---------- API CONFIG ---------- */}
+          <Win title="API CONFIGURATION" accent="purple" bodyStyle={{padding:18}}>
+            <SecTitle>ตั้งค่าการเชื่อมต่อ AI</SecTitle>
+            <label className="lbl">Gemini API Key</label>
+            <input className="fld" type="password" value={geminiKey} onChange={e=>handleKeySave(e.target.value)}
+              placeholder="AIzaSy..." style={{fontFamily:'var(--mono)'}}/>
+            <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>
+              บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
+            </div>
+          </Win>
+        </div>
 
         {/* ---------- OWNER PROFILE ---------- */}
         <Win title="MY PROFILE · CV DATA" accent="gold" bodyStyle={{padding:18}}
@@ -203,9 +228,5 @@ function CVPreview({ cfg, projects }){
     </div>
   );
 }
-
-
-
-
 
 export default Settings;

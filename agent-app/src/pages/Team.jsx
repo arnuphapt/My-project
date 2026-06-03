@@ -209,7 +209,7 @@ function AgentProfile({ a }){
   );
 }
 
-const ROLE_PRESETS=[['ASSISTANT','ผู้ช่วยทั่วไป'],['DEVELOPER','นักพัฒนา'],['DESIGNER','ออกแบบ'],['ANALYST','นักวิเคราะห์'],['WRITER','นักเขียน'],['MARKETER','การตลาด']];
+const ROLE_PRESETS=[['SECRETARY','เลขา'],['ASSISTANT','ผู้ช่วยทั่วไป'],['DEVELOPER','นักพัฒนา'],['DESIGNER','ออกแบบ'],['ANALYST','นักวิเคราะห์'],['WRITER','นักเขียน'],['MARKETER','การตลาด']];
 function CreateAgent({ onClose }){
   const [name,setName]=useS('');
   const [roleEn,setRoleEn]=useS('ASSISTANT');
