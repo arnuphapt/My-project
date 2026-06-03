@@ -1,78 +1,80 @@
-import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
-import { OfficeStore, useOffice, fmt, SEED } from '../store';
-import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
+import { OfficeStore, useOffice, SEED } from '../store';
+import { PageHead, Bar } from '../components/UI.jsx';
 import '../../../image-slot.js';
 
 /* ============ ASSETS ============ */
-function Assets(){
-  const [s,set]=useOffice();
-  const [active,setActive]=useS('ALL');
-  // slot count per group is stored in state.assetSlots so user can add more
+function Assets() {
+  const [s] = useOffice();
+  const [active, setActive] = useS('ALL');
   const slots = s.assetSlots || {};
   const groups = SEED.assetGroups;
 
-  const setCount=(gid,delta)=>OfficeStore.setState(st=>{
-    const cur=(st.assetSlots&&st.assetSlots[gid])!=null ? st.assetSlots[gid] : (groups.find(g=>g.id===gid)?.count||4);
-    return {...st, assetSlots:{...(st.assetSlots||{}), [gid]:Math.max(1,Math.min(40,cur+delta))}};
-  },{now:true});
+  const setCount = (gid, delta) => OfficeStore.setState(st => {
+    const cur = (st.assetSlots && st.assetSlots[gid]) != null ? st.assetSlots[gid] : (groups.find(g => g.id === gid)?.count || 4);
+    return { ...st, assetSlots: { ...(st.assetSlots || {}), [gid]: Math.max(1, Math.min(40, cur + delta)) } };
+  }, { now: true });
 
-  const countOf=g=> (slots[g.id]!=null ? slots[g.id] : g.count);
-  const total = groups.reduce((a,g)=>a+countOf(g),0);
-  const shown = active==='ALL'? groups : groups.filter(g=>g.id===active);
+  const countOf = g => (slots[g.id] != null ? slots[g.id] : g.count);
+  const total = groups.reduce((a, g) => a + countOf(g), 0);
+  const shown = active === 'ALL' ? groups : groups.filter(g => g.id === active);
 
   return (
-    <div style={{maxWidth:1280,margin:'0 auto',padding:'20px 22px'}}>
-      <PageHead title="ASSETS" sub="คลังเก็บไฟล์ — ลากรูป โลโก้ พิกเซลอาร์ต หรือเอกสารมาวางในช่องได้เลย"
-        right={<span className="tag" style={{padding:'6px 10px'}}>ทั้งหมด {total} ช่อง</span>}/>
+    <div className="max-w-[1280px] mx-auto px-[22px] py-5">
+      <PageHead 
+        title="ASSETS" 
+        sub="คลังเก็บไฟล์ — ลากรูป โลโก้ พิกเซลอาร์ต หรือเอกสารมาวางในช่องได้เลย"
+        right={<span className="tag px-2.5 py-1.5">ทั้งหมด {total} ช่อง</span>}
+      />
 
       {/* group filter */}
-      <div style={{display:'flex',gap:7,flexWrap:'wrap',marginBottom:18}}>
-        <button className={'btn sm '+(active==='ALL'?'':'ghost')} onClick={()=>setActive('ALL')}>ทั้งหมด</button>
-        {groups.map(g=>(
-          <button key={g.id} className={'btn sm '+(active===g.id?'':'ghost')} onClick={()=>setActive(g.id)}>{g.name}</button>
+      <div className="flex gap-[7px] flex-wrap mb-[18px]">
+        <button className={'btn sm ' + (active === 'ALL' ? '' : 'ghost')} onClick={() => setActive('ALL')}>ทั้งหมด</button>
+        {groups.map(g => (
+          <button key={g.id} className={'btn sm ' + (active === g.id ? '' : 'ghost')} onClick={() => setActive(g.id)}>{g.name}</button>
         ))}
       </div>
 
-      <div style={{display:'flex',flexDirection:'column',gap:22}}>
-        {shown.map(g=>(
-          <AssetGroup key={g.id} g={g} count={countOf(g)} onAdd={()=>setCount(g.id,1)} onRemove={()=>setCount(g.id,-1)}/>
+      <div className="flex flex-col gap-[22px]">
+        {shown.map(g => (
+          <AssetGroup key={g.id} g={g} count={countOf(g)} onAdd={() => setCount(g.id, 1)} onRemove={() => setCount(g.id, -1)} />
         ))}
       </div>
     </div>
   );
 }
 
-const GROUP_ICON = { img:'🖼️', logo:'🏷️', pix:'👾', doc:'📄' };
-const GROUP_SHAPE = { img:'rect', logo:'rounded', pix:'rect', doc:'rounded' };
+const GROUP_ICON = { img: '🖼️', logo: '🏷️', pix: '👾', doc: '📄' };
+const GROUP_SHAPE = { img: 'rect', logo: 'rounded', pix: 'rect', doc: 'rounded' };
 
-function AssetGroup({ g, count, onAdd, onRemove }){
-  const shape=GROUP_SHAPE[g.id]||'rounded';
+function AssetGroup({ g, count, onAdd, onRemove }) {
+  const shape = GROUP_SHAPE[g.id] || 'rounded';
   return (
     <div>
-      <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:11}}>
-        <span style={{fontSize:18}}>{GROUP_ICON[g.id]||'📁'}</span>
-        <span style={{fontFamily:'var(--pixel)',fontSize:11,color:'var(--cyan)',letterSpacing:1,textShadow:'0 0 8px rgba(58,208,255,.4)'}}>{g.name}</span>
-        <span style={{fontSize:13,color:'var(--text-dim)'}}>{g.th}</span>
-        <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text-mute)'}}>· {count} ช่อง</span>
-        <div style={{flex:1}}></div>
-        <button className="btn ghost sm" onClick={onRemove} disabled={count<=1}>－</button>
+      <div className="flex items-center gap-[10px] mb-[11px]">
+        <span className="text-[18px]">{GROUP_ICON[g.id] || '📁'}</span>
+        <span className="font-pixel text-[11px] text-cyan tracking-[1px] [text-shadow:0_0_8px_rgba(58,208,255,0.4)]">{g.name}</span>
+        <span className="text-[13px] text-text-dim">{g.th}</span>
+        <span className="font-mono text-[12px] text-text-mute">· {count} ช่อง</span>
+        <div className="flex-1"></div>
+        <button className="btn ghost sm" onClick={onRemove} disabled={count <= 1}>－</button>
         <button className="btn sm" onClick={onAdd}>＋ เพิ่มช่อง</button>
       </div>
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(150px,1fr))',gap:12}}>
-        {Array.from({length:count}).map((_,i)=>(
-          <div key={i} style={{position:'relative',aspectRatio:'1/1'}}>
-            <image-slot id={'asset-'+g.id+'-'+i} shape={shape} radius="10"
-              placeholder={g.name+' #'+(i+1)}
-              style={{position:'absolute',inset:0,width:'100%',height:'100%'}}></image-slot>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
+        {Array.from({ length: count }).map((_, i) => (
+          <div key={i} className="relative aspect-square">
+            <image-slot 
+              id={'asset-' + g.id + '-' + i} 
+              shape={shape} 
+              radius="10"
+              placeholder={g.name + ' #' + (i + 1)}
+              className="absolute inset-0 w-full h-full"
+            />
           </div>
         ))}
       </div>
     </div>
   );
 }
-
-
-
-
 
 export default Assets;

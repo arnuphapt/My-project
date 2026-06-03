@@ -27,21 +27,20 @@ export default function SystemLogs() {
   };
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 24, boxSizing: 'border-box' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 18 }}>
+    <div className="h-full flex flex-col p-6 box-border">
+      <div className="flex items-end justify-between mb-[18px]">
         <div>
-          <h1 className="title-xl" style={{ fontSize: 20, letterSpacing: 1 }}>SYSTEM LOGS</h1>
-          <div style={{ color: 'var(--text-dim)', fontSize: 14, marginTop: 8, fontFamily: 'var(--thai)' }}>
+          <h1 className="title-xl text-[20px] tracking-[1px]">SYSTEM LOGS</h1>
+          <div className="text-text-dim text-[14px] mt-2 font-thai">
             ประวัติการทำงานและข้อความระบบ
           </div>
         </div>
       </div>
       
       {/* Test Log Input */}
-      <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+      <div className="flex gap-2.5 mb-4">
         <input 
-          className="fld"
-          style={{ flex: 1, padding: '10px 14px', fontFamily: 'var(--thai)' }}
+          className="fld flex-1 px-3.5 py-2.5 font-thai"
           placeholder="พิมพ์ข้อความทดสอบ log..." 
           value={testMessage}
           onChange={e => setTestMessage(e.target.value)}
@@ -52,28 +51,31 @@ export default function SystemLogs() {
       </div>
 
       {/* Logs View */}
-      <div style={{ flex: 1, background: 'rgba(10,14,24,.8)', border: '1px solid var(--line)', borderRadius: 12, padding: 16, overflow: 'auto', fontFamily: 'var(--mono)', fontSize: 13 }}>
+      <div className="flex-1 bg-[#0a0e18]/80 border border-line rounded-xl p-4 overflow-auto font-mono text-[13px]">
         {logs.length === 0 ? (
-          <div style={{ color: 'var(--text-mute)', textAlign: 'center', marginTop: 40, fontFamily: 'var(--thai)' }}>
+          <div className="text-text-mute text-center mt-10 font-thai">
             ยังไม่มีบันทึก Log
           </div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr style={{ color: 'var(--text-dim)', borderBottom: '1px solid var(--line)' }}>
-                <th style={{ padding: '8px 4px', width: '180px' }}>เวลา (Created At)</th>
-                <th style={{ padding: '8px 4px', width: '80px' }}>Level</th>
-                <th style={{ padding: '8px 4px' }}>ข้อความ (Message)</th>
+              <tr className="text-text-dim border-b border-line">
+                <th className="px-1 py-2 w-[180px]">เวลา (Created At)</th>
+                <th className="px-1 py-2 w-[80px]">Level</th>
+                <th className="px-1 py-2">ข้อความ (Message)</th>
               </tr>
             </thead>
             <tbody>
               {logs.map(log => (
-                <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                  <td style={{ padding: '8px 4px', color: 'var(--text-mute)' }}>{log.created_at}</td>
-                  <td style={{ padding: '8px 4px', color: log.level === 'ERROR' ? 'var(--red)' : 'var(--cyan)' }}>
+                <tr key={log.id} className="border-b border-white/5">
+                  <td className="px-1 py-2 text-text-mute">{log.created_at}</td>
+                  <td 
+                    className="px-1 py-2" 
+                    style={{ color: log.level === 'ERROR' ? 'var(--red)' : 'var(--cyan)' }}
+                  >
                     {log.level}
                   </td>
-                  <td style={{ padding: '8px 4px', color: 'var(--white)', fontFamily: 'var(--thai)' }}>{log.message}</td>
+                  <td className="px-1 py-2 text-white font-thai">{log.message}</td>
                 </tr>
               ))}
             </tbody>

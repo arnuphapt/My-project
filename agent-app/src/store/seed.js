@@ -75,6 +75,7 @@ export const settings = {
   phone:'',
   website:'',
   bio:'',
+  birthdate:'',
   accent:'cyan',
 };
 

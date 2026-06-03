@@ -1,6 +1,6 @@
-import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
-import { OfficeStore, useOffice, fmt, SEED } from '../store';
-import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import React, { useState as useS, useEffect as useE } from 'react';
+import { OfficeStore, useOffice } from '../store';
+import { Win, PageHead } from '../components/UI.jsx';
 import '../../../image-slot.js';
 
 /* ============ SETTINGS ============ */
@@ -12,17 +12,17 @@ const ACCENTS = [
   ['rose',  '#ff6b9d', 'ชมพู'],
 ];
 
-function Settings(){
-  const [s,set]=useOffice();
-  const cfg=s.settings||{};
-  const upd=patch=>OfficeStore.setState(st=>({...st,settings:{...st.settings,...patch}}),{now:true});
-  const F=(key,val)=>upd({[key]:val});
+function Settings() {
+  const [s] = useOffice();
+  const cfg = s.settings || {};
+  const upd = patch => OfficeStore.setState(st => ({ ...st, settings: { ...st.settings, ...patch } }), { now: true });
+  const F = (key, val) => upd({ [key]: val });
 
   const [geminiKey, setGeminiKey] = useS('');
 
   useE(() => {
     if (window.electronAPI) {
-      window.electronAPI.getSetting('gemini_api_key').then(k => setGeminiKey(k||''));
+      window.electronAPI.getSetting('gemini_api_key').then(k => setGeminiKey(k || ''));
     }
   }, []);
 
@@ -31,198 +31,275 @@ function Settings(){
     if (window.electronAPI) window.electronAPI.saveSetting('gemini_api_key', val);
   };
 
-  const filled = ['ownerName','ownerRole','email','bio'].filter(k=>(cfg[k]||'').trim()).length;
-  const pct = Math.round(filled/4*100);
+  const filled = ['ownerName', 'ownerRole', 'email', 'bio'].filter(k => (cfg[k] || '').trim()).length;
+  const pct = Math.round(filled / 4 * 100);
 
-  const reset=()=>{ if(confirm('คืนค่าตั้งต้นทั้งหมด? (ชื่อระบบ โลโก้ และประวัติจะถูกล้าง)')){
-    OfficeStore.setState(st=>({...st,settings:{...window.SEED.settings}}),{now:true});
-    window.electronAPI?.saveLog('warning', 'System reset to default settings');
-  }};
+  const reset = () => {
+    if (confirm('คืนค่าตั้งต้นทั้งหมด? (ชื่อระบบ โลโก้ และประวัติจะถูกล้าง)')) {
+      OfficeStore.setState(st => ({ ...st, settings: { ...window.SEED.settings } }), { now: true });
+      window.electronAPI?.saveLog('warning', 'System reset to default settings');
+    }
+  };
 
   return (
-    <div style={{maxWidth:1040,margin:'0 auto',padding:'20px 22px'}}>
-      <PageHead title="SETTINGS" sub="ตั้งค่าตัวตนของระบบ และกรอกประวัติของคุณ — ข้อมูลนี้ใช้สร้าง Resume / CV ต่อได้"
-        right={<button className="btn ghost" onClick={reset}>คืนค่าตั้งต้น</button>}/>
+    <div className="max-w-[1040px] mx-auto px-[22px] py-5">
+      <PageHead 
+        title="SETTINGS" 
+        sub="ตั้งค่าตัวตนของระบบ และกรอกประวัติของคุณ — ข้อมูลนี้ใช้สร้าง Resume / CV ต่อได้"
+        right={<button className="btn ghost" onClick={reset}>คืนค่าตั้งต้น</button>}
+      />
 
-      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,alignItems:'start'}}>
-
-        <div style={{display:'flex',flexDirection:'column',gap:16}}>
+      <div className="grid grid-cols-2 gap-4 items-start">
+        <div className="flex flex-col gap-4">
           {/* ---------- SYSTEM IDENTITY ---------- */}
-          <Win title="SYSTEM IDENTITY" bodyStyle={{padding:18}}>
+          <Win title="SYSTEM IDENTITY" bodyStyle={{ padding: 18 }}>
             <SecTitle>ตัวตนของระบบ</SecTitle>
 
-            <div style={{display:'flex',gap:16,alignItems:'flex-start',marginBottom:16}}>
-              <div style={{flex:'none'}}>
+            <div className="flex gap-4 items-start mb-4">
+              <div className="flex-none">
                 <label className="lbl">โลโก้</label>
-                <div style={{width:88,height:88,borderRadius:12,position:'relative',overflow:'hidden',
-                  border:'1px solid #2f456e',background:'linear-gradient(135deg,#2f4ea8,#6a4cb8)'}}>
-                  <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
-                    pointerEvents:'none',fontFamily:'var(--pixel)',fontSize:30,color:'#fff'}}>
-                    {(cfg.sysName1||'M').trim()[0]||'M'}</div>
-                  <image-slot id="sys-logo" shape="rounded" radius="12"
-                    style={{position:'absolute',inset:0,width:'88px',height:'88px'}}></image-slot>
+                <div className="w-[88px] h-[88px] rounded-xl relative overflow-hidden border border-[#2f456e] bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
+                    {(cfg.sysName1 || 'M').trim()[0] || 'M'}
+                  </div>
+                  <image-slot 
+                    id="sys-logo" 
+                    shape="rounded" 
+                    radius="12"
+                    className="absolute inset-0 w-[88px] h-[88px]"
+                  />
                 </div>
-                <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:6,textAlign:'center',width:88}}>ลากรูปมาวาง</div>
+                <div className="font-mono text-[10px] text-text-mute mt-1.5 text-center w-[88px]">ลากรูปมาวาง</div>
               </div>
 
-              <div style={{flex:1}}>
+              <div className="flex-1">
                 <label className="lbl">ชื่อระบบ</label>
-                <div style={{display:'flex',gap:8}}>
-                  <input className="fld" value={cfg.sysName1||''} maxLength={10}
-                    onChange={e=>F('sysName1',e.target.value)} placeholder="MY" style={{textTransform:'uppercase'}}/>
-                  <input className="fld" value={cfg.sysName2||''} maxLength={12}
-                    onChange={e=>F('sysName2',e.target.value)} placeholder="OFFICE" style={{textTransform:'uppercase'}}/>
+                <div className="flex gap-2">
+                  <input 
+                    className="fld uppercase" 
+                    value={cfg.sysName1 || ''} 
+                    maxLength={10}
+                    onChange={e => F('sysName1', e.target.value)} 
+                    placeholder="MY" 
+                  />
+                  <input 
+                    className="fld uppercase" 
+                    value={cfg.sysName2 || ''} 
+                    maxLength={12}
+                    onChange={e => F('sysName2', e.target.value)} 
+                    placeholder="OFFICE" 
+                  />
                 </div>
-                <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>2 บรรทัด — โชว์มุมซ้ายบน</div>
-                <label className="lbl" style={{marginTop:13}}>คำโปรย (Tagline)</label>
-                <input className="fld" value={cfg.tagline||''} onChange={e=>F('tagline',e.target.value)}
-                  placeholder="ระบบจัดการชีวิตของฉัน"/>
+                <div className="font-mono text-[10px] text-text-mute mt-1.25">2 บรรทัด — โชว์มุมซ้ายบน</div>
+                <label className="lbl mt-3.25">คำโปรย (Tagline)</label>
+                <input 
+                  className="fld" 
+                  value={cfg.tagline || ''} 
+                  onChange={e => F('tagline', e.target.value)}
+                  placeholder="ระบบจัดการชีวิตของฉัน"
+                />
               </div>
             </div>
 
             <label className="lbl">สีหลักของระบบ (Accent)</label>
-            <div style={{display:'flex',gap:9,marginTop:4}}>
-              {ACCENTS.map(([id,hex,th])=>(
-                <button key={id} onClick={()=>F('accent',id)} title={th}
-                  style={{width:38,height:38,borderRadius:9,cursor:'pointer',background:hex,
-                    border:cfg.accent===id?'2px solid #fff':'2px solid transparent',
-                    boxShadow:cfg.accent===id?'0 0 0 2px '+hex:'0 2px 6px rgba(0,0,0,.4)',
-                    display:'flex',alignItems:'center',justifyContent:'center',color:'#0b0e16',fontWeight:900}}>
-                  {cfg.accent===id?'✓':''}</button>
+            <div className="flex gap-2.25 mt-1">
+              {ACCENTS.map(([id, hex, th]) => (
+                <button 
+                  key={id} 
+                  onClick={() => F('accent', id)} 
+                  title={th}
+                  style={{
+                    width: 38,
+                    height: 38,
+                    borderRadius: 9,
+                    cursor: 'pointer',
+                    background: hex,
+                    border: cfg.accent === id ? '2px solid #fff' : '2px solid transparent',
+                    boxShadow: cfg.accent === id ? '0 0 0 2px ' + hex : '0 2px 6px rgba(0,0,0,.4)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#0b0e16',
+                    fontWeight: 900
+                  }}
+                >
+                  {cfg.accent === id ? '✓' : ''}
+                </button>
               ))}
             </div>
           </Win>
 
           {/* ---------- API CONFIG ---------- */}
-          <Win title="API CONFIGURATION" accent="purple" bodyStyle={{padding:18}}>
+          <Win title="API CONFIGURATION" accent="purple" bodyStyle={{ padding: 18 }}>
             <SecTitle>ตั้งค่าการเชื่อมต่อ AI</SecTitle>
             <label className="lbl">Gemini API Key</label>
-            <input className="fld" type="password" value={geminiKey} onChange={e=>handleKeySave(e.target.value)}
-              placeholder="AIzaSy..." style={{fontFamily:'var(--mono)'}}/>
-            <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>
+            <input 
+              className="fld font-mono" 
+              type="password" 
+              value={geminiKey} 
+              onChange={e => handleKeySave(e.target.value)}
+              placeholder="AIzaSy..." 
+            />
+            <div className="font-mono text-[10px] text-text-mute mt-1.25">
               บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
             </div>
-
           </Win>
         </div>
 
         {/* ---------- OWNER PROFILE ---------- */}
-        <Win title="MY PROFILE · CV DATA" accent="gold" bodyStyle={{padding:18}}
-          right={<span className="tag" style={{padding:'4px 8px'}}>{pct}% พร้อม</span>}>
+        <Win 
+          title="MY PROFILE · CV DATA" 
+          accent="gold" 
+          bodyStyle={{ padding: 18 }}
+          right={<span className="tag px-2 py-1">{pct}% พร้อม</span>}
+        >
           <SecTitle>ประวัติของฉัน</SecTitle>
 
-          <div style={{display:'flex',gap:14,alignItems:'flex-start',marginBottom:14}}>
-            <div style={{flex:'none'}}>
+          <div className="flex gap-3.5 items-start mb-3.5">
+            <div className="flex-none">
               <label className="lbl">รูปโปรไฟล์</label>
-              <div style={{width:72,height:72,borderRadius:12,position:'relative',overflow:'hidden',border:'1px solid var(--line)'}}>
-                <image-slot id="player-avatar" shape="rounded" radius="12" placeholder="YOU"
-                  style={{position:'absolute',inset:0,width:'72px',height:'72px'}}></image-slot>
+              <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border border-line">
+                <image-slot 
+                  id="player-avatar" 
+                  shape="rounded" 
+                  radius="12" 
+                  placeholder="YOU"
+                  className="absolute inset-0 w-[72px] h-[72px]"
+                />
               </div>
             </div>
-            <div style={{flex:1}}>
+            <div className="flex-1">
               <label className="lbl">ชื่อ-นามสกุล</label>
-              <input className="fld" value={cfg.ownerName||''} onChange={e=>F('ownerName',e.target.value)} placeholder="ชื่อของคุณ"/>
-              <label className="lbl" style={{marginTop:11}}>ตำแหน่ง / บทบาท</label>
-              <input className="fld" value={cfg.ownerRole||''} onChange={e=>F('ownerRole',e.target.value)} placeholder="เช่น Founder / Developer"/>
+              <input className="fld" value={cfg.ownerName || ''} onChange={e => F('ownerName', e.target.value)} placeholder="ชื่อของคุณ" />
+              <label className="lbl mt-2.75">ตำแหน่ง / บทบาท</label>
+              <input className="fld" value={cfg.ownerRole || ''} onChange={e => F('ownerRole', e.target.value)} placeholder="เช่น Founder / Developer" />
             </div>
           </div>
 
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          <div className="grid grid-cols-2 gap-2.5">
             <div>
               <label className="lbl">อีเมล</label>
-              <input className="fld" value={cfg.email||''} onChange={e=>F('email',e.target.value)} placeholder="you@email.com"/>
+              <input className="fld" value={cfg.email || ''} onChange={e => F('email', e.target.value)} placeholder="you@email.com" />
             </div>
             <div>
               <label className="lbl">เบอร์โทร</label>
-              <input className="fld" value={cfg.phone||''} onChange={e=>F('phone',e.target.value)} placeholder="08x-xxx-xxxx"/>
+              <input className="fld" value={cfg.phone || ''} onChange={e => F('phone', e.target.value)} placeholder="08x-xxx-xxxx" />
             </div>
             <div>
               <label className="lbl">ที่อยู่ / เมือง</label>
-              <input className="fld" value={cfg.location||''} onChange={e=>F('location',e.target.value)} placeholder="Bangkok, Thailand"/>
+              <input className="fld" value={cfg.location || ''} onChange={e => F('location', e.target.value)} placeholder="Bangkok, Thailand" />
             </div>
             <div>
               <label className="lbl">เว็บไซต์ / พอร์ต</label>
-              <input className="fld" value={cfg.website||''} onChange={e=>F('website',e.target.value)} placeholder="myportfolio.com"/>
+              <input className="fld" value={cfg.website || ''} onChange={e => F('website', e.target.value)} placeholder="myportfolio.com" />
+            </div>
+            <div>
+              <label className="lbl">วันเกิด (คำนวณ Level)</label>
+              <input className="fld" type="date" value={cfg.birthdate || ''} onChange={e => F('birthdate', e.target.value)} />
             </div>
           </div>
 
-          <label className="lbl" style={{marginTop:13}}>เกี่ยวกับฉัน (Bio)</label>
-          <textarea className="fld" rows="4" value={cfg.bio||''} onChange={e=>F('bio',e.target.value)}
-            placeholder="เล่าสั้นๆ ว่าคุณคือใคร ถนัดอะไร เป้าหมายคืออะไร... ข้อความนี้จะใช้เป็นหัว Resume"/>
+          <label className="lbl mt-3.25">เกี่ยวกับฉัน (Bio)</label>
+          <textarea 
+            className="fld" 
+            rows="4" 
+            value={cfg.bio || ''} 
+            onChange={e => F('bio', e.target.value)}
+            placeholder="เล่าสั้นๆ ว่าคุณคือใคร ถนัดอะไร เป้าหมายคืออะไร... ข้อความนี้จะใช้เป็นหัว Resume"
+          />
         </Win>
       </div>
 
       {/* ---------- CV PREVIEW ---------- */}
-      <Win title="RESUME PREVIEW" style={{marginTop:16}} bodyStyle={{padding:0}}
-        right={<span className="tag" style={{padding:'4px 8px'}}>auto จากข้อมูล + โปรเจกต์</span>}>
-        <CVPreview cfg={cfg} projects={s.projects}/>
+      <Win 
+        title="RESUME PREVIEW" 
+        className="mt-4" 
+        bodyStyle={{ padding: 0 }}
+        right={<span className="tag px-2 py-1">auto จากข้อมูล + โปรเจกต์</span>}
+      >
+        <CVPreview cfg={cfg} projects={s.projects} />
       </Win>
 
-      <div style={{textAlign:'center',color:'var(--text-mute)',fontFamily:'var(--mono)',fontSize:11,margin:'16px 0 8px'}}>
+      <div className="text-center text-text-mute font-mono text-[11px] my-4 mb-2">
         ทุกการแก้ไขถูกบันทึกอัตโนมัติ · เก็บไว้ในเครื่องนี้
       </div>
     </div>
   );
 }
 
-function SecTitle({ children }){
-  return <div style={{fontFamily:'var(--pixel2)',fontSize:11,letterSpacing:.5,color:'var(--text-dim)',
-    textTransform:'uppercase',marginBottom:14,paddingBottom:9,borderBottom:'1px solid var(--line)'}}>{children}</div>;
+function SecTitle({ children }) {
+  return (
+    <div className="font-pixel2 text-[11px] tracking-[0.5px] text-text-dim uppercase mb-3.5 pb-2.25 border-b border-line">
+      {children}
+    </div>
+  );
 }
 
-function CVPreview({ cfg, projects }){
-  const name=(cfg.ownerName||'').trim()||'— ยังไม่ได้กรอกชื่อ —';
-  const contacts=[cfg.email,cfg.phone,cfg.location,cfg.website].filter(x=>(x||'').trim());
-  const skills=[...new Set(projects.flatMap(p=>p.tags))];
-  const done=projects.filter(p=>p.status==='เสร็จแล้ว');
+function CVPreview({ cfg, projects }) {
+  const name = (cfg.ownerName || '').trim() || '— ยังไม่ได้กรอกชื่อ —';
+  const contacts = [cfg.email, cfg.phone, cfg.location, cfg.website].filter(x => (x || '').trim());
+  const skills = [...new Set(projects.flatMap(p => p.tags))];
   return (
-    <div style={{display:'grid',gridTemplateColumns:'1fr 1.4fr',gap:0}}>
+    <div className="grid grid-cols-[1fr_1.4fr] gap-0">
       {/* left rail */}
-      <div style={{background:'rgba(8,10,18,.55)',borderRight:'1px solid var(--line)',padding:'22px 20px'}}>
-        <div style={{width:64,height:64,borderRadius:12,position:'relative',overflow:'hidden',
-          border:'1px solid var(--line)',marginBottom:14}}>
-          <image-slot id="player-avatar" shape="rounded" radius="12" placeholder="YOU"
-            style={{position:'absolute',inset:0,width:'64px',height:'64px'}}></image-slot>
+      <div className="bg-[#080a12]/55 border-r border-line p-[22px_20px]">
+        <div className="w-16 h-16 rounded-xl relative overflow-hidden border border-line mb-3.5">
+          <image-slot 
+            id="player-avatar" 
+            shape="rounded" 
+            radius="12" 
+            placeholder="YOU"
+            className="absolute inset-0 w-16 h-16"
+          />
         </div>
-        <div style={{fontFamily:'var(--pixel2)',fontWeight:700,fontSize:20,color:'var(--white)',lineHeight:1.2}}>{name}</div>
-        <div style={{color:'var(--cyan)',fontFamily:'var(--mono)',fontSize:13,marginTop:5}}>{(cfg.ownerRole||'').trim()||'ตำแหน่ง'}</div>
+        <div className="font-pixel2 font-bold text-[20px] text-white leading-tight">{name}</div>
+        <div className="text-cyan font-mono text-[13px] mt-1.25">{(cfg.ownerRole || '').trim() || 'ตำแหน่ง'}</div>
 
-        {contacts.length>0 && <>
-          <div style={{fontFamily:'var(--pixel2)',fontSize:10,color:'var(--text-dim)',letterSpacing:.5,margin:'20px 0 8px'}}>CONTACT</div>
-          <div style={{display:'flex',flexDirection:'column',gap:6}}>
-            {contacts.map((c,i)=><div key={i} style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text)'}}>{c}</div>)}
-          </div>
-        </>}
+        {contacts.length > 0 && (
+          <>
+            <div className="font-pixel2 text-[10px] text-text-dim tracking-[0.5px] mt-5 mb-2">CONTACT</div>
+            <div className="flex flex-col gap-1.5">
+              {contacts.map((c, i) => <div key={i} className="font-mono text-[12px] text-text">{c}</div>)}
+            </div>
+          </>
+        )}
 
-        {skills.length>0 && <>
-          <div style={{fontFamily:'var(--pixel2)',fontSize:10,color:'var(--text-dim)',letterSpacing:.5,margin:'20px 0 8px'}}>SKILLS</div>
-          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
-            {skills.map(sk=><span key={sk} className="chip" style={{fontSize:10,color:'var(--cyan)',borderColor:'rgba(70,182,255,.35)'}}>{sk}</span>)}
-          </div>
-        </>}
+        {skills.length > 0 && (
+          <>
+            <div className="font-pixel2 text-[10px] text-text-dim tracking-[0.5px] mt-5 mb-2">SKILLS</div>
+            <div className="flex flex-wrap gap-1.5">
+              {skills.map(sk => <span key={sk} className="chip text-[10px] text-cyan border-cyan/35">{sk}</span>)}
+            </div>
+          </>
+        )}
       </div>
 
       {/* right body */}
-      <div style={{padding:'22px 22px'}}>
-        <div style={{fontFamily:'var(--pixel2)',fontSize:10,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>ABOUT</div>
-        <p style={{margin:0,fontSize:13.5,lineHeight:1.65,color:(cfg.bio||'').trim()?'var(--text)':'var(--text-mute)'}}>
-          {(cfg.bio||'').trim()||'เขียนแนะนำตัวในช่อง Bio ด้านบน แล้วจะมาแสดงตรงนี้'}</p>
+      <div className="p-[22px]">
+        <div className="font-pixel2 text-[10px] text-text-dim tracking-[0.5px] mb-2">ABOUT</div>
+        <p 
+          className="m-0 text-[13.5px] leading-relaxed" 
+          style={{ color: (cfg.bio || '').trim() ? 'var(--text)' : 'var(--text-mute)' }}
+        >
+          {(cfg.bio || '').trim() || 'เขียนแนะนำตัวในช่อง Bio ด้านบน แล้วจะมาแสดงตรงนี้'}
+        </p>
 
-        <div style={{fontFamily:'var(--pixel2)',fontSize:10,color:'var(--text-dim)',letterSpacing:.5,margin:'22px 0 10px'}}>PROJECTS · ผลงาน</div>
-        <div style={{display:'flex',flexDirection:'column',gap:12}}>
-          {projects.length===0 && <div className="empty">ยังไม่มีโปรเจกต์ — เพิ่มที่หน้า Projects</div>}
-          {projects.map(p=>(
-            <div key={p.id} style={{borderLeft:'2px solid var(--cyan)',paddingLeft:12}}>
-              <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:8}}>
-                <span style={{fontFamily:'var(--pixel2)',fontWeight:700,fontSize:14,color:'var(--white)'}}>{p.title}</span>
-                <span style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text-mute)',flex:'none'}}>{p.period}</span>
+        <div className="font-pixel2 text-[10px] text-text-dim tracking-[0.5px] mt-[22px] mb-2.5">PROJECTS · ผลงาน</div>
+        <div className="flex flex-col gap-3">
+          {projects.length === 0 && <div className="empty">ยังไม่มีโปรเจกต์ — เพิ่มที่หน้า Projects</div>}
+          {projects.map(p => (
+            <div key={p.id} className="border-l-2 border-cyan pl-3">
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="font-pixel2 font-bold text-[14px] text-white">{p.title}</span>
+                <span className="font-mono text-[11px] text-text-mute flex-none">{p.period}</span>
               </div>
-              <div style={{fontFamily:'var(--mono)',fontSize:11.5,color:'var(--cyan)',marginTop:2}}>{p.role}</div>
-              <div style={{fontSize:12.5,color:'var(--text-dim)',marginTop:5,lineHeight:1.5}}>{p.summary}</div>
-              {p.highlights&&p.highlights.length>0 &&
-                <ul style={{margin:'7px 0 0',paddingLeft:16,color:'var(--text)',fontSize:12.5,lineHeight:1.6}}>
-                  {p.highlights.slice(0,3).map((h,i)=><li key={i}>{h}</li>)}
-                </ul>}
+              <div className="font-mono text-[11.5px] text-cyan mt-0.5">{p.role}</div>
+              <div className="text-[12.5px] text-text-dim mt-1.25 leading-normal">{p.summary}</div>
+              {p.highlights && p.highlights.length > 0 && (
+                <ul className="mt-1.75 mb-0 pl-4 text-text text-[12.5px] leading-relaxed">
+                  {p.highlights.slice(0, 3).map((h, i) => <li key={i}>{h}</li>)}
+                </ul>
+              )}
             </div>
           ))}
         </div>
