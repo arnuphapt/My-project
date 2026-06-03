@@ -1,5 +1,5 @@
 import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
-import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { OfficeStore, useOffice, fmt, SEED } from '../store';
 import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
 import '../../../image-slot.js';
 

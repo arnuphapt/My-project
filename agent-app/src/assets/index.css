@@ -1,3 +1,35 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-0: var(--bg-0);
+  --color-bg-1: var(--bg-1);
+  --color-bg-2: var(--bg-2);
+  --color-panel: var(--panel);
+  --color-panel-solid: var(--panel-solid);
+  --color-panel-head: var(--panel-head);
+  --color-line: var(--line);
+  --color-line-bright: var(--line-bright);
+  --color-glow: var(--glow);
+  
+  --color-cyan: var(--cyan);
+  --color-blue: var(--blue);
+  --color-purple: var(--purple);
+  --color-magenta: var(--magenta);
+  --color-gold: var(--gold);
+  --color-green: var(--green);
+  --color-red: var(--red);
+  
+  --color-text: var(--text);
+  --color-text-dim: var(--text-dim);
+  --color-text-mute: var(--text-mute);
+  --color-white: var(--white);
+  
+  --font-pixel: var(--pixel);
+  --font-pixel2: var(--pixel2);
+  --font-mono: var(--mono);
+  --font-thai: var(--thai);
+}
+
 :root{
   /* surfaces — black-blue */
   --bg-0:#070910;

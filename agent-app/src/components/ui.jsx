@@ -1,5 +1,5 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
-import { OfficeStore, useOffice, fmt } from '../store/store.js';
+import { OfficeStore, useOffice, fmt } from '../store';
 const RARITY = { legend:['r-legend','LEGENDARY'], epic:['r-epic','EPIC'], rare:['r-rare','RARE'], common:['r-common','COMMON'] };
 
 function Rarity({ r }){ const [c,l]=RARITY[r]||RARITY.common; return <span className={'rarity '+c}>{l}</span>; }
@@ -35,13 +35,12 @@ function StatusDot({ s }){ return <span className={'sdot s-'+s}></span>; }
 function Avatar({ agent, size=44, slot }){
   const id = 'agent-'+agent.id;
   return (
-    <div style={{width:size,height:size,position:'relative',flex:'none'}}>
+    <div className="relative flex-none" style={{width:size,height:size}}>
       <image-slot id={id} shape="rounded" radius="8"
         placeholder={agent.name}
         style={{width:size+'px',height:size+'px'}}></image-slot>
-      <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
-        pointerEvents:'none',fontFamily:'var(--pixel)',fontSize:(size/3.6)+'px',color:agent.color,
-        textShadow:'0 0 8px '+agent.color+'88'}}>{agent.name[0]}</div>
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel"
+        style={{fontSize:(size/3.6)+'px',color:agent.color, textShadow:'0 0 8px '+agent.color+'88'}}>{agent.name[0]}</div>
     </div>
   );
 }
@@ -58,6 +57,7 @@ const NAV = [
   ['systemlogs','SYSTEM LOGS','📝'],
   ['settings','SETTINGS','⚙️'],
 ];
+
 function NavBar(){
   const [s,set]=useOffice();
   const p=s.player;
@@ -65,43 +65,40 @@ function NavBar(){
   const logoLetter=(cfg.sysName1||'M').trim()[0]||'M';
   return (
     <div className="nav">
-      <div onClick={()=>set({route:'settings'})} title="ตั้งค่าระบบ" style={{display:'flex',alignItems:'center',gap:11,marginRight:14,minWidth:0,cursor:'pointer'}}>
-        <div style={{width:38,height:38,borderRadius:9,position:'relative',flex:'none',
-          border:'1px solid #2f456e',boxShadow:'0 4px 12px rgba(0,0,0,.4)',overflow:'hidden',
-          background:'linear-gradient(135deg,#2f4ea8,#6a4cb8)'}}>
-          <div style={{position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',
-            pointerEvents:'none',fontFamily:'var(--pixel)',fontSize:14,color:'#fff'}}>{logoLetter}</div>
+      <div onClick={()=>set({route:'settings'})} title="ตั้งค่าระบบ" className="flex items-center gap-2.5 mr-3.5 min-w-0 cursor-pointer">
+        <div className="w-[38px] h-[38px] rounded-[9px] relative flex-none border border-[#2f456e] shadow-[0_4px_12px_rgba(0,0,0,0.4)] overflow-hidden bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[14px] text-white">{logoLetter}</div>
           <image-slot id="sys-logo" shape="rounded" radius="8" placeholder=""
-            style={{position:'absolute',inset:0,width:'38px',height:'38px'}}></image-slot>
+            className="absolute inset-0 w-[38px] h-[38px]"></image-slot>
         </div>
-        <div style={{lineHeight:1.2,minWidth:0}}>
-          <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--white)',letterSpacing:1}}>{cfg.sysName1||'MY'}</div>
-          <div style={{fontFamily:'var(--pixel)',fontSize:10,color:'var(--cyan)',letterSpacing:1}}>{cfg.sysName2||'OFFICE'}</div>
+        <div className="leading-[1.2] min-w-0">
+          <div className="font-pixel text-[10px] text-white tracking-[1px]">{cfg.sysName1||'MY'}</div>
+          <div className="font-pixel text-[10px] text-cyan tracking-[1px]">{cfg.sysName2||'OFFICE'}</div>
         </div>
       </div>
-      <div style={{display:'flex',gap:4,flex:1}}>
+      <div className="flex gap-1 flex-1">
         {NAV.map(([id,lb,ic])=>(
           <div key={id} className={'nav-item'+(s.route===id?' on':'')} onClick={()=>set({route:id})}>
             <span className="ic">{ic}</span><span className="lb">{lb}</span>
           </div>
         ))}
       </div>
-      <div style={{display:'flex',alignItems:'center',gap:16}}>
-        <div style={{display:'flex',alignItems:'center',gap:7,fontFamily:'var(--mono)',fontSize:15,color:'var(--gold)'}}>
-          <span style={{fontSize:16}}>🪙</span>{fmt.n(p.coins,0)}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-[7px] font-mono text-[15px] text-gold">
+          <span className="text-[16px]">🪙</span>{fmt.n(p.coins,0)}
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:7,fontFamily:'var(--mono)',fontSize:15,color:'var(--purple)'}}>
-          <span style={{fontSize:16}}>💎</span>{p.gems}
+        <div className="flex items-center gap-[7px] font-mono text-[15px] text-purple">
+          <span className="text-[16px]">💎</span>{p.gems}
         </div>
-        <div style={{display:'flex',alignItems:'center',gap:10}}>
-          <div style={{width:42,height:42,borderRadius:9,position:'relative',flex:'none'}}>
+        <div className="flex items-center gap-2.5">
+          <div className="w-[42px] h-[42px] rounded-[9px] relative flex-none">
             <image-slot id="player-avatar" shape="rounded" radius="8" placeholder="YOU"
-              style={{width:'42px',height:'42px'}}></image-slot>
+              className="w-[42px] h-[42px]"></image-slot>
           </div>
-          <div style={{lineHeight:1.35}}>
-            <div style={{fontFamily:'var(--pixel)',fontSize:9,color:'var(--white)'}}>Lv. {p.level}</div>
-            <div style={{width:96,marginTop:3}}><Bar pct={p.xp/p.xpMax*100} tone="purple"/></div>
-            <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:2}}>{fmt.n(p.xp,0)} / {fmt.n(p.xpMax,0)} XP</div>
+          <div className="leading-[1.35]">
+            <div className="font-pixel text-[9px] text-white">Lv. {p.level}</div>
+            <div className="w-[96px] mt-[3px]"><Bar pct={p.xp/p.xpMax*100} tone="purple"/></div>
+            <div className="font-mono text-[10px] text-text-mute mt-[2px]">{fmt.n(p.xp,0)} / {fmt.n(p.xpMax,0)} XP</div>
           </div>
         </div>
       </div>
@@ -112,10 +109,10 @@ function NavBar(){
 /* page header used on inner pages */
 function PageHead({ title, th, sub, right }){
   return (
-    <div style={{display:'flex',alignItems:'flex-end',justifyContent:'space-between',gap:16,marginBottom:18,flexWrap:'wrap'}}>
+    <div className="flex items-end justify-between gap-4 mb-[18px] flex-wrap">
       <div>
-        <h1 className="title-xl" style={{fontSize:20,letterSpacing:1}}>{title}</h1>
-        {sub && <div style={{color:'var(--text-dim)',fontSize:14,marginTop:8,fontFamily:'var(--thai)'}}>{sub}</div>}
+        <h1 className="title-xl text-[20px] tracking-[1px]">{title}</h1>
+        {sub && <div className="text-text-dim text-[14px] mt-2 font-thai">{sub}</div>}
       </div>
       {right}
     </div>
@@ -125,9 +122,8 @@ function PageHead({ title, th, sub, right }){
 /* modal */
 function Modal({ title, th, onClose, children, width=520 }){
   return (
-    <div onClick={onClose} style={{position:'fixed',inset:0,zIndex:200,background:'rgba(4,6,20,.72)',
-      backdropFilter:'blur(3px)',display:'flex',alignItems:'center',justifyContent:'center',padding:20}}>
-      <div onClick={e=>e.stopPropagation()} style={{width:'100%',maxWidth:width}}>
+    <div onClick={onClose} className="fixed inset-0 z-[200] bg-[#040614]/72 backdrop-blur-[3px] flex items-center justify-center p-5">
+      <div onClick={e=>e.stopPropagation()} className="w-full" style={{maxWidth:width}}>
         <Win title={title} th={th} onClose={onClose} bodyStyle={{padding:18}}>{children}</Win>
       </div>
     </div>
@@ -141,19 +137,16 @@ function ClassTag({ cls }){
 }
 
 function SumCard({ label, main, sub, tone, onClick }){
-  const colMap={gold:'var(--gold)',pos:'var(--green)',neg:'var(--red)',cyan:'var(--cyan)'};
+  const colMap={gold:'text-gold',pos:'text-green',neg:'text-red',cyan:'text-cyan'};
   return (
-    <div className="win" 
-      style={{padding:'14px 15px', cursor:onClick?'pointer':'default', transition:'background .2s'}}
-      onMouseEnter={e=>onClick&&(e.currentTarget.style.background='rgba(255,255,255,0.05)')}
-      onMouseLeave={e=>onClick&&(e.currentTarget.style.background='')}
+    <div className={`win p-[14px_15px] transition-colors duration-200 ${onClick ? 'cursor-pointer hover:bg-white/5' : 'cursor-default'}`}
       onClick={onClick}>
-      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
-        <div style={{fontFamily:'var(--pixel2)',fontSize:11,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>{label}</div>
-        {onClick && <span style={{fontSize:12,color:'var(--text-dim)',opacity:0.6}}>✎</span>}
+      <div className="flex justify-between items-start">
+        <div className="font-pixel2 text-[11px] text-text-dim tracking-[.5px] mb-2">{label}</div>
+        {onClick && <span className="text-[12px] text-text-dim opacity-60">✎</span>}
       </div>
-      <div style={{fontFamily:'var(--mono)',fontSize:24,color:colMap[tone]||'var(--white)',lineHeight:1}}>{main}</div>
-      <div style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text-mute)',marginTop:6}}>{sub}</div>
+      <div className={`font-mono text-[24px] leading-none ${colMap[tone] || 'text-white'}`}>{main}</div>
+      <div className="font-mono text-[13px] text-text-mute mt-1.5">{sub}</div>
     </div>
   );
 }
