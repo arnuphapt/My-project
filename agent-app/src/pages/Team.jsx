@@ -1,3 +1,8 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ TEAM ============ */
 function Team(){
   const [s,set]=useOffice();
@@ -152,9 +157,10 @@ function AgentTasks({ a }){
       agents:st.agents.map(x=>x.id===a.id?{...x,status:'working',statusTh:'ทำงานอยู่',last:'เมื่อสักครู่',tasks:[{text:t,done:false,t:OfficeStore.clock()},...x.tasks]}:x),
       log:[{t:OfficeStore.clock(),who:a.name,text:'รับงาน: '+t,kind:'ok'},...st.log].slice(0,40),
     }),{now:true});
+    window.electronAPI?.saveLog('info', 'Assigned task to ' + a.name + ': ' + t);
     setTxt('');
   };
-  const toggle=i=>OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,tasks:x.tasks.map((tk,j)=>j===i?{...tk,done:!tk.done}:tk)}:x)}),{now:true});
+  const toggle=i=> { OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,tasks:x.tasks.map((tk,j)=>j===i?{...tk,done:!tk.done}:tk)}:x)}),{now:true}); window.electronAPI?.saveLog('info', 'Toggled task status for ' + a.name); };
   return (
     <div>
       <label className="lbl">มอบหมายงานใหม่</label>
@@ -183,8 +189,8 @@ function AgentProfile({ a }){
   const [s]=useOffice();
   const [role,setRole]=useS(a.roleTh);
   const [desc,setDesc]=useS(a.desc);
-  const save=()=>OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,roleTh:role,desc}:x)}),{now:true});
-  const fire=()=>{ if(confirm('ปลด '+a.name+' ออกจากทีม?')) OfficeStore.setState(st=>({...st,agents:st.agents.filter(x=>x.id!==a.id)}),{now:true}); };
+  const save=()=>{ OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,roleTh:role,desc}:x)}),{now:true}); window.electronAPI?.saveLog('info', 'Updated agent profile: ' + a.name); };
+  const fire=()=>{ if(confirm('ปลด '+a.name+' ออกจากทีม?')){ OfficeStore.setState(st=>({...st,agents:st.agents.filter(x=>x.id!==a.id)}),{now:true}); window.electronAPI?.saveLog('warning', 'Fired agent: ' + a.name); } };
   return (
     <div>
       <p style={{fontSize:14,color:'var(--text-dim)',lineHeight:1.6,marginTop:0}}>{a.desc}</p>
@@ -215,6 +221,7 @@ function CreateAgent({ onClose }){
     OfficeStore.setState(st=>({...st,agents:[...st.agents,{
       id,name:nm,roleEn,roleTh,rarity,color:colors[rarity],status:'idle',statusTh:'ว่าง',last:'เพิ่งเข้าทีม',
       lv:1,salary:0.5,desc:'พนักงานใหม่ พร้อมรับงาน '+roleTh,skills:[roleTh],tasks:[]}]}),{now:true});
+    window.electronAPI?.saveLog('info', 'Created new agent: ' + nm);
     onClose();
   };
   return (
@@ -240,4 +247,8 @@ function CreateAgent({ onClose }){
   );
 }
 
-window.Team = Team;
+
+
+
+
+export default Team;

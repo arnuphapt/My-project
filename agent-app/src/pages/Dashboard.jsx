@@ -1,3 +1,9 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import '../../../image-slot.js';
+import TestGemini from '../TestGemini.jsx';
+
 /* ============ DASHBOARD / WARROOM ============ */
 function Dashboard(){
   const [s,set]=useOffice();
@@ -29,6 +35,9 @@ function Dashboard(){
           <TradingPanel v={v}/>
           <TeamChatMini/>
         </div>
+        
+        {/* Gemini Test Panel */}
+        <TestGemini />
       </div>
 
       {/* RIGHT RAIL */}
@@ -244,5 +253,9 @@ function TeamChatMini(){
   );
 }
 
-window.Dashboard = Dashboard;
+
 Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, CryptoPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble });
+
+
+
+export default Dashboard;

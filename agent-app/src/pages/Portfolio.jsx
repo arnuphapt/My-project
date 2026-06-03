@@ -1,3 +1,8 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY, SumCard } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ PORTFOLIO (tabbed) ============ */
 function Portfolio(){
   const [tab,setTab]=useS('sim');
@@ -123,17 +128,6 @@ function SimPortfolio(){
 
       {trade && <TradeModal sym={trade.sym} side={trade.side} onClose={()=>setTrade(null)}/>}
       {depo && <DepositModal onClose={()=>setDepo(false)}/>}
-    </div>
-  );
-}
-
-function SumCard({ label, main, sub, tone }){
-  const colMap={gold:'var(--gold)',pos:'var(--green)',neg:'var(--red)',cyan:'var(--cyan)'};
-  return (
-    <div className="win" style={{padding:'14px 15px'}}>
-      <div style={{fontFamily:'var(--pixel2)',fontSize:11,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>{label}</div>
-      <div style={{fontFamily:'var(--mono)',fontSize:24,color:colMap[tone]||'var(--white)',lineHeight:1}}>{main}</div>
-      <div style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text-mute)',marginTop:6}}>{sub}</div>
     </div>
   );
 }
@@ -275,7 +269,7 @@ function LiveTrading(){
           <label className="lbl">Exchange / Broker</label>
           <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
             {['Binance','Bybit','OKX','MT5'].map(x=>(
-              <button key={x} className={'btn sm '+(L.exchange===x?'':'ghost')} onClick={()=>upd({exchange:x})}>{x}</button>
+              <button key={x} className={'btn sm '+(L.exchange===x?'':'ghost')} onClick={()=>{ upd({exchange:x}); window.electronAPI?.saveLog('info', 'Changed exchange to: ' + x); }}>{x}</button>
             ))}
           </div>
 
@@ -294,7 +288,7 @@ function LiveTrading(){
 
           <button className={'btn '+(L.connected?'red':'green')} style={{width:'100%',marginTop:16}}
             disabled={!canConnect&&!L.connected}
-            onClick={()=>upd({connected:!L.connected, botOn:false})}>
+            onClick={()=>{ upd({connected:!L.connected, botOn:false}); window.electronAPI?.saveLog('info', 'Exchange connection status: ' + (!L.connected?'Connected':'Disconnected')); }}>
             {L.connected?'ตัดการเชื่อมต่อ':(canConnect?'เชื่อมต่อ (Paper Mode)':'กรอก API ก่อนเชื่อมต่อ')}
           </button>
         </Win>
@@ -311,7 +305,7 @@ function LiveTrading(){
                 <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text-mute)',marginTop:2}}>
                   {!L.connected?'เชื่อมต่อก่อนเปิดบอท':(L.botOn?'กำลังรับสัญญาณ TradingView':'พร้อมทำงาน · ปิดอยู่')}</div>
               </div>
-              <Toggle on={L.botOn} disabled={!L.connected} onClick={()=>upd({botOn:!L.botOn})}/>
+              <Toggle on={L.botOn} disabled={!L.connected} onClick={()=>{ upd({botOn:!L.botOn}); window.electronAPI?.saveLog('info', 'Trading Bot status: ' + (!L.botOn?'ON':'OFF')); }}/>
             </div>
 
             <SliderRow label="ความเสี่ยงต่อไม้" value={L.riskPct} unit="%" min={0.5} max={10} step={0.5} onChange={v=>upd({riskPct:v})}/>
@@ -367,4 +361,4 @@ function SliderRow({ label, value, unit, min, max, step, onChange, compact }){
   );
 }
 
-window.Portfolio = Portfolio;
+export default Portfolio;

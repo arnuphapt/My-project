@@ -1,3 +1,8 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY, SumCard } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
   'กำลังทำ':   ['#ffce4a','r-legend'],
@@ -204,4 +209,8 @@ function CreateProject({ onClose }){
   );
 }
 
-window.Projects = Projects;
+
+
+
+
+export default Projects;

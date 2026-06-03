@@ -1,3 +1,8 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ WARROOM · IMMERSIVE ISOMETRIC OFFICE ============ */
 function WarRoom(){
   const [s,set]=useOffice();
@@ -226,4 +231,8 @@ function DeskPopover({ agent, onClose, onAssigned }){
   );
 }
 
-window.WarRoom = WarRoom;
+
+
+
+
+export default WarRoom;

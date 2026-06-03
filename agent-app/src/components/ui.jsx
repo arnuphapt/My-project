@@ -1,6 +1,5 @@
-/* ============ SHARED UI ============ */
-const { useState:useS, useEffect:useE, useRef:useR } = React;
-
+import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
+import { OfficeStore, useOffice, fmt } from '../store/store.js';
 const RARITY = { legend:['r-legend','LEGENDARY'], epic:['r-epic','EPIC'], rare:['r-rare','RARE'], common:['r-common','COMMON'] };
 
 function Rarity({ r }){ const [c,l]=RARITY[r]||RARITY.common; return <span className={'rarity '+c}>{l}</span>; }
@@ -56,6 +55,7 @@ const NAV = [
   ['team','TEAM','👥'],
   ['secretary','SECRETARY','💬'],
   ['assets','ASSETS','🗂️'],
+  ['systemlogs','SYSTEM LOGS','📝'],
   ['settings','SETTINGS','⚙️'],
 ];
 function NavBar(){
@@ -140,4 +140,15 @@ function ClassTag({ cls }){
   return <span className="chip" style={{color:c,borderColor:c+'55'}}>{l}</span>;
 }
 
-Object.assign(window, { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY });
+function SumCard({ label, main, sub, tone }){
+  const colMap={gold:'var(--gold)',pos:'var(--green)',neg:'var(--red)',cyan:'var(--cyan)'};
+  return (
+    <div className="win" style={{padding:'14px 15px'}}>
+      <div style={{fontFamily:'var(--pixel2)',fontSize:11,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>{label}</div>
+      <div style={{fontFamily:'var(--mono)',fontSize:24,color:colMap[tone]||'var(--white)',lineHeight:1}}>{main}</div>
+      <div style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text-mute)',marginTop:6}}>{sub}</div>
+    </div>
+  );
+}
+
+export { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY, SumCard };

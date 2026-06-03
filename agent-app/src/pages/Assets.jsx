@@ -1,10 +1,15 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ ASSETS ============ */
 function Assets(){
   const [s,set]=useOffice();
   const [active,setActive]=useS('ALL');
   // slot count per group is stored in state.assetSlots so user can add more
   const slots = s.assetSlots || {};
-  const groups = window.SEED.assetGroups;
+  const groups = SEED.assetGroups;
 
   const setCount=(gid,delta)=>OfficeStore.setState(st=>{
     const cur=(st.assetSlots&&st.assetSlots[gid])!=null ? st.assetSlots[gid] : (groups.find(g=>g.id===gid)?.count||4);
@@ -66,4 +71,8 @@ function AssetGroup({ g, count, onAdd, onRemove }){
   );
 }
 
-window.Assets = Assets;
+
+
+
+
+export default Assets;

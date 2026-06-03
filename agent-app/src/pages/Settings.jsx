@@ -1,3 +1,8 @@
+import React, { useState as useS, useEffect as useE, useRef as useR, useMemo, useCallback } from 'react';
+import { OfficeStore, useOffice, fmt, SEED } from '../store/store.js';
+import { Win, Row, Bar, StatusDot, Avatar, NavBar, PageHead, Modal, Rarity, ClassTag, RARITY } from '../components/UI.jsx';
+import '../../../image-slot.js';
+
 /* ============ SETTINGS ============ */
 const ACCENTS = [
   ['cyan',  '#46b6ff', 'ฟ้า'],
@@ -18,6 +23,7 @@ function Settings(){
 
   const reset=()=>{ if(confirm('คืนค่าตั้งต้นทั้งหมด? (ชื่อระบบ โลโก้ และประวัติจะถูกล้าง)')){
     OfficeStore.setState(st=>({...st,settings:{...window.SEED.settings}}),{now:true});
+    window.electronAPI?.saveLog('warning', 'System reset to default settings');
   }};
 
   return (
@@ -198,4 +204,8 @@ function CVPreview({ cfg, projects }){
   );
 }
 
-window.Settings = Settings;
+
+
+
+
+export default Settings;
