@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './assets/index.css';
 import '../../image-slot.js';
 import TestGemini from './TestGemini.jsx';
+import SystemLogs from './SystemLogs.jsx';
 
 
 /* ========== js/data.jsx ========== */
@@ -11,40 +12,7 @@ import TestGemini from './TestGemini.jsx';
   const FX = 32.61; // THB per USD
 
   // ---- AI Agents (roster maps to areas of the user's life) ----
-  const agents = [
-    { id:'mira',   name:'Mira',   roleEn:'CHIEF OF STAFF', roleTh:'เลขาส่วนตัว · คุมทั้งระบบ', rarity:'legend', color:'#ffce4a',
-      status:'working', statusTh:'ทำงานอยู่', last:'2 นาทีที่แล้ว', lv:30, salary:1.9,
-      desc:'หัวหน้าเลขา ดูแลทุกอย่างในออฟฟิศ รับคำสั่งจากคุณแล้วกระจายงานให้ทีม AI คนอื่น ขี้เล่นนิดๆ แต่งานเป๊ะ',
-      skills:['วางแผนงาน','สรุปสถานะ','มอบหมายงาน','เตือนความจำ'] },
-    { id:'quant',  name:'Quant',  roleEn:'INVEST ANALYST', roleTh:'นักวิเคราะห์การลงทุน', rarity:'epic', color:'#b06bff',
-      status:'working', statusTh:'เฝ้าพอร์ตอยู่', last:'เมื่อสักครู่', lv:24, salary:1.5,
-      desc:'เฝ้าดูพอร์ตจำลอง วิเคราะห์หุ้น/กองทุน/คริปโต รายงานกำไร-ขาดทุน และเตือนเมื่อราคาขยับแรง',
-      skills:['วิเคราะห์พอร์ต','คัดหุ้น','เฝ้าราคา','รายงาน PnL'] },
-    { id:'devin',  name:'Devin',  roleEn:'DEVELOPER', roleTh:'นักพัฒนา · เขียนโค้ด', rarity:'epic', color:'#4db4ff',
-      status:'thinking', statusTh:'กำลังคิด', last:'4 นาทีที่แล้ว', lv:22, salary:1.4,
-      desc:'สร้างเครื่องมือ ออโตเมชัน และต้นแบบต่างๆ แปลงไอเดียเป็นของใช้งานได้',
-      skills:['เขียนโค้ด','ออโตเมชัน','ทำ prototype','แก้บั๊ก'] },
-    { id:'pixel',  name:'Pixel',  roleEn:'DESIGNER', roleTh:'กราฟิก · ออกแบบ', rarity:'epic', color:'#ff5cc8',
-      status:'idle', statusTh:'ว่าง', last:'12 นาทีที่แล้ว', lv:20, salary:1.2,
-      desc:'งานออกแบบทั้งหมด โลโก้ แบนเนอร์ UI งานพิกเซลอาร์ต',
-      skills:['ออกแบบ UI','พิกเซลอาร์ต','โลโก้','แบนเนอร์'] },
-    { id:'echo',   name:'Echo',   roleEn:'CONTENT', roleTh:'คอนเทนต์ · โซเชียล', rarity:'rare', color:'#3ad0ff',
-      status:'idle', statusTh:'ว่าง', last:'20 นาทีที่แล้ว', lv:15, salary:0.9,
-      desc:'เขียนคอนเทนต์ คิดแคปชั่น วางแผนโพสต์ ตอบคอมเมนต์',
-      skills:['เขียนคอนเทนต์','วางแผนโพสต์','คิดแคปชั่น'] },
-    { id:'ledger', name:'Ledger', roleEn:'FINANCE', roleTh:'การเงิน · บัญชี', rarity:'rare', color:'#3ce594',
-      status:'working', statusTh:'ปิดงบอยู่', last:'8 นาทีที่แล้ว', lv:14, salary:0.9,
-      desc:'จดบันทึกรายรับรายจ่าย สรุปกระแสเงินสด และเตือนบิลที่ต้องจ่าย',
-      skills:['ทำบัญชี','สรุปงบ','เตือนบิล'] },
-    { id:'scout',  name:'Scout',  roleEn:'RESEARCH', roleTh:'ค้นคว้า · หาข้อมูล', rarity:'rare', color:'#9aa6cf',
-      status:'idle', statusTh:'ว่าง', last:'35 นาทีที่แล้ว', lv:12, salary:0.7,
-      desc:'หาข้อมูล สรุปบทความ เทียบตัวเลือก ก่อนตัดสินใจ',
-      skills:['หาข้อมูล','สรุปบทความ','เปรียบเทียบ'] },
-    { id:'tidy',   name:'Tidy',   roleEn:'OPERATIONS', roleTh:'จัดระบบ · งานออฟฟิศ', rarity:'common', color:'#9aa6cf',
-      status:'working', statusTh:'จัดไฟล์อยู่', last:'เมื่อสักครู่', lv:9, salary:0.5,
-      desc:'จัดระเบียบไฟล์ ตั้งเวลานัด ดูแลความเรียบร้อยของระบบ',
-      skills:['จัดไฟล์','ตั้งนัด','เก็บกวาด'] },
-  ];
+  const agents = [];
 
   // ---- Market assets (price in native currency) ----
   const mk = (symbol,name,cls,price,cur,prev)=>({symbol,name,cls,price,cur,prevClose:prev??price,seed:price});
@@ -167,14 +135,8 @@ import TestGemini from './TestGemini.jsx';
       agents: S.agents.map(a=>({...a, tasks:[]})),
       projects: S.projects.map(p=>({...p})),
       secChat: [],
-      teamChat: [
-        {who:'mira', text:'อรุณสวัสดิ์เจ้านาย ☕ วันนี้พอร์ตเขียวอยู่นะ อยากให้จัดการอะไรก่อนดี?', t:'08:02'},
-        {who:'quant', text:'NVDA +2.5% ตั้งแต่เปิดตลาด เฝ้าให้อยู่ครับ', t:'08:05'},
-      ],
-      log: [
-        {t:'08:01', who:'Mira', text:'เปิดออฟฟิศ เริ่มวันใหม่', kind:'sys'},
-        {t:'08:05', who:'Quant', text:'ซิงก์ราคาตลาดเรียบร้อย', kind:'ok'},
-      ],
+      teamChat: [],
+      log: [],
     };
   }
 
@@ -385,6 +347,7 @@ const NAV = [
   ['team','TEAM','👥'],
   ['secretary','SECRETARY','💬'],
   ['assets','ASSETS','🗂️'],
+  ['systemlogs','SYSTEM LOGS','📝'],
   ['settings','SETTINGS','⚙️'],
 ];
 function NavBar(){
@@ -1236,7 +1199,7 @@ function LiveTrading(){
           <label className="lbl">Exchange / Broker</label>
           <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:12}}>
             {['Binance','Bybit','OKX','MT5'].map(x=>(
-              <button key={x} className={'btn sm '+(L.exchange===x?'':'ghost')} onClick={()=>upd({exchange:x})}>{x}</button>
+              <button key={x} className={'btn sm '+(L.exchange===x?'':'ghost')} onClick={()=>{ upd({exchange:x}); window.electronAPI?.saveLog('info', 'Changed exchange to: ' + x); }}>{x}</button>
             ))}
           </div>
 
@@ -1255,7 +1218,7 @@ function LiveTrading(){
 
           <button className={'btn '+(L.connected?'red':'green')} style={{width:'100%',marginTop:16}}
             disabled={!canConnect&&!L.connected}
-            onClick={()=>upd({connected:!L.connected, botOn:false})}>
+            onClick={()=>{ upd({connected:!L.connected, botOn:false}); window.electronAPI?.saveLog('info', 'Exchange connection status: ' + (!L.connected?'Connected':'Disconnected')); }}>
             {L.connected?'ตัดการเชื่อมต่อ':(canConnect?'เชื่อมต่อ (Paper Mode)':'กรอก API ก่อนเชื่อมต่อ')}
           </button>
         </Win>
@@ -1272,7 +1235,7 @@ function LiveTrading(){
                 <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--text-mute)',marginTop:2}}>
                   {!L.connected?'เชื่อมต่อก่อนเปิดบอท':(L.botOn?'กำลังรับสัญญาณ TradingView':'พร้อมทำงาน · ปิดอยู่')}</div>
               </div>
-              <Toggle on={L.botOn} disabled={!L.connected} onClick={()=>upd({botOn:!L.botOn})}/>
+              <Toggle on={L.botOn} disabled={!L.connected} onClick={()=>{ upd({botOn:!L.botOn}); window.electronAPI?.saveLog('info', 'Trading Bot status: ' + (!L.botOn?'ON':'OFF')); }}/>
             </div>
 
             <SliderRow label="ความเสี่ยงต่อไม้" value={L.riskPct} unit="%" min={0.5} max={10} step={0.5} onChange={v=>upd({riskPct:v})}/>
@@ -1486,9 +1449,10 @@ function AgentTasks({ a }){
       agents:st.agents.map(x=>x.id===a.id?{...x,status:'working',statusTh:'ทำงานอยู่',last:'เมื่อสักครู่',tasks:[{text:t,done:false,t:OfficeStore.clock()},...x.tasks]}:x),
       log:[{t:OfficeStore.clock(),who:a.name,text:'รับงาน: '+t,kind:'ok'},...st.log].slice(0,40),
     }),{now:true});
+    window.electronAPI?.saveLog('info', 'Assigned task to ' + a.name + ': ' + t);
     setTxt('');
   };
-  const toggle=i=>OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,tasks:x.tasks.map((tk,j)=>j===i?{...tk,done:!tk.done}:tk)}:x)}),{now:true});
+  const toggle=i=> { OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,tasks:x.tasks.map((tk,j)=>j===i?{...tk,done:!tk.done}:tk)}:x)}),{now:true}); window.electronAPI?.saveLog('info', 'Toggled task status for ' + a.name); };
   return (
     <div>
       <label className="lbl">มอบหมายงานใหม่</label>
@@ -1517,8 +1481,8 @@ function AgentProfile({ a }){
   const [s]=useOffice();
   const [role,setRole]=useS(a.roleTh);
   const [desc,setDesc]=useS(a.desc);
-  const save=()=>OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,roleTh:role,desc}:x)}),{now:true});
-  const fire=()=>{ if(confirm('ปลด '+a.name+' ออกจากทีม?')) OfficeStore.setState(st=>({...st,agents:st.agents.filter(x=>x.id!==a.id)}),{now:true}); };
+  const save=()=>{ OfficeStore.setState(st=>({...st,agents:st.agents.map(x=>x.id===a.id?{...x,roleTh:role,desc}:x)}),{now:true}); window.electronAPI?.saveLog('info', 'Updated agent profile: ' + a.name); };
+  const fire=()=>{ if(confirm('ปลด '+a.name+' ออกจากทีม?')){ OfficeStore.setState(st=>({...st,agents:st.agents.filter(x=>x.id!==a.id)}),{now:true}); window.electronAPI?.saveLog('warning', 'Fired agent: ' + a.name); } };
   return (
     <div>
       <p style={{fontSize:14,color:'var(--text-dim)',lineHeight:1.6,marginTop:0}}>{a.desc}</p>
@@ -1549,6 +1513,7 @@ function CreateAgent({ onClose }){
     OfficeStore.setState(st=>({...st,agents:[...st.agents,{
       id,name:nm,roleEn,roleTh,rarity,color:colors[rarity],status:'idle',statusTh:'ว่าง',last:'เพิ่งเข้าทีม',
       lv:1,salary:0.5,desc:'พนักงานใหม่ พร้อมรับงาน '+roleTh,skills:[roleTh],tasks:[]}]}),{now:true});
+    window.electronAPI?.saveLog('info', 'Created new agent: ' + nm);
     onClose();
   };
   return (
@@ -2002,6 +1967,7 @@ function Settings(){
 
   const reset=()=>{ if(confirm('คืนค่าตั้งต้นทั้งหมด? (ชื่อระบบ โลโก้ และประวัติจะถูกล้าง)')){
     OfficeStore.setState(st=>({...st,settings:{...window.SEED.settings}}),{now:true});
+    window.electronAPI?.saveLog('warning', 'System reset to default settings');
   }};
 
   return (
@@ -2207,6 +2173,7 @@ function App(){
     team:      Team,
     secretary: Secretary,
     assets:    Assets,
+    systemlogs: SystemLogs,
     settings:  Settings,
   }[route] || Dashboard;
 

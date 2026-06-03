@@ -1,5 +1,6 @@
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('./db.cjs');
 
@@ -11,6 +12,7 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
+      webSecurity: false,
     }
   });
 
@@ -65,4 +67,69 @@ ipcMain.handle('get-chat-history', (event, agentId) => {
 ipcMain.handle('save-chat-message', (event, { agentId, sender, message }) => {
   db.saveChatMessage(agentId, sender, message);
   return true;
+});
+
+ipcMain.handle('get-logs', async (event, limit) => {
+  return await db.getLogs(limit);
+});
+
+ipcMain.handle('save-log', async (event, { level, message }) => {
+  await db.saveLog(level, message);
+  return true;
+});
+
+ipcMain.handle('save-asset-file', async (event, { id, dataUrl }) => {
+  let folder = 'gallery';
+  if (id.startsWith('sys-') || id.startsWith('player-')) folder = 'identity';
+  else if (id.startsWith('proj-')) folder = 'projects';
+
+  const assetsDir = path.join(__dirname, 'src', 'assets', folder);
+  if (!fs.existsSync(assetsDir)) {
+    fs.mkdirSync(assetsDir, { recursive: true });
+  }
+
+  // dataUrl format: data:image/webp;base64,UklGR...
+  const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+  if (!matches || matches.length !== 3) {
+    throw new Error('Invalid input string');
+  }
+
+  const extension = matches[1].split('/')[1] || 'webp';
+  const buffer = Buffer.from(matches[2], 'base64');
+  const filename = `${id}-${Date.now()}.${extension}`;
+  const filepath = path.join(assetsDir, filename);
+
+  fs.writeFileSync(filepath, buffer);
+  // Return absolute file URL so browser can load it directly
+  return `file:///${filepath.replace(/\\/g, '/')}`;
+});
+
+ipcMain.handle('save-image-slots', async (event, dataStr) => {
+  await db.saveSetting('image_slots', dataStr);
+  return true;
+});
+
+ipcMain.handle('get-image-slots', async (event) => {
+  return await db.getSetting('image_slots');
+});
+
+ipcMain.handle('get-gallery-assets', async () => {
+  const assetsDir = path.join(__dirname, 'src', 'assets');
+  let allFiles = [];
+  
+  const scanDir = (dir) => {
+    if (!fs.existsSync(dir)) return;
+    const files = fs.readdirSync(dir);
+    for (const f of files) {
+      const fullPath = path.join(dir, f);
+      if (fs.statSync(fullPath).isDirectory()) {
+        scanDir(fullPath);
+      } else if (f.match(/\.(webp|png|jpe?g)$/i)) {
+        allFiles.push(`file:///${fullPath.replace(/\\/g, '/')}`);
+      }
+    }
+  };
+
+  scanDir(assetsDir);
+  return allFiles.sort().reverse();
 });

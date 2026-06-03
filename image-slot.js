@@ -75,8 +75,12 @@
 
   function load() {
     if (loadP) return loadP;
-    loadP = fetch(STATE_FILE)
-      .then((r) => (r.ok ? r.json() : null))
+    
+    const fetcher = (window.electronAPI && window.electronAPI.getImageSlots)
+      ? window.electronAPI.getImageSlots().then(str => str ? JSON.parse(str) : null).catch(()=>null)
+      : fetch(STATE_FILE).then((r) => (r.ok ? r.json() : null)).catch(()=>null);
+
+    loadP = fetcher
       .then((j) => {
         // Merge: sidecar loses to any in-memory change that raced ahead of
         // the fetch (drop or clear) so neither is clobbered by hydration.
@@ -95,7 +99,6 @@
         }
         tombstones.clear();
       })
-      .catch(() => {})
       .then(() => { loaded = true; subs.forEach((fn) => fn()); });
     return loadP;
   }
@@ -108,11 +111,18 @@
   let saveDirty = false;
   function save() {
     if (saving) { saveDirty = true; return; }
-    const w = window.omelette && window.omelette.writeFile;
-    if (!w) return;
+    
     saving = true;
-    Promise.resolve(w(STATE_FILE, JSON.stringify(slots)))
-      .catch(() => {})
+    let promise;
+    if (window.electronAPI && window.electronAPI.saveImageSlots) {
+      promise = window.electronAPI.saveImageSlots(JSON.stringify(slots));
+    } else {
+      const w = window.omelette && window.omelette.writeFile;
+      if (!w) { saving = false; return; }
+      promise = Promise.resolve(w(STATE_FILE, JSON.stringify(slots)));
+    }
+    
+    promise.catch(() => {})
       .then(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
   }
 
@@ -132,11 +142,11 @@
     if (val) { slots[id] = val; tombstones.delete(id); }
     else { delete slots[id]; if (!loaded) tombstones.add(id); }
     subs.forEach((fn) => fn());
-    // A drop is rare + high-value — write immediately so nav-away can't lose
-    // it. Gate on the initial read so we don't overwrite a sidecar we haven't
-    // merged yet; the merge in load() keeps this change once the read lands.
     if (loaded) save(); else load().then(save);
   }
+  
+  // Expose for external control (e.g., from React Asset Browser)
+  window.setImageSlot = setSlot;
 
   // ── Image downscale ─────────────────────────────────────────────────────
   // Encode through a canvas so the sidecar carries resized bytes, not the
@@ -478,8 +488,13 @@
       const gen = ++this._gen;
       try {
         const w = this.clientWidth || this.offsetWidth || MAX_DIM;
-        const url = await toDataUrl(file, w);
+        let url = await toDataUrl(file, w);
         if (gen !== this._gen) return;
+
+        if (window.electronAPI && window.electronAPI.saveAssetFile && this.id) {
+          url = await window.electronAPI.saveAssetFile(this.id, url);
+        }
+
         // Only exit reframe once the new image is in hand — a rejected type
         // or decode failure leaves the in-progress crop untouched.
         this._exitReframe(false);
@@ -598,11 +613,9 @@
       this._sub.style.display = editable ? '' : 'none';
 
       // Content. The sidecar is also writable by the agent's write_file
-      // tool, so its value isn't guaranteed canvas-originated — only accept
-      // data:image/ URLs from it. The `src` attribute is author-controlled
-      // (Claude wrote it into the HTML) so it passes through unchanged.
+      // tool, so its value isn't guaranteed canvas-originated. We accept data:image/ and file:///
       let stored = this.id ? getSlot(this.id) : this._local;
-      if (stored && stored.u && !/^data:image\//i.test(stored.u)) stored = null;
+      if (stored && stored.u && !/^data:image\//i.test(stored.u) && !/^file:\/\//i.test(stored.u)) stored = null;
       const srcAttr = this.getAttribute('src') || '';
       this._userUrl = (stored && stored.u) || null;
       const url = this._userUrl || srcAttr;
