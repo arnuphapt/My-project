@@ -46,7 +46,7 @@ function SimPortfolio(){
         <SumCard label="มูลค่ารวม (Net Worth)" main={'฿'+fmt.n(v.totalUSD*FX,0)} sub={'$'+fmt.n(v.totalUSD,2)} tone="gold"/>
         <SumCard label="กำไรลอยตัว (Unrealized)" main={fmt.money(v.unrealUSD,'USD')} sub={fmt.pct(v.unrealPct)} tone={v.unrealUSD>=0?'pos':'neg'}/>
         <SumCard label="กำไรที่ขายแล้ว (Realized)" main={fmt.money(realizedUSD,'USD')} sub={'฿'+fmt.n(realizedUSD*FX,0)} tone={realizedUSD>=0?'pos':'neg'}/>
-        <SumCard label="เงินสดพร้อมลงทุน" main={'฿'+fmt.n(s.cash.thb,0)} sub={'$'+fmt.n(s.cash.usd,2)} tone="cyan"/>
+        <SumCard label="เงินสดพร้อมลงทุน" main={'฿'+fmt.n(s.cash.thb,0)} sub={'$'+fmt.n(s.cash.usd,2)} tone="cyan" onClick={()=>setDepo(true)}/>
       </div>
 
       <div style={{display:'grid',gridTemplateColumns:'minmax(0,1.35fr) minmax(0,1fr)',gap:14,alignItems:'start'}}>
@@ -97,12 +97,16 @@ function SimPortfolio(){
 
         {/* market */}
         <Win title="MARKET" th={false}>
+          <MarketSearch />
           <div style={{display:'flex',gap:6,marginBottom:12,flexWrap:'wrap'}}>
             {['ALL','SET','US','FUND','CRYPTO'].map(f=>(
               <button key={f} className={'btn sm '+(filter===f?'':'ghost')} onClick={()=>setFilter(f)}>{f==='ALL'?'ทั้งหมด':f}</button>
             ))}
+            <div style={{flex:1}}></div>
+            <button className="btn cyan sm ghost" onClick={()=>OfficeStore.restoreDefaultMarket()} title="กู้คืนรายการหุ้นเริ่มต้น">↺</button>
+            <button className="btn red sm ghost" onClick={()=>confirm('ล้างรายการทั้งหมดใน Market (ยกเว้นที่กำลังถืออยู่)?') && OfficeStore.clearAllMarket()} title="ล้างรายการทั้งหมด">🗑</button>
           </div>
-          <div style={{display:'flex',flexDirection:'column',gap:2,maxHeight:560,overflow:'auto'}}>
+          <div style={{display:'flex',flexDirection:'column',gap:2}}>
             {list.map(m=>{
               const ch=(m.price-m.prevClose)/m.prevClose*100;
               return (
@@ -119,6 +123,8 @@ function SimPortfolio(){
                     <div style={{fontSize:11,color:ch>=0?'var(--green)':'var(--red)'}}>{fmt.pct(ch,2)}</div>
                   </div>
                   <button className="btn green sm" onClick={()=>setTrade({sym:m.symbol,side:'buy'})}>ซื้อ</button>
+                  <button className="btn red sm ghost" style={{padding:'4px 6px'}} title="ลบออกจาก Market" 
+                    onClick={() => confirm('ลบ '+m.symbol+' ออกจากรายการ?') && OfficeStore.removeFavorite(m.symbol)}>✕</button>
                 </div>
               );
             })}
@@ -205,26 +211,121 @@ function TradeModal({ sym, side, onClose }){
 }
 
 function DepositModal({ onClose }){
+  const [s] = useOffice();
   const [ccy,setCcy]=useS('thb');
-  const [amt,setAmt]=useS('100000');
+  const [mode,setMode]=useS('set');
+  
+  // Keep input in sync with current balance when switching currency or mode (if in set mode)
+  const [amt,setAmt]=useS(String(s.cash.thb));
+  
+  useE(()=>{
+    if(mode === 'set') setAmt(String(s.cash[ccy]));
+    else setAmt('100000');
+  }, [ccy, mode, s.cash]);
+
   return (
-    <Modal title="เติมเงินเข้าพอร์ต" onClose={onClose} width={420}>
-      <p style={{color:'var(--text-dim)',fontSize:13,marginTop:0}}>เติมเงินสดจำลองเข้าพอร์ตเพื่อใช้ฝึกลงทุน</p>
-      <div style={{display:'flex',gap:8,marginBottom:12}}>
-        <button className={'btn '+(ccy==='thb'?'gold':'ghost')} style={{flex:1}} onClick={()=>setCcy('thb')}>บาท ฿</button>
-        <button className={'btn '+(ccy==='usd'?'gold':'ghost')} style={{flex:1}} onClick={()=>setCcy('usd')}>ดอลลาร์ $</button>
+    <Modal title="จัดการงบประมาณ (Budget)" onClose={onClose} width={420}>
+      <p style={{color:'var(--text-dim)',fontSize:13,marginTop:0}}>ตั้งค่ายอดเงินสดคงเหลือ หรือเติมเงินจำลองเข้าพอร์ต</p>
+      
+      <div style={{display:'flex',gap:8,marginBottom:14}}>
+        <button className={'btn '+(mode==='set'?'cyan':'ghost')} style={{flex:1}} onClick={()=>setMode('set')}>✎ แก้ไขยอดใหม่</button>
+        <button className={'btn '+(mode==='add'?'gold':'ghost')} style={{flex:1}} onClick={()=>setMode('add')}>＋ เติมเงินเพิ่ม</button>
       </div>
+
+      <div style={{display:'flex',gap:8,marginBottom:12}}>
+        <button className={'btn '+(ccy==='thb'?'ghost on':'ghost')} style={{flex:1}} onClick={()=>setCcy('thb')}>บาท ฿</button>
+        <button className={'btn '+(ccy==='usd'?'ghost on':'ghost')} style={{flex:1}} onClick={()=>setCcy('usd')}>ดอลลาร์ $</button>
+      </div>
+      
       <label className="lbl">จำนวนเงิน</label>
       <input className="fld" type="number" value={amt} onChange={e=>setAmt(e.target.value)}/>
+      
       <div style={{display:'flex',gap:6,marginTop:8}}>
-        {(ccy==='thb'?[10000,50000,100000,500000]:[1000,5000,10000]).map(x=>(
-          <button key={x} className="btn ghost sm" onClick={()=>setAmt(String(x))}>{fmt.compact(x)}</button>
+        {(ccy==='thb'?[0, 50000, 100000, 500000, 1000000]:[0, 1000, 5000, 10000, 50000]).map(x=>(
+          <button key={x} className="btn ghost sm" onClick={()=>setAmt(String(x))}>
+            {x===0 ? '0' : fmt.compact(x)}
+          </button>
         ))}
       </div>
-      <button className="btn gold" style={{width:'100%',marginTop:18}} onClick={()=>{OfficeStore.deposit(ccy,parseFloat(amt)||0);onClose();}}>
-        เติม {(ccy==='thb'?'฿':'$')+fmt.n(parseFloat(amt)||0,0)}
+      
+      <button className={'btn '+(mode==='add'?'gold':'cyan')} style={{width:'100%',marginTop:18}} onClick={()=>{
+        const val = parseFloat(amt)||0;
+        if(mode==='add') OfficeStore.deposit(ccy, val);
+        else OfficeStore.setCash(ccy, val);
+        onClose();
+      }}>
+        {mode==='add'?'เติมเงิน ':'บันทึกยอดเป็น '}{(ccy==='thb'?'฿':'$')+fmt.n(parseFloat(amt)||0,0)}
       </button>
     </Modal>
+  );
+}
+
+function MarketSearch() {
+  const [q, setQ] = useS('');
+  const [results, setResults] = useS([]);
+  
+  useE(()=>{
+    if(q.trim().length < 1) { setResults([]); return; }
+    const timer = setTimeout(async ()=>{
+      try {
+        const res = await fetch(`https://query2.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(q)}&quotesCount=6`);
+        if(res.ok) {
+          const data = await res.json();
+          setResults(data.quotes || []);
+        }
+      }catch(e){}
+    }, 400);
+    return ()=>clearTimeout(timer);
+  }, [q]);
+
+  const add = (r) => {
+    let cls = 'US';
+    if(r.quoteType==='CRYPTOCURRENCY') cls='CRYPTO';
+    else if(r.exchDisp==='SET') cls='SET';
+    else if(r.quoteType==='MUTUALFUND' || r.quoteType==='ETF') cls='FUND';
+    
+    OfficeStore.addFavorite({
+       symbol: r.symbol,
+       name: r.shortname || r.longname || r.symbol,
+       cls: cls,
+       price: 1, 
+       cur: (cls==='SET' || cls==='FUND') ? 'THB' : 'USD',
+       prevClose: 1,
+       seed: 1
+    });
+    setQ('');
+    setResults([]);
+  };
+
+  return (
+    <div style={{marginBottom:12}}>
+      <input className="fld" placeholder="🔍 ค้นหาชื่อหุ้น, คริปโต (เช่น AAPL, BTC)..." 
+        value={q} onChange={e=>setQ(e.target.value)} />
+      
+      {results.length > 0 && (
+        <div style={{background:'#080a12',
+          border:'1px solid var(--line)',borderRadius:8,marginTop:8,
+          maxHeight:300,overflow:'auto',boxShadow:'0 4px 12px rgba(0,0,0,.3)'}}>
+          <div style={{padding:'6px 12px',background:'rgba(255,255,255,0.05)',fontSize:11,color:'var(--text-dim)',borderBottom:'1px solid var(--line)'}}>
+            ผลการค้นหา (คลิกเพื่อเพิ่มลง Market)
+          </div>
+          {results.map((r,i)=>(
+            <div key={i} style={{padding:'8px 12px',cursor:'pointer',borderBottom:'1px solid rgba(255,255,255,.05)',display:'flex',justifyContent:'space-between'}}
+              onMouseEnter={e=>e.currentTarget.style.background='rgba(40,60,140,.3)'}
+              onMouseLeave={e=>e.currentTarget.style.background='transparent'}
+              onClick={()=>add(r)}>
+              <div>
+                <div style={{color:'var(--white)',fontWeight:600}}>{r.symbol}</div>
+                <div style={{fontSize:11,color:'var(--text-dim)'}}>{r.shortname||r.longname}</div>
+              </div>
+              <div style={{textAlign:'right'}}>
+                <span className="chip" style={{fontSize:10}}>{r.exchDisp||r.quoteType}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 

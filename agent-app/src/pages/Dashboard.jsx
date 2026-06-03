@@ -43,7 +43,7 @@ function Dashboard(){
       {/* RIGHT RAIL */}
       <div style={{display:'flex',flexDirection:'column',gap:12,minHeight:0,overflow:'auto',paddingRight:2}}>
         <CompanyStatusPanel v={v}/>
-        <CryptoPanel/>
+        <MarketPanel/>
         <LofiPanel/>
       </div>
     </div>
@@ -141,21 +141,21 @@ function CompanyStatusPanel({ v }){
   );
 }
 
-function CryptoPanel(){
+function MarketPanel(){
   const [s]=useOffice();
-  const cryptos = Object.values(s.market).filter(m=>m.cls==='CRYPTO');
+  const items = Object.values(s.market);
   return (
-    <Win title="CRYPTO PRICES" style={{minHeight:0}}>
+    <Win title="MARKET PRICES" style={{minHeight:0}}>
       <div style={{display:'grid',gridTemplateColumns:'1fr auto auto',gap:'2px 12px',fontFamily:'var(--mono)',fontSize:13}}>
-        <div style={{color:'var(--text-mute)',fontSize:11}}>เหรียญ</div>
+        <div style={{color:'var(--text-mute)',fontSize:11}}>สินทรัพย์</div>
         <div style={{color:'var(--text-mute)',fontSize:11,textAlign:'right'}}>ราคา</div>
         <div style={{color:'var(--text-mute)',fontSize:11,textAlign:'right'}}>24ชม</div>
-        {cryptos.map(m=>{
+        {items.map(m=>{
           const ch=(m.price-m.prevClose)/m.prevClose*100;
           return (
             <React.Fragment key={m.symbol}>
-              <div style={{color:'var(--white)',padding:'4px 0'}}>{m.symbol}</div>
-              <div style={{textAlign:'right',color:'var(--text)'}}>${fmt.n(m.price, m.price<1?4:2)}</div>
+              <div style={{color:'var(--white)',padding:'4px 0',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{m.symbol}</div>
+              <div style={{textAlign:'right',color:'var(--text)'}}>{m.cur==='USD'?'$':'฿'}{fmt.n(m.price, m.price<1?4:2)}</div>
               <div style={{textAlign:'right',color:ch>=0?'var(--green)':'var(--red)'}}>{fmt.pct(ch,1)}</div>
             </React.Fragment>
           );
@@ -254,7 +254,7 @@ function TeamChatMini(){
 }
 
 
-Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, CryptoPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble });
+Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble });
 
 
 

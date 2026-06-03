@@ -19,6 +19,7 @@ function Settings(){
   const F=(key,val)=>upd({[key]:val});
 
   const [geminiKey, setGeminiKey] = useS('');
+
   useE(() => {
     if (window.electronAPI) {
       window.electronAPI.getSetting('gemini_api_key').then(k => setGeminiKey(k||''));
@@ -101,6 +102,7 @@ function Settings(){
             <div style={{fontFamily:'var(--mono)',fontSize:10,color:'var(--text-mute)',marginTop:5}}>
               บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
             </div>
+
           </Win>
         </div>
 

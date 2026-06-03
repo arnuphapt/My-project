@@ -140,11 +140,18 @@ function ClassTag({ cls }){
   return <span className="chip" style={{color:c,borderColor:c+'55'}}>{l}</span>;
 }
 
-function SumCard({ label, main, sub, tone }){
+function SumCard({ label, main, sub, tone, onClick }){
   const colMap={gold:'var(--gold)',pos:'var(--green)',neg:'var(--red)',cyan:'var(--cyan)'};
   return (
-    <div className="win" style={{padding:'14px 15px'}}>
-      <div style={{fontFamily:'var(--pixel2)',fontSize:11,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>{label}</div>
+    <div className="win" 
+      style={{padding:'14px 15px', cursor:onClick?'pointer':'default', transition:'background .2s'}}
+      onMouseEnter={e=>onClick&&(e.currentTarget.style.background='rgba(255,255,255,0.05)')}
+      onMouseLeave={e=>onClick&&(e.currentTarget.style.background='')}
+      onClick={onClick}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start'}}>
+        <div style={{fontFamily:'var(--pixel2)',fontSize:11,color:'var(--text-dim)',letterSpacing:.5,marginBottom:8}}>{label}</div>
+        {onClick && <span style={{fontSize:12,color:'var(--text-dim)',opacity:0.6}}>✎</span>}
+      </div>
       <div style={{fontFamily:'var(--mono)',fontSize:24,color:colMap[tone]||'var(--white)',lineHeight:1}}>{main}</div>
       <div style={{fontFamily:'var(--mono)',fontSize:13,color:'var(--text-mute)',marginTop:6}}>{sub}</div>
     </div>

@@ -11,31 +11,31 @@ const agents = [];
 const mk = (symbol,name,cls,price,cur,prev)=>({symbol,name,cls,price,cur,prevClose:prev??price,seed:price});
 const market = {
   // Thai stocks (THB)
-  PTT:    mk('PTT','ปตท.','SET',35.25,'THB',35.75),
-  AOT:    mk('AOT','ท่าอากาศยานไทย','SET',58.50,'THB',57.25),
-  CPALL:  mk('CPALL','ซีพี ออลล์','SET',61.00,'THB',60.25),
-  KBANK:  mk('KBANK','กสิกรไทย','SET',158.50,'THB',160.00),
-  ADVANC: mk('ADVANC','แอดวานซ์','SET',281.00,'THB',278.00),
-  DELTA:  mk('DELTA','เดลต้า','SET',122.50,'THB',125.00),
+  PTT:    mk('PTT','ปตท.','SET',0,'THB'),
+  AOT:    mk('AOT','ท่าอากาศยานไทย','SET',0,'THB'),
+  CPALL:  mk('CPALL','ซีพี ออลล์','SET',0,'THB'),
+  KBANK:  mk('KBANK','กสิกรไทย','SET',0,'THB'),
+  ADVANC: mk('ADVANC','แอดวานซ์','SET',0,'THB'),
+  DELTA:  mk('DELTA','เดลต้า','SET',0,'THB'),
   // US stocks (USD)
-  AAPL:  mk('AAPL','Apple','US',212.40,'USD',214.10),
-  NVDA:  mk('NVDA','NVIDIA','US',131.80,'USD',128.50),
-  TSLA:  mk('TSLA','Tesla','US',242.10,'USD',248.30),
-  MSFT:  mk('MSFT','Microsoft','US',451.20,'USD',449.00),
-  GOOGL: mk('GOOGL','Alphabet','US',178.60,'USD',177.20),
-  AMZN:  mk('AMZN','Amazon','US',201.30,'USD',203.50),
+  AAPL:  mk('AAPL','Apple','US',0,'USD'),
+  NVDA:  mk('NVDA','NVIDIA','US',0,'USD'),
+  TSLA:  mk('TSLA','Tesla','US',0,'USD'),
+  MSFT:  mk('MSFT','Microsoft','US',0,'USD'),
+  GOOGL: mk('GOOGL','Alphabet','US',0,'USD'),
+  AMZN:  mk('AMZN','Amazon','US',0,'USD'),
   // Mutual funds (THB NAV)
-  SCBSET:   mk('SCBSET','SCB SET Index','FUND',18.42,'THB',18.30),
-  KFGBRAND: mk('KFGBRAND','KF Global Brands','FUND',24.85,'THB',24.60),
-  TMBGQG:   mk('TMBGQG','TMB Global Quality','FUND',16.10,'THB',16.22),
-  SCBGOLD:  mk('SCBGOLD','SCB Gold','FUND',12.74,'THB',12.55),
+  SCBSET:   mk('SCBSET','SCB SET Index','FUND',0,'THB'),
+  KFGBRAND: mk('KFGBRAND','KF Global Brands','FUND',0,'THB'),
+  TMBGQG:   mk('TMBGQG','TMB Global Quality','FUND',0,'THB'),
+  SCBGOLD:  mk('SCBGOLD','SCB Gold','FUND',0,'THB'),
   // Crypto (USD)
-  BTC:  mk('BTC','Bitcoin','CRYPTO',73042,'USD',75600),
-  ETH:  mk('ETH','Ethereum','CRYPTO',1977,'USD',2068),
-  SOL:  mk('SOL','Solana','CRYPTO',80.53,'USD',83.10),
-  BNB:  mk('BNB','BNB','CRYPTO',635.59,'USD',652.40),
-  XRP:  mk('XRP','XRP','CRYPTO',1.28,'USD',1.33),
-  DOGE: mk('DOGE','Dogecoin','CRYPTO',0.0979,'USD',0.1012),
+  BTC:  mk('BTC','Bitcoin','CRYPTO',0,'USD'),
+  ETH:  mk('ETH','Ethereum','CRYPTO',0,'USD'),
+  SOL:  mk('SOL','Solana','CRYPTO',0,'USD'),
+  BNB:  mk('BNB','BNB','CRYPTO',0,'USD'),
+  XRP:  mk('XRP','XRP','CRYPTO',0,'USD'),
+  DOGE: mk('DOGE','Dogecoin','CRYPTO',0,'USD'),
 };
 
 // ---- Starting portfolio ----
@@ -113,11 +113,19 @@ function load(){
     merged.player = {...base.player, ...(raw.player||{})};
     merged.live = {...base.live, ...(raw.live||{})};
     merged.warroomPos = {...base.warroomPos, ...(raw.warroomPos||{})};
-    // always refresh market metadata (names) but keep persisted prices
-    merged.market = {};
-    Object.keys(base.market).forEach(k=>{
-      merged.market[k] = { ...base.market[k], ...(raw.market?.[k]||{}) };
-    });
+    // If the user has a saved market list, use it as the definitive list (so deleted defaults stay deleted)
+    // but still merge metadata from base.market if it exists.
+    if (raw.market) {
+      merged.market = {};
+      Object.keys(raw.market).forEach(k => {
+        merged.market[k] = { ...(base.market[k]||{}), ...raw.market[k] };
+      });
+    } else {
+      merged.market = {};
+      Object.keys(base.market).forEach(k => {
+        merged.market[k] = { ...base.market[k] };
+      });
+    }
     merged.route = 'dashboard';
     return merged;
   }catch(e){ return freshState(); }
@@ -210,26 +218,73 @@ function sell(sym, qty){
   return {ok:true};
 }
 function deposit(ccy, amt){
-  if(amt<=0) return;
+  if(amt===0) return;
   setState(s=>{ const cash={...s.cash}; cash[ccy]+=amt; return {...s,cash}; },{now:true});
+}
+function setCash(ccy, amt){
+  if(amt<0) return;
+  setState(s=>{ const cash={...s.cash}; cash[ccy]=amt; return {...s,cash}; },{now:true});
 }
 
 function clock(){ const d=new Date(); return d.toTimeString().slice(0,5); }
 
 /* ---------- market ticker (realtime drift) ---------- */
+let lastFetch = 0;
+let isFetching = false;
+let realPrices = {};
+
+async function fetchMarketData() {
+  isFetching = true;
+  lastFetch = Date.now();
+  try {
+    const s = OfficeStore.getState();
+    const supported = Object.keys(s.market).filter(k => 
+       s.market[k].cls === 'US' || s.market[k].cls === 'CRYPTO' || s.market[k].cls === 'SET' || s.market[k].cls === 'FUND'
+    );
+    
+    const fetchPromises = supported.map(async sym => {
+       let querySym = sym;
+       if(s.market[sym].cls === 'CRYPTO' && !sym.includes('-')) querySym = `${sym}-USD`;
+       else if (s.market[sym].cls === 'SET' && !sym.includes('.')) querySym = `${sym}.BK`;
+       
+       const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${querySym}`);
+       if(res.ok) {
+         const data = await res.json();
+         const meta = data?.chart?.result?.[0]?.meta;
+         if(meta && meta.regularMarketPrice > 0) {
+             return { sym, price: meta.regularMarketPrice, pc: meta.previousClose || meta.chartPreviousClose || meta.regularMarketPrice };
+         }
+       }
+       return null;
+    });
+    const results = await Promise.all(fetchPromises);
+    results.forEach(r => { if(r) realPrices[r.sym] = r; });
+  } catch(e) { console.error('Yahoo Finance error', e); }
+  isFetching = false;
+}
+
 function startTicker(){
   if(window.__tickerOn) return; window.__tickerOn=true;
+  
+  fetchMarketData();
+
   setInterval(()=>{
+    const now = Date.now();
+    
+    if (!isFetching && now - lastFetch > 15000) {
+      fetchMarketData();
+    }
+
     setState(s=>{
       const market={...s.market};
       Object.keys(market).forEach(k=>{
         const m={...market[k]};
-        const vol = m.cls==='CRYPTO'?0.004 : m.cls==='FUND'?0.0008 : 0.0022;
-        const drift=(Math.random()-0.5)*2*vol;
-        let np = m.price*(1+drift);
-        // gentle mean-reversion toward seed so it doesn't wander off
-        np += (m.seed-np)*0.01;
-        m.price = +np.toFixed(m.price<1?5:m.price<100?2:2);
+        
+        if (realPrices[k]) {
+          // Use real data directly
+          m.price = realPrices[k].price;
+          if (realPrices[k].pc > 0) m.prevClose = realPrices[k].pc;
+        }
         market[k]=m;
       });
       return {...s, market};
@@ -237,7 +292,38 @@ function startTicker(){
   }, 2000);
 }
 
-const OfficeStore = { getState, setState, subscribe, valuation, buy, sell, deposit, startTicker, clock, FX:S.FX };
+function addFavorite(m){
+  setState(s => ({ ...s, market: { ...s.market, [m.symbol]: m } }), {now:true});
+  if (window.__tickerOn) fetchMarketData(); // trigger immediate sync
+}
+function removeFavorite(sym){
+  setState(s => {
+    const market = {...s.market};
+    delete market[sym];
+    return { ...s, market };
+  }, {now:true});
+}
+function clearAllMarket(){
+  setState(s => {
+    const holdingsSet = new Set(s.holdings.map(h => h.symbol));
+    const newMarket = {};
+    Object.keys(s.market).forEach(k => {
+      if(holdingsSet.has(k)) newMarket[k] = s.market[k];
+    });
+    return { ...s, market: newMarket };
+  }, {now:true});
+}
+function restoreDefaultMarket(){
+  setState(s => {
+    const newMarket = { ...s.market };
+    Object.keys(SEED.market).forEach(k => {
+      if(!newMarket[k]) newMarket[k] = SEED.market[k];
+    });
+    return { ...s, market: newMarket };
+  }, {now:true});
+}
+
+const OfficeStore = { getState, setState, subscribe, valuation, buy, sell, deposit, setCash, addFavorite, removeFavorite, clearAllMarket, restoreDefaultMarket, startTicker, clock, FX:S.FX };
 
 
 /* number helpers */
