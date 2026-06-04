@@ -1,4 +1,4 @@
-import { getState, setState } from './core.js';
+import { getState, setState } from '../store/core.js';
 
 /* ---------- market ticker (realtime drift) ---------- */
 let lastFetch = 0;

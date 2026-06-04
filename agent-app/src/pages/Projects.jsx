@@ -2,6 +2,7 @@ import React, { useState as useS } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
+import { createProject } from '../api/projects.js';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
@@ -234,17 +235,22 @@ function CreateProject({ onClose }) {
   const [summary, setSummary] = useS('');
   const [tags, setTags] = useS('');
 
-  const create = () => {
+  const create = async () => {
     const t = title.trim() || 'โปรเจกต์ใหม่';
     const id = 'p' + Date.now().toString().slice(-6);
-    OfficeStore.setState(st => ({
-      ...st,
-      projects: [{
-        id, title: t, role: role.trim() || 'Builder', status: 'กำลังทำ', progress: 10, period: period.trim() || '2026',
-        tags: tags.split(',').map(x => x.trim()).filter(Boolean), cover: '', summary: summary.trim() || 'รายละเอียดโปรเจกต์...',
-        highlights: [],
-      }, ...st.projects]
-    }), { now: true });
+    const newProj = {
+      id, title: t, role: role.trim() || 'Builder', status: 'กำลังทำ', progress: 10, period: period.trim() || '2026',
+      tags: tags.split(',').map(x => x.trim()).filter(Boolean), cover: '', summary: summary.trim() || 'รายละเอียดโปรเจกต์...',
+      highlights: [],
+    };
+    
+    try {
+      await createProject(newProj);
+      OfficeStore.syncBackendData();
+    } catch (err) {
+      console.error(err);
+      alert('Error saving project to Backend');
+    }
     onClose();
   };
 

@@ -3,6 +3,7 @@ import { OfficeStore, useOffice } from '../store';
 import { StatusDot, PageHead, Modal, RARITY } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { renderMd } from '../components/SkillMd.jsx';
+import { createAgent } from '../api/agents.js';
 
 /* ============ TEAM — employee roster + profile sheet ============ */
 
@@ -572,17 +573,35 @@ function CreateAgent({ onClose }) {
   const [roleTh, setRoleTh] = useS('ผู้ช่วยทั่วไป');
   const [rarity, setRarity] = useS('rare');
 
-  const create = () => {
+  const create = async () => {
     const nm = name.trim() || 'Agent';
     const id = nm.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString().slice(-4);
-    OfficeStore.setState(st => ({
-      ...st,
-      agents: [...st.agents, {
-        id, name: nm, roleEn, roleTh, rarity, seniority: rarity === 'legend' ? 'senior' : rarity === 'epic' ? 'mid' : rarity === 'rare' ? 'junior' : 'newgrad', color: '#ffce4a', status: 'idle', statusTh: 'ว่าง', last: 'เพิ่งเข้าทีม',
-        lv: 1, salary: 0.5, desc: 'พนักงานใหม่ พร้อมรับงาน ' + roleTh, skills: [roleTh], tasks: [], model: 'sonnet', skillMd: `# ${nm}'s Skills\n\n- **${roleTh}** — ทักษะพื้นฐาน`
-      }]
-    }), { now: true });
-    window.electronAPI?.saveLog('info', 'Created new agent: ' + nm);
+    const seniority = rarity === 'legend' ? 'senior' : rarity === 'epic' ? 'mid' : rarity === 'rare' ? 'junior' : 'newgrad';
+    
+    const newAgent = {
+      id,
+      name: nm,
+      roleEn,
+      roleTh,
+      rarity,
+      seniority,
+      status: 'idle',
+      lv: 1,
+      salary: 0.5,
+      desc: 'พนักงานใหม่ พร้อมรับงาน ' + roleTh,
+      model: 'sonnet',
+      skillMd: `# ${nm}'s Skills\n\n- **${roleTh}** — ทักษะพื้นฐาน`
+    };
+
+    try {
+      await createAgent(newAgent);
+      window.electronAPI?.saveLog('info', 'Created new agent on API: ' + nm);
+      OfficeStore.syncBackendData(); // Reload from API
+    } catch (err) {
+      console.error(err);
+      alert('Error connecting to backend API');
+    }
+    
     onClose();
   };
 

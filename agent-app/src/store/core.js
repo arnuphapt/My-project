@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
 import { SEED } from './seed.js';
+import { getAgents } from '../api/agents.js';
+import { getProjects } from '../api/projects.js';
+import { getHoldings } from '../api/portfolio.js';
+import { getSettings } from '../api/settings.js';
 
 /* ============ GLOBAL STORE ENGINE ============ */
 const LS = 'ai-office-v3';
@@ -108,3 +112,44 @@ export function useOffice() {
   useEffect(() => subscribe(() => force(n => n + 1)), []);
   return [state, setState];
 }
+
+// ── API Integration ───────────────────────────────────────────
+export async function syncBackendData() {
+  try {
+    const [agentsData, projectsData, holdingsData, settingsData] = await Promise.all([
+      getAgents(),
+      getProjects(),
+      getHoldings(),
+      getSettings()
+    ]);
+    
+    const formattedAgents = agentsData.map(a => {
+        // Compute UI fields that are not in the backend schema
+        const color = a.rarity === 'legend' ? '#ff5168' : a.rarity === 'epic' ? '#b06bff' : a.rarity === 'rare' ? '#4db4ff' : '#9aa6cf';
+        return {
+          ...a,
+          color,
+          statusTh: a.status === 'idle' ? 'ว่าง' : 'กำลังทำงาน',
+          last: 'เชื่อมต่อกับ API แล้ว',
+          skills: [a.roleTh],
+          tasks: []
+        };
+    });
+
+    const newState = { agents: formattedAgents };
+    if (projectsData.length > 0) newState.projects = projectsData;
+    if (holdingsData.length > 0) newState.holdings = holdingsData;
+    if (Object.keys(settingsData).length > 0) {
+       // Merge settings over the base ones
+       const mergedSettings = { ...getState().settings, ...settingsData };
+       newState.settings = mergedSettings;
+    }
+
+    setState(newState, { now: true });
+  } catch (err) {
+    console.error('Failed to sync data from Backend API', err);
+  }
+}
+
+// Auto-sync on load (will execute once when core.js is evaluated)
+setTimeout(syncBackendData, 1000);

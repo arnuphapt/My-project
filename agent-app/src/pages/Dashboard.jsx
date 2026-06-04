@@ -3,6 +3,7 @@ import { OfficeStore, useOffice, fmt } from '../store';
 import { Win, Row, StatusDot, PageHead, Bar } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import TestGemini from '../TestGemini.jsx';
+import { checkApiHealth } from '../api/health.js';
 
 /* ============ DASHBOARD / WARROOM ============ */
 function Dashboard() {
@@ -46,6 +47,7 @@ function Dashboard() {
       {/* RIGHT RAIL */}
       <div className="flex flex-col gap-3 min-h-0 overflow-auto pr-0.5">
         <CompanyStatusPanel v={v} />
+        <ApiStatusPanel />
         <MarketPanel />
         <LofiPanel />
       </div>
@@ -284,6 +286,46 @@ function TeamChatMini() {
   );
 }
 
-Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble });
+function ApiStatusPanel() {
+  const [status, setStatus] = useS('connecting');
+  const [latency, setLatency] = useS(0);
+
+  useE(() => {
+    let active = true;
+    const check = async () => {
+      try {
+        const start = Date.now();
+        const res = await checkApiHealth();
+        if (active && res.status === 'online') {
+          setStatus('online');
+          setLatency(res.latency);
+        } else if (active) {
+          setStatus('offline');
+        }
+      } catch (e) {
+        if (active) setStatus('offline');
+      }
+    };
+    check();
+    const id = setInterval(check, 5000);
+    return () => { active = false; clearInterval(id); };
+  }, []);
+
+  const color = status === 'online' ? 'var(--green)' : status === 'connecting' ? 'var(--gold)' : 'var(--red)';
+  const label = status === 'online' ? 'CONNECTED' : status === 'connecting' ? 'CONNECTING' : 'DISCONNECTED';
+
+  return (
+    <Win title="BACKEND API">
+      <div className="flex items-center gap-3">
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}></div>
+        <div className="flex-1 text-white text-[13px] font-mono">{label}</div>
+        {status === 'online' && <div className="text-text-mute text-[11px] font-mono">{latency}ms</div>}
+      </div>
+      <div className="font-mono text-[11px] text-text-mute mt-2">http://127.0.0.1:8000/</div>
+    </Win>
+  );
+}
+
+Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble, ApiStatusPanel });
 
 export default Dashboard;

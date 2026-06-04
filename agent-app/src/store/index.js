@@ -1,8 +1,8 @@
-import { getState, setState, subscribe, useOffice } from './core.js';
+import { getState, setState, subscribe, useOffice, syncBackendData } from './core.js';
 import { valuation } from './portfolio.js';
 import { buy, sell, deposit, setCash, clock } from './trading.js';
 import { addFavorite, removeFavorite, clearAllMarket, restoreDefaultMarket } from './market.js';
-import { startTicker } from './api.js';
+import { startTicker } from '../api/market.js';
 import { fmt } from './fmt.js';
 import { SEED } from './seed.js';
 
@@ -23,7 +23,8 @@ const OfficeStore = {
   clock,
   get FX() {
     return getState().fx;
-  }
+  },
+  syncBackendData
 };
 
 export { OfficeStore, useOffice, fmt, SEED };

@@ -1,6 +1,6 @@
 import { setState } from './core.js';
 import { SEED } from './seed.js';
-import { fetchMarketData } from './api.js';
+import { fetchMarketData } from '../api/market.js';
 
 /* ---------- market management ---------- */
 export function addFavorite(m) {
