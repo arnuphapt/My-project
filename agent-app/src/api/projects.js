@@ -23,3 +23,22 @@ export async function createProject(projectData) {
     body: JSON.stringify(payload)
   });
 }
+
+export async function updateProject(projectId, projectData) {
+  const payload = {
+    ...projectData,
+    tags: Array.isArray(projectData.tags) ? projectData.tags.join(',') : projectData.tags,
+    highlights: Array.isArray(projectData.highlights) ? JSON.stringify(projectData.highlights) : projectData.highlights
+  };
+  return await apiFetch(`/projects/${projectId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function deleteProject(projectId) {
+  return await apiFetch(`/projects/${projectId}`, {
+    method: 'DELETE'
+  });
+}

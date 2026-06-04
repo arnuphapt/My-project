@@ -11,3 +11,9 @@ export async function createHolding(holdingData) {
     body: JSON.stringify(holdingData)
   });
 }
+
+export async function deleteHolding(symbol) {
+  return await apiFetch(`/holdings/${symbol}`, {
+    method: 'DELETE'
+  });
+}

@@ -3,7 +3,7 @@ import { OfficeStore, useOffice } from '../store';
 import { StatusDot, PageHead, Modal, RARITY } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { renderMd } from '../components/SkillMd.jsx';
-import { createAgent } from '../api/agents.js';
+import { createAgent, updateAgent, deleteAgent } from '../api/agents.js';
 
 /* ============ TEAM — employee roster + profile sheet ============ */
 
@@ -365,7 +365,8 @@ function Team() {
   const ceo = {
     ...(s.ceo || {}), isCeo: true, id: '__ceo',
     name: (cfg.ownerName || '').trim() || 'YOU',
-    roleEn: (cfg.ownerRole || 'FOUNDER').toUpperCase(), roleTh: 'ผู้ก่อตั้ง · CEO'
+    roleEn: (cfg.ownerRole || 'FOUNDER').toUpperCase(), roleTh: 'ผู้ก่อตั้ง · CEO',
+    seniority: 'ceo'
   };
   const a = openId === '__ceo' ? ceo : s.agents.find(x => x.id === openId);
 
@@ -518,15 +519,27 @@ function AgentProfile({ a }) {
   const [role, setRole] = useS(a.roleTh);
   const [desc, setDesc] = useS(a.desc);
 
-  const save = () => {
-    OfficeStore.setState(st => ({ ...st, agents: st.agents.map(x => x.id === a.id ? { ...x, roleTh: role, desc } : x) }), { now: true });
-    window.electronAPI?.saveLog('info', 'Updated agent profile: ' + a.name);
+  const save = async () => {
+    try {
+      await updateAgent(a.id, { ...a, roleTh: role, desc });
+      window.electronAPI?.saveLog('info', 'Updated agent profile: ' + a.name);
+      OfficeStore.syncBackendData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update agent');
+    }
   };
 
-  const fire = () => {
+  const fire = async () => {
     if (window.confirm('ปลด ' + a.name + ' ออกจากทีม?')) {
-      OfficeStore.setState(st => ({ ...st, agents: st.agents.filter(x => x.id !== a.id) }), { now: true });
-      window.electronAPI?.saveLog('warning', 'Fired agent: ' + a.name);
+      try {
+        await deleteAgent(a.id);
+        window.electronAPI?.saveLog('warning', 'Fired agent: ' + a.name);
+        OfficeStore.syncBackendData();
+      } catch (err) {
+        console.error(err);
+        alert('Failed to fire agent');
+      }
     }
   };
 
@@ -571,13 +584,17 @@ function CreateAgent({ onClose }) {
   const [name, setName] = useS('');
   const [roleEn, setRoleEn] = useS('ASSISTANT');
   const [roleTh, setRoleTh] = useS('ผู้ช่วยทั่วไป');
-  const [rarity, setRarity] = useS('rare');
+  const [seniority, setSeniority] = useS('mid');
+  const [model, setModel] = useS('sonnet');
 
   const create = async () => {
     const nm = name.trim() || 'Agent';
     const id = nm.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString().slice(-4);
-    const seniority = rarity === 'legend' ? 'senior' : rarity === 'epic' ? 'mid' : rarity === 'rare' ? 'junior' : 'newgrad';
-    
+
+    // Map seniority back to rarity just for schema compatibility (if needed)
+    const rarityMap = { senior: 'legend', mid: 'epic', junior: 'rare', newgrad: 'common' };
+    const rarity = rarityMap[seniority] || 'rare';
+
     const newAgent = {
       id,
       name: nm,
@@ -589,7 +606,7 @@ function CreateAgent({ onClose }) {
       lv: 1,
       salary: 0.5,
       desc: 'พนักงานใหม่ พร้อมรับงาน ' + roleTh,
-      model: 'sonnet',
+      model,
       skillMd: `# ${nm}'s Skills\n\n- **${roleTh}** — ทักษะพื้นฐาน`
     };
 
@@ -601,7 +618,7 @@ function CreateAgent({ onClose }) {
       console.error(err);
       alert('Error connecting to backend API');
     }
-    
+
     onClose();
   };
 
@@ -615,15 +632,27 @@ function CreateAgent({ onClose }) {
           <button key={en} className={'btn sm ' + (roleEn === en ? '' : 'ghost')} onClick={() => { setRoleEn(en); setRoleTh(th); }}>{th}</button>
         ))}
       </div>
-      <label className="lbl mt-3">ระดับความหายาก</label>
+      <label className="lbl mt-3">ประสบการณ์ (Experience)</label>
       <div className="flex gap-1.5">
-        {['legend', 'epic', 'rare', 'common'].map(r => (
+        {['senior', 'mid', 'junior', 'newgrad'].map(s => (
           <button
-            key={r}
-            className={'flex-1 btn sm ' + (rarity === r ? '' : 'ghost')}
-            onClick={() => setRarity(r)}
+            key={s}
+            className={'flex-1 btn sm ' + (seniority === s ? '' : 'ghost')}
+            onClick={() => setSeniority(s)}
           >
-            {RARITY[r] ? RARITY[r][1] : r}
+            {SENIOR[s] ? SENIOR[s].label : s}
+          </button>
+        ))}
+      </div>
+      <label className="lbl mt-3">โมเดล AI (Model)</label>
+      <div className="flex gap-1.5">
+        {['opus', 'sonnet', 'haiku'].map(m => (
+          <button
+            key={m}
+            className={'flex-1 btn sm ' + (model === m ? '' : 'ghost')}
+            onClick={() => setModel(m)}
+          >
+            {MODELS[m] ? MODELS[m].label : m}
           </button>
         ))}
       </div>

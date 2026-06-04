@@ -21,3 +21,9 @@ export async function saveSetting(key, value) {
     body: JSON.stringify({ key, value: strValue })
   });
 }
+
+export async function deleteSetting(key) {
+  return await apiFetch(`/settings/${key}`, {
+    method: 'DELETE'
+  });
+}

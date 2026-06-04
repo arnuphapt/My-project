@@ -2,7 +2,7 @@ import React, { useState as useS } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
-import { createProject } from '../api/projects.js';
+import { createProject, updateProject, deleteProject } from '../api/projects.js';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
@@ -127,10 +127,30 @@ function ProjectDrawer({ p, onClose }) {
   const [c] = PSTATUS[p.status] || PSTATUS['พัก'];
   const [hl, setHl] = useS('');
   const live = OfficeStore.getState().projects.find(x => x.id === p.id) || p;
-  const upd = patch => OfficeStore.setState(st => ({ ...st, projects: st.projects.map(x => x.id === p.id ? { ...x, ...patch } : x) }), { now: true });
+  const upd = async (patch) => {
+    const updated = { ...live, ...patch };
+    try {
+      await updateProject(p.id, updated);
+      OfficeStore.syncBackendData();
+    } catch (err) {
+      console.error(err);
+      alert('Failed to update project');
+    }
+  };
   const addHl = () => { const t = hl.trim(); if (!t) return; upd({ highlights: [...live.highlights, t] }); setHl(''); };
   const delHl = i => upd({ highlights: live.highlights.filter((_, j) => j !== i) });
-  const del = () => { if (confirm('ลบโปรเจกต์ "' + p.title + '"?')) { OfficeStore.setState(st => ({ ...st, projects: st.projects.filter(x => x.id !== p.id) }), { now: true }); onClose(); } };
+  const del = async () => { 
+    if (confirm('ลบโปรเจกต์ "' + p.title + '"?')) { 
+      try {
+        await deleteProject(p.id);
+        OfficeStore.syncBackendData();
+        onClose(); 
+      } catch(err) {
+        console.error(err);
+        alert('Failed to delete project');
+      }
+    } 
+  };
 
   return (
     <div

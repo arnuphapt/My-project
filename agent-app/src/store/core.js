@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { SEED } from './seed.js';
-import { getAgents } from '../api/agents.js';
+import { getAgents, createAgent } from '../api/agents.js';
 import { getProjects } from '../api/projects.js';
 import { getHoldings } from '../api/portfolio.js';
 import { getSettings } from '../api/settings.js';
@@ -123,7 +123,17 @@ export async function syncBackendData() {
       getSettings()
     ]);
     
-    const formattedAgents = agentsData.map(a => {
+    let finalAgents = agentsData;
+    
+    // Auto mock if backend is empty
+    if (finalAgents.length === 0 && SEED.agents.length > 0) {
+      for (const a of SEED.agents) {
+        try { await createAgent(a); } catch (e) {}
+      }
+      finalAgents = SEED.agents;
+    }
+
+    const formattedAgents = finalAgents.map(a => {
         // Compute UI fields that are not in the backend schema
         const color = a.rarity === 'legend' ? '#ff5168' : a.rarity === 'epic' ? '#b06bff' : a.rarity === 'rare' ? '#4db4ff' : '#9aa6cf';
         return {

@@ -2,7 +2,22 @@
 export const FX = 32.61; // THB per USD
 
 // ---- AI Agents (roster maps to areas of the user's life) ----
-export const agents = [];
+export const agents = [
+  {
+    id: "joyuri_mock",
+    name: "JOYURI",
+    roleEn: "SECRETARY",
+    roleTh: "เลขา",
+    rarity: "legend",
+    seniority: "secretary",
+    status: "idle",
+    lv: 1,
+    salary: 1.0,
+    desc: "เลขาประจำตัวสุดเก่ง พร้อมรับคำสั่งและจัดการงานทุกอย่าง",
+    model: "opus",
+    skillMd: "# JOYURI's Skills\n\n- **จัดการตารางงาน**\n- **สรุปเอกสาร**\n- **ค้นหาข้อมูลทั่วไป**"
+  }
+];
 
 // ---- Market assets (price in native currency) ----
 export const mk = (symbol, name, cls, price, cur, prev) => ({
