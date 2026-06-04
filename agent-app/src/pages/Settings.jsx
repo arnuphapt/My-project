@@ -1,15 +1,15 @@
 import React, { useState as useS, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, PageHead } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ SETTINGS ============ */
 const ACCENTS = [
-  ['cyan',  '#46b6ff', 'ฟ้า'],
-  ['teal',  '#2fe0c2', 'เขียวน้ำทะเล'],
-  ['violet','#9d6bff', 'ม่วง'],
-  ['gold',  '#ffce4a', 'ทอง'],
-  ['rose',  '#ff6b9d', 'ชมพู'],
+  ['cyan', '#46b6ff', 'ฟ้า'],
+  ['teal', '#2fe0c2', 'เขียวน้ำทะเล'],
+  ['violet', '#9d6bff', 'ม่วง'],
+  ['gold', '#ffce4a', 'ทอง'],
+  ['rose', '#ff6b9d', 'ชมพู'],
 ];
 
 function Settings() {
@@ -43,8 +43,8 @@ function Settings() {
 
   return (
     <div className="max-w-[1040px] mx-auto px-[22px] py-5">
-      <PageHead 
-        title="SETTINGS" 
+      <PageHead
+        title="SETTINGS"
         sub="ตั้งค่าตัวตนของระบบ และกรอกประวัติของคุณ — ข้อมูลนี้ใช้สร้าง Resume / CV ต่อได้"
         right={<button className="btn ghost" onClick={reset}>คืนค่าตั้งต้น</button>}
       />
@@ -62,9 +62,9 @@ function Settings() {
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
                     {(cfg.sysName1 || 'M').trim()[0] || 'M'}
                   </div>
-                  <image-slot 
-                    id="sys-logo" 
-                    shape="rounded" 
+                  <image-slot
+                    id="sys-logo"
+                    shape="rounded"
                     radius="12"
                     className="absolute inset-0 w-[88px] h-[88px]"
                   />
@@ -75,26 +75,26 @@ function Settings() {
               <div className="flex-1">
                 <label className="lbl">ชื่อระบบ</label>
                 <div className="flex gap-2">
-                  <input 
-                    className="fld uppercase" 
-                    value={cfg.sysName1 || ''} 
+                  <input
+                    className="fld uppercase"
+                    value={cfg.sysName1 || ''}
                     maxLength={10}
-                    onChange={e => F('sysName1', e.target.value)} 
-                    placeholder="MY" 
+                    onChange={e => F('sysName1', e.target.value)}
+                    placeholder="MY"
                   />
-                  <input 
-                    className="fld uppercase" 
-                    value={cfg.sysName2 || ''} 
+                  <input
+                    className="fld uppercase"
+                    value={cfg.sysName2 || ''}
                     maxLength={12}
-                    onChange={e => F('sysName2', e.target.value)} 
-                    placeholder="OFFICE" 
+                    onChange={e => F('sysName2', e.target.value)}
+                    placeholder="OFFICE"
                   />
                 </div>
                 <div className="font-mono text-[10px] text-text-mute mt-1.25">2 บรรทัด — โชว์มุมซ้ายบน</div>
                 <label className="lbl mt-3.25">คำโปรย (Tagline)</label>
-                <input 
-                  className="fld" 
-                  value={cfg.tagline || ''} 
+                <input
+                  className="fld"
+                  value={cfg.tagline || ''}
                   onChange={e => F('tagline', e.target.value)}
                   placeholder="ระบบจัดการชีวิตของฉัน"
                 />
@@ -104,9 +104,9 @@ function Settings() {
             <label className="lbl">สีหลักของระบบ (Accent)</label>
             <div className="flex gap-2.25 mt-1">
               {ACCENTS.map(([id, hex, th]) => (
-                <button 
-                  key={id} 
-                  onClick={() => F('accent', id)} 
+                <button
+                  key={id}
+                  onClick={() => F('accent', id)}
                   title={th}
                   style={{
                     width: 38,
@@ -133,12 +133,12 @@ function Settings() {
           <Win title="API CONFIGURATION" accent="purple" bodyStyle={{ padding: 18 }}>
             <SecTitle>ตั้งค่าการเชื่อมต่อ AI</SecTitle>
             <label className="lbl">Gemini API Key</label>
-            <input 
-              className="fld font-mono" 
-              type="password" 
-              value={geminiKey} 
+            <input
+              className="fld font-mono"
+              type="password"
+              value={geminiKey}
               onChange={e => handleKeySave(e.target.value)}
-              placeholder="AIzaSy..." 
+              placeholder="AIzaSy..."
             />
             <div className="font-mono text-[10px] text-text-mute mt-1.25">
               บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
@@ -147,9 +147,9 @@ function Settings() {
         </div>
 
         {/* ---------- OWNER PROFILE ---------- */}
-        <Win 
-          title="MY PROFILE · CV DATA" 
-          accent="gold" 
+        <Win
+          title="MY PROFILE · CV DATA"
+          accent="gold"
           bodyStyle={{ padding: 18 }}
           right={<span className="tag px-2 py-1">{pct}% พร้อม</span>}
         >
@@ -159,10 +159,10 @@ function Settings() {
             <div className="flex-none">
               <label className="lbl">รูปโปรไฟล์</label>
               <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border border-line">
-                <image-slot 
-                  id="player-avatar" 
-                  shape="rounded" 
-                  radius="12" 
+                <image-slot
+                  id="player-avatar"
+                  shape="rounded"
+                  radius="12"
                   placeholder="YOU"
                   className="absolute inset-0 w-[72px] h-[72px]"
                 />
@@ -200,10 +200,10 @@ function Settings() {
           </div>
 
           <label className="lbl mt-3.25">เกี่ยวกับฉัน (Bio)</label>
-          <textarea 
-            className="fld" 
-            rows="4" 
-            value={cfg.bio || ''} 
+          <textarea
+            className="fld"
+            rows="4"
+            value={cfg.bio || ''}
             onChange={e => F('bio', e.target.value)}
             placeholder="เล่าสั้นๆ ว่าคุณคือใคร ถนัดอะไร เป้าหมายคืออะไร... ข้อความนี้จะใช้เป็นหัว Resume"
           />
@@ -211,9 +211,9 @@ function Settings() {
       </div>
 
       {/* ---------- CV PREVIEW ---------- */}
-      <Win 
-        title="RESUME PREVIEW" 
-        className="mt-4" 
+      <Win
+        title="RESUME PREVIEW"
+        className="mt-4"
         bodyStyle={{ padding: 0 }}
         right={<span className="tag px-2 py-1">auto จากข้อมูล + โปรเจกต์</span>}
       >
@@ -244,10 +244,10 @@ function CVPreview({ cfg, projects }) {
       {/* left rail */}
       <div className="bg-[#080a12]/55 border-r border-line p-[22px_20px]">
         <div className="w-16 h-16 rounded-xl relative overflow-hidden border border-line mb-3.5">
-          <image-slot 
-            id="player-avatar" 
-            shape="rounded" 
-            radius="12" 
+          <image-slot
+            id="player-avatar"
+            shape="rounded"
+            radius="12"
             placeholder="YOU"
             className="absolute inset-0 w-16 h-16"
           />
@@ -277,8 +277,8 @@ function CVPreview({ cfg, projects }) {
       {/* right body */}
       <div className="p-[22px]">
         <div className="font-pixel2 text-[10px] text-text-dim tracking-[0.5px] mb-2">ABOUT</div>
-        <p 
-          className="m-0 text-[13.5px] leading-relaxed" 
+        <p
+          className="m-0 text-[13.5px] leading-relaxed"
           style={{ color: (cfg.bio || '').trim() ? 'var(--text)' : 'var(--text-mute)' }}
         >
           {(cfg.bio || '').trim() || 'เขียนแนะนำตัวในช่อง Bio ด้านบน แล้วจะมาแสดงตรงนี้'}

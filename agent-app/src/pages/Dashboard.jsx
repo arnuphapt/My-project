@@ -1,7 +1,7 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice, fmt } from '../store';
 import { Win, Row, StatusDot, PageHead, Bar } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 import TestGemini from '../TestGemini.jsx';
 
 /* ============ DASHBOARD / WARROOM ============ */
@@ -22,9 +22,9 @@ function Dashboard() {
       {/* CENTER STAGE */}
       <div className="relative min-h-0 flex flex-col">
         <div className="relative flex-1 min-h-[340px]">
-          <image-slot 
-            id="office-scene" 
-            shape="rounded" 
+          <image-slot
+            id="office-scene"
+            shape="rounded"
             radius="12"
             placeholder="วางรูป pixel-art ออฟฟิศที่นี่ (isometric office scene)"
             className="absolute inset-0 w-full h-full"
@@ -38,7 +38,7 @@ function Dashboard() {
           <TradingPanel v={v} />
           <TeamChatMini />
         </div>
-        
+
         {/* Gemini Test Panel */}
         <TestGemini />
       </div>
@@ -55,15 +55,15 @@ function Dashboard() {
 
 function Bubble({ name, x, y, color, text }) {
   return (
-    <div 
+    <div
       className="absolute -translate-x-1/2 -translate-y-1/2 max-w-[180px] z-5"
       style={{ left: x, top: y }}
     >
-      <div 
+      <div
         className="bg-[#0a102c]/92 rounded-[10px] p-[8px_11px] backdrop-blur-[4px]"
         style={{ border: '1px solid ' + color, boxShadow: '0 0 16px ' + color + '55' }}
       >
-        <div 
+        <div
           className="font-mono text-[11px] mb-0.75"
           style={{ color: color }}
         >
@@ -102,9 +102,9 @@ function AgentsPanel() {
     <Win title="AI AGENTS" right={<span className="win-dots mr-1"><i onClick={() => set({ route: 'team' })}>+</i></span>}>
       <div className="flex flex-col gap-0.5">
         {s.agents.slice(0, 6).map(a => (
-          <div 
-            key={a.id} 
-            onClick={() => set({ route: 'team' })} 
+          <div
+            key={a.id}
+            onClick={() => set({ route: 'team' })}
             className="flex items-center gap-2.25 p-[7px_4px] cursor-pointer rounded-[7px] hover:bg-[#283c8c]/25 transition-colors duration-200"
           >
             <StatusDot s={a.status} />
@@ -112,7 +112,7 @@ function AgentsPanel() {
               <div className="text-white text-[14px] font-semibold">{a.name}</div>
               <div className="text-text-mute text-[11px] font-mono whitespace-nowrap overflow-hidden text-ellipsis">{a.statusTh} · {a.last}</div>
             </div>
-            <span 
+            <span
               className="font-mono text-[11px]"
               style={{ color: a.color }}
             >
@@ -173,8 +173,8 @@ function MarketPanel() {
             <React.Fragment key={m.symbol}>
               <div className="text-white py-1 whitespace-nowrap overflow-hidden text-ellipsis">{m.symbol}</div>
               <div className="text-right text-text">{m.cur === 'USD' ? '$' : '฿'}{fmt.n(m.price, m.price < 1 ? 4 : 2)}</div>
-              <div 
-                className="text-right" 
+              <div
+                className="text-right"
                 style={{ color: ch >= 0 ? 'var(--green)' : 'var(--red)' }}
               >
                 {fmt.pct(ch, 1)}
@@ -241,12 +241,12 @@ function TeamChatMini() {
   const [s] = useOffice();
   const [txt, setTxt] = useS('');
   const boxRef = useR(null);
-  useE(() => { 
-    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight; 
+  useE(() => {
+    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [s.teamChat.length]);
-  
+
   const send = () => {
-    const t = txt.trim(); 
+    const t = txt.trim();
     if (!t) return;
     OfficeStore.setState(st => ({ ...st, teamChat: [...st.teamChat, { who: 'you', text: t, t: OfficeStore.clock() }] }), { now: true });
     setTxt('');
@@ -257,7 +257,7 @@ function TeamChatMini() {
       OfficeStore.setState(st => ({ ...st, teamChat: [...st.teamChat, { who: a.id, text: reps[Math.floor(Math.random() * reps.length)], t: OfficeStore.clock() }] }), { now: true });
     }, 700);
   };
-  
+
   const nameOf = id => id === 'you' ? 'คุณ' : (s.agents.find(a => a.id === id)?.name || id);
   const colOf = id => id === 'you' ? 'var(--cyan)' : (s.agents.find(a => a.id === id)?.color || 'var(--text-dim)');
   return (
@@ -271,12 +271,12 @@ function TeamChatMini() {
         ))}
       </div>
       <div className="flex gap-1.75 p-[9px_11px] border-t border-line">
-        <input 
-          className="fld px-2.5 py-2 text-[13px] flex-1" 
-          placeholder="พิมพ์ข้อความ..." 
+        <input
+          className="fld px-2.5 py-2 text-[13px] flex-1"
+          placeholder="พิมพ์ข้อความ..."
           value={txt}
-          onChange={e => setTxt(e.target.value)} 
-          onKeyDown={e => e.key === 'Enter' && send()} 
+          onChange={e => setTxt(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && send()}
         />
         <button className="btn sm" onClick={send}>▶</button>
       </div>

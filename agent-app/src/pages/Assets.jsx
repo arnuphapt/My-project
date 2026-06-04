@@ -1,7 +1,7 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice, SEED } from '../store';
 import { PageHead, Bar } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ ASSETS ============ */
 function Assets() {
@@ -21,8 +21,8 @@ function Assets() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-[22px] py-5">
-      <PageHead 
-        title="ASSETS" 
+      <PageHead
+        title="ASSETS"
         sub="คลังเก็บไฟล์ — ลากรูป โลโก้ พิกเซลอาร์ต หรือเอกสารมาวางในช่องได้เลย"
         right={<span className="tag px-2.5 py-1.5">ทั้งหมด {total} ช่อง</span>}
       />
@@ -63,9 +63,9 @@ function AssetGroup({ g, count, onAdd, onRemove }) {
       <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3">
         {Array.from({ length: count }).map((_, i) => (
           <div key={i} className="relative aspect-square">
-            <image-slot 
-              id={'asset-' + g.id + '-' + i} 
-              shape={shape} 
+            <image-slot
+              id={'asset-' + g.id + '-' + i}
+              shape={shape}
               radius="10"
               placeholder={g.name + ' #' + (i + 1)}
               className="absolute inset-0 w-full h-full"

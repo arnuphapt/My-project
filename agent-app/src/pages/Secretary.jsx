@@ -1,7 +1,7 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, PageHead } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ SECRETARY ============ */
 function Secretary() {
@@ -9,13 +9,13 @@ function Secretary() {
   const [txt, setTxt] = useS('');
   const [busy, setBusy] = useS(false);
   const boxRef = useR(null);
-  
+
   // Find the agent with "เลขา" in Thai role, or "SECRETARY" in English role
   const sec = s.agents.find(a => a.roleTh.includes('เลขา') || a.roleEn.toUpperCase().includes('SECRETARY'));
   const log = s.secChat;
 
-  useE(() => { 
-    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight; 
+  useE(() => {
+    if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [log.length, busy]);
 
   const push = (m) => OfficeStore.setState(st => ({ ...st, secChat: [...st.secChat, m] }), { now: true });
@@ -47,10 +47,10 @@ function Secretary() {
   }
 
   const send = async (preset) => {
-    const t = (preset || txt).trim(); 
+    const t = (preset || txt).trim();
     if (!t || busy) return;
-    push({ from: 'u', text: t }); 
-    setTxt(''); 
+    push({ from: 'u', text: t });
+    setTxt('');
     setBusy(true);
     const roster = OfficeStore.getState().agents.map(a => `${a.id} (${a.name}, ${a.roleTh})`).join('; ');
     try {
@@ -75,8 +75,8 @@ function Secretary() {
       const clean = kept.join('\n').trim();
       if (clean) push({ from: 'a', text: clean });
       else push({ from: 'a', text: 'จัดให้เรียบร้อยแล้วค่ะเจ้านาย ✅ ดูงานที่หน้า Team ได้เลย' });
-    } catch (e) { 
-      push({ from: 'a', text: 'อุ๊ย ระบบสะดุดนิดนึง 😅 ลองพิมพ์อีกทีนะเจ้านาย' }); 
+    } catch (e) {
+      push({ from: 'a', text: 'อุ๊ย ระบบสะดุดนิดนึง 😅 ลองพิมพ์อีกทีนะเจ้านาย' });
     }
     setBusy(false);
   };
@@ -93,7 +93,7 @@ function Secretary() {
             <div className="flex flex-col items-center gap-2.5">
               <div className="relative w-24 h-24">
                 <image-slot id={`card-${sec.id}`} shape="rounded" radius="12" placeholder={sec.name} className="w-24 h-24" />
-                <div 
+                <div
                   className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
                   style={{ color: sec.color, textShadow: `0 0 14px ${sec.color}b3` }}
                 >
@@ -131,16 +131,16 @@ function Secretary() {
             {log.map((m, i) => (
               <div key={i} className="max-w-[82%]" style={{ alignSelf: m.from === 'u' ? 'flex-end' : 'flex-start' }}>
                 {m.from === 'a' && (
-                  <div 
+                  <div
                     className="font-mono text-[11px] mb-0.5"
                     style={{ color: sec.color }}
                   >
                     {sec.name}
                   </div>
                 )}
-                <div 
+                <div
                   className="rounded-xl px-3.5 py-2.5 text-[14.5px] leading-relaxed text-white whitespace-pre-wrap"
-                  style={{ 
+                  style={{
                     background: m.from === 'u' ? 'linear-gradient(180deg,#27408f,#1a2a64)' : 'rgba(40,32,12,.55)',
                     border: '1px solid ' + (m.from === 'u' ? 'var(--line-bright)' : 'rgba(255,206,74,.4)')
                   }}

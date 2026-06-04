@@ -8,6 +8,7 @@ const NAV = [
   ['portfolio','PORTFOLIO','📈'],
   ['projects','PROJECTS','💼'],
   ['team','TEAM','👥'],
+  ['orgchart','ORG CHART','📊'],
   ['secretary','SECRETARY','💬'],
   ['assets','ASSETS','🗂️'],
   ['systemlogs','SYSTEM LOGS','📝'],

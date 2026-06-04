@@ -1,7 +1,7 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, Modal } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ WARROOM · IMMERSIVE ISOMETRIC OFFICE ============ */
 function WarRoom() {
@@ -15,9 +15,9 @@ function WarRoom() {
   const [clock, setClock] = useS(nowHM());
   const stageRef = useR(null);
 
-  useE(() => { 
-    const id = setInterval(() => setClock(nowHM()), 30000); 
-    return () => clearInterval(id); 
+  useE(() => {
+    const id = setInterval(() => setClock(nowHM()), 30000);
+    return () => clearInterval(id);
   }, []);
 
   // ambient thoughts
@@ -32,15 +32,15 @@ function WarRoom() {
 
   function popBubble(id, text) {
     setBubbles(b => ({ ...b, [id]: text }));
-    setTimeout(() => setBubbles(b => { 
-      const n = { ...b }; 
-      if (n[id] === text) delete n[id]; 
-      return n; 
+    setTimeout(() => setBubbles(b => {
+      const n = { ...b };
+      if (n[id] === text) delete n[id];
+      return n;
     }), 4200);
   }
 
   const broadcast = () => {
-    const t = cmd.trim(); 
+    const t = cmd.trim();
     if (!t) return;
     OfficeStore.setState(st => ({
       ...st,
@@ -55,7 +55,7 @@ function WarRoom() {
   const pos = (id) => (live && live.id === id) ? live : (s.warroomPos[id] || { x: 50, y: 50 });
   function onDown(e, id) {
     if (!place) return;
-    e.preventDefault(); 
+    e.preventDefault();
     e.stopPropagation();
     setDrag({ id });
     setLive({ id, ...(s.warroomPos[id] || { x: 50, y: 50 }) });
@@ -68,24 +68,24 @@ function WarRoom() {
     setLive({ id: drag.id, x, y });
   }
   function onUp() {
-    if (drag && live) { 
-      OfficeStore.setState(st => ({ ...st, warroomPos: { ...st.warroomPos, [live.id]: { x: live.x, y: live.y } } }), { now: true }); 
+    if (drag && live) {
+      OfficeStore.setState(st => ({ ...st, warroomPos: { ...st.warroomPos, [live.id]: { x: live.x, y: live.y } } }), { now: true });
     }
-    setDrag(null); 
+    setDrag(null);
     setLive(null);
   }
 
   return (
-    <div 
+    <div
       className="h-full relative overflow-hidden"
-      ref={stageRef} 
-      onPointerMove={onMove} 
-      onPointerUp={onUp} 
+      ref={stageRef}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
       onPointerLeave={onUp}
     >
       {/* ===== ROOM BACKDROP ===== */}
-      <image-slot 
-        id="office-scene" 
+      <image-slot
+        id="office-scene"
         shape="rect"
         placeholder="วางรูปห้องออฟฟิศ isometric ที่นี่ (พื้นไม้ · หน้าต่าง · โต๊ะทำงาน — เต็มห้อง)"
         className="absolute inset-0 w-full h-full"
@@ -96,15 +96,15 @@ function WarRoom() {
       {s.agents.map(a => {
         const p = pos(a.id);
         return (
-          <CharToken 
-            key={a.id} 
-            a={a} 
-            x={p.x} 
-            y={p.y} 
-            bubble={bubbles[a.id]} 
+          <CharToken
+            key={a.id}
+            a={a}
+            x={p.x}
+            y={p.y}
+            bubble={bubbles[a.id]}
             place={place}
             dragging={drag && drag.id === a.id}
-            onDown={e => onDown(e, a.id)} 
+            onDown={e => onDown(e, a.id)}
             onClick={() => { if (!place) setOpen(a.id); }}
           />
         );
@@ -130,19 +130,19 @@ function WarRoom() {
       {/* ===== ORDER BAR ===== */}
       <div className="absolute left-1/2 bottom-3 -translate-x-1/2 z-30 flex items-center gap-2.25 px-2.5 py-2 rounded-[11px] w-[min(560px,86%)] bg-[#0c0f18]/86 border border-line backdrop-blur-md">
         <span className="font-pixel text-[8px] text-cyan tracking-[1px] flex-none">ORDER ALL ▸</span>
-        <input 
-          className="fld px-2.75 py-2 text-[13px] flex-1" 
-          placeholder="ออกคำสั่งให้ทุกคนในออฟฟิศ..." 
+        <input
+          className="fld px-2.75 py-2 text-[13px] flex-1"
+          placeholder="ออกคำสั่งให้ทุกคนในออฟฟิศ..."
           value={cmd}
-          onChange={e => setCmd(e.target.value)} 
-          onKeyDown={e => e.key === 'Enter' && broadcast()} 
+          onChange={e => setCmd(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && broadcast()}
         />
         <button className="btn sm" onClick={broadcast}>📢</button>
       </div>
 
       {open && (
-        <DeskPopover 
-          agent={s.agents.find(a => a.id === open)} 
+        <DeskPopover
+          agent={s.agents.find(a => a.id === open)}
           onClose={() => setOpen(null)}
           onAssigned={txt => popBubble(open, txt)}
         />
@@ -151,8 +151,8 @@ function WarRoom() {
   );
 }
 
-function nowHM() { 
-  return new Date().toTimeString().slice(0, 5); 
+function nowHM() {
+  return new Date().toTimeString().slice(0, 5);
 }
 const IDLE_THOUGHTS = ['☕', 'พิมพ์ๆ...', '📊', 'อืม น่าสน', 'เกือบเสร็จละ', '555', 'focus 🎧', 'เช็คตลาดแป๊บ', '📝', '✦'];
 const ACK = ['รับทราบ! 💪', 'จัดให้เลย', 'โอเค ลุยต่อ', '555 ได้เลย', 'กำลังทำ ✦', 'เคลียร์ทันที'];
@@ -171,16 +171,16 @@ function Speech({ text, color }) {
 /* ---- draggable character token ---- */
 function CharToken({ a, x, y, bubble, place, dragging, onDown, onClick }) {
   return (
-    <div 
-      onPointerDown={onDown} 
+    <div
+      onPointerDown={onDown}
       onClick={onClick}
       className="absolute -translate-x-1/2 -translate-y-full select-none touch-none"
-      style={{ 
-        left: x + '%', 
-        top: y + '%', 
+      style={{
+        left: x + '%',
+        top: y + '%',
         zIndex: dragging ? 40 : 10,
         cursor: place ? 'grab' : 'pointer',
-        filter: dragging ? 'drop-shadow(0 10px 16px rgba(0,0,0,.6))' : 'none', 
+        filter: dragging ? 'drop-shadow(0 10px 16px rgba(0,0,0,.6))' : 'none',
         transition: dragging ? 'none' : 'filter .1s'
       }}
     >
@@ -189,26 +189,26 @@ function CharToken({ a, x, y, bubble, place, dragging, onDown, onClick }) {
       {/* character */}
       <div className="relative w-[74px] h-[84px] mx-auto">
         <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[60px] h-3 bg-[radial-gradient(ellipse,rgba(0,0,0,0.5),transparent_70%)] rounded-[50%]"></div>
-        <div 
+        <div
           className="absolute inset-0 bottom-2 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
           style={{ color: a.color, textShadow: '0 0 12px ' + a.color + '66' }}
         >
           {a.name[0]}
         </div>
-        <image-slot 
-          id={'agent-' + a.id} 
+        <image-slot
+          id={'agent-' + a.id}
           shape="rect"
           className="absolute left-0 right-0 top-0 bottom-2 w-[74px] h-[76px]"
-          style={{ 
-            border: place ? '1.5px dashed ' + a.color : 'none', 
-            background: place ? 'rgba(10,14,24,.4)' : 'transparent' 
+          style={{
+            border: place ? '1.5px dashed ' + a.color : 'none',
+            background: place ? 'rgba(10,14,24,.4)' : 'transparent'
           }}
         />
         <span className={'sdot s-' + a.status} style={{ position: 'absolute', right: 6, top: 2, width: 11, height: 11, border: '2px solid #0c0f18' }}></span>
       </div>
 
       {/* nameplate */}
-      <div 
+      <div
         className="mt-0.5 px-2 py-0.5 rounded-[7px] bg-[#0c0f18]/90 text-center whitespace-nowrap"
         style={{ border: '1px solid ' + a.color + '55' }}
       >
@@ -225,13 +225,13 @@ function DeskPopover({ agent, onClose, onAssigned }) {
   const [, set] = useOffice();
   const upd = patch => OfficeStore.setState(st => ({ ...st, agents: st.agents.map(x => x.id === agent.id ? { ...x, ...patch } : x) }), { now: true });
   const assign = () => {
-    const t = task.trim(); 
+    const t = task.trim();
     if (!t) return;
     upd({ task: t, status: 'working', statusTh: t, last: 'เมื่อสักครู่' });
     OfficeStore.setState(st => ({
       ...st,
       teamChat: [...st.teamChat, { who: 'you', text: '@' + agent.name + ' ' + t, t: OfficeStore.clock() },
-        { who: agent.id, text: ACK[Math.floor(Math.random() * ACK.length)], t: OfficeStore.clock() }],
+      { who: agent.id, text: ACK[Math.floor(Math.random() * ACK.length)], t: OfficeStore.clock() }],
       log: [{ t: OfficeStore.clock(), who: agent.name, text: 'รับงาน: ' + t, kind: 'ok' }, ...st.log].slice(0, 40),
     }), { now: true });
     if (onAssigned) onAssigned(ACK[Math.floor(Math.random() * ACK.length)]);
@@ -240,14 +240,14 @@ function DeskPopover({ agent, onClose, onAssigned }) {
   return (
     <Modal title={agent.roleEn + ' · ' + agent.name} onClose={onClose} width={460}>
       <div className="flex gap-3.5 items-center mb-3.5">
-        <div 
+        <div
           className="w-16 h-[70px] rounded-xl relative overflow-hidden flex-none bg-gradient-to-b from-[#1b2236] to-[#10141f]"
           style={{ border: '2px solid ' + agent.color + '66' }}
         >
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[24px]" style={{ color: agent.color }}>{agent.name[0]}</div>
-          <image-slot 
-            id={'agent-' + agent.id} 
-            shape="rounded" 
+          <image-slot
+            id={'agent-' + agent.id}
+            shape="rounded"
             radius="12"
             className="absolute inset-0 w-16 h-[70px]"
           />
@@ -269,10 +269,10 @@ function DeskPopover({ agent, onClose, onAssigned }) {
       <div className="flex gap-2 mt-2">
         <span className="font-mono text-[11px] text-text-mute self-center">สถานะ:</span>
         {[['working', 'ทำงาน', '#3ce594'], ['thinking', 'คิดอยู่', '#46b6ff'], ['idle', 'ว่าง', '#9aa6cf']].map(([st, lb, c]) => (
-          <button 
-            key={st} 
+          <button
+            key={st}
             className={'flex-1 btn sm ' + (agent.status === st ? '' : 'ghost')}
-            onClick={() => upd({ status: st, statusTh: lb })} 
+            onClick={() => upd({ status: st, statusTh: lb })}
             style={{ color: agent.status === st ? '#0b0e16' : c }}
           >
             {lb}

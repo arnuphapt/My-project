@@ -1,13 +1,13 @@
 import React, { useState as useS } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
-  'กำลังทำ':   ['#ffce4a', 'r-legend'],
+  'กำลังทำ': ['#ffce4a', 'r-legend'],
   'เสร็จแล้ว': ['#3ce594', 'r-rare'],
-  'พัก':       ['#9aa6cf', 'r-common'],
+  'พัก': ['#9aa6cf', 'r-common'],
 };
 
 function Projects() {
@@ -21,8 +21,8 @@ function Projects() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-[22px] py-5">
-      <PageHead 
-        title="PROJECTS" 
+      <PageHead
+        title="PROJECTS"
         sub="คลังผลงาน — เก็บสะสมไว้เป็นข้อมูลสร้าง Resume / CV ในอนาคต"
         right={<button className="btn" onClick={() => setCreate(true)}>＋ เพิ่มโปรเจกต์</button>}
       />
@@ -39,8 +39,8 @@ function Projects() {
         {s.projects.map(p => (
           <ProjectCard key={p.id} p={p} onClick={() => setOpen(p.id)} />
         ))}
-        <div 
-          onClick={() => setCreate(true)} 
+        <div
+          onClick={() => setCreate(true)}
           className="win min-h-[260px] flex flex-col items-center justify-center cursor-pointer gap-2.5 !border-dashed border-cyan/40 hover:border-cyan/80 transition-colors duration-200"
         >
           <div className="text-[34px] text-cyan">＋</div>
@@ -49,9 +49,9 @@ function Projects() {
       </div>
 
       {/* skill cloud */}
-      <Win 
-        title="SKILL CLOUD" 
-        th={false} 
+      <Win
+        title="SKILL CLOUD"
+        th={false}
         className="mt-4.5"
         right={<span className="tag mr-1.5">auto จากแท็ก</span>}
       >
@@ -60,8 +60,8 @@ function Projects() {
           {skills.map(sk => {
             const n = s.projects.filter(p => p.tags.includes(sk)).length;
             return (
-              <span 
-                key={sk} 
+              <span
+                key={sk}
                 className="chip text-[12px] px-[11px] py-1.25 text-cyan border-cyan/40"
               >
                 {sk}
@@ -81,19 +81,19 @@ function Projects() {
 function ProjectCard({ p, onClick }) {
   const [c] = PSTATUS[p.status] || PSTATUS['พัก'];
   return (
-    <div 
-      onClick={onClick} 
+    <div
+      onClick={onClick}
       className="win cursor-pointer transition-transform duration-100 hover:-translate-y-[3px]"
     >
       <div className="relative h-32">
-        <image-slot 
-          id={'proj-' + p.id} 
-          shape="rect" 
+        <image-slot
+          id={'proj-' + p.id}
+          shape="rect"
           placeholder={'cover · ' + p.title}
           className="absolute inset-0 w-full h-full"
         />
         <div className="absolute top-2.25 right-2.25">
-          <span 
+          <span
             className="chip bg-[#060a1e]/80"
             style={{ color: c, borderColor: c + '66' }}
           >
@@ -132,23 +132,23 @@ function ProjectDrawer({ p, onClose }) {
   const del = () => { if (confirm('ลบโปรเจกต์ "' + p.title + '"?')) { OfficeStore.setState(st => ({ ...st, projects: st.projects.filter(x => x.id !== p.id) }), { now: true }); onClose(); } };
 
   return (
-    <div 
-      onClick={onClose} 
+    <div
+      onClick={onClose}
       className="fixed inset-0 z-[200] bg-[#040614]/70 backdrop-blur-[3px] flex justify-end"
     >
-      <div 
-        onClick={e => e.stopPropagation()} 
+      <div
+        onClick={e => e.stopPropagation()}
         className="w-[min(540px,96vw)] h-full bg-panel-solid border-l border-line-bright shadow-[-10px_0_40px_rgba(0,0,0,0.5)] flex flex-col"
       >
         <div className="relative h-[150px] flex-none">
-          <image-slot 
-            id={'proj-' + p.id} 
-            shape="rect" 
+          <image-slot
+            id={'proj-' + p.id}
+            shape="rect"
             placeholder={'cover · ' + p.title}
             className="absolute inset-0 w-full h-full"
           />
-          <i 
-            onClick={onClose} 
+          <i
+            onClick={onClose}
             className="absolute top-3 right-3.5 cursor-pointer text-white text-[22px] font-mono [text-shadow:0_0_8px_#000] z-[2]"
           >
             ×
@@ -173,14 +173,14 @@ function ProjectDrawer({ p, onClose }) {
           <div className="font-pixel2 text-[12px] text-text-dim tracking-[0.5px] mt-4.5 mb-2.25">HIGHLIGHTS · ผลงานเด่น</div>
           <div className="flex flex-col gap-1.75">
             {live.highlights.map((h, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className="flex gap-2.25 items-start px-2.75 py-2.25 bg-[#060a1e]/50 border border-line rounded-lg"
               >
                 <span className="text-green font-mono flex-none">▸</span>
                 <span className="flex-1 text-[13.5px] text-text leading-normal">{h}</span>
-                <i 
-                  onClick={() => delHl(i)} 
+                <i
+                  onClick={() => delHl(i)}
                   className="cursor-pointer text-text-mute font-mono text-[14px]"
                 >
                   ×
@@ -189,12 +189,12 @@ function ProjectDrawer({ p, onClose }) {
             ))}
           </div>
           <div className="flex gap-2 mt-2.25">
-            <input 
-              className="fld px-2.75 py-2 text-[13px]" 
-              placeholder="เพิ่มผลงานเด่น / ตัวเลขที่ทำได้..." 
+            <input
+              className="fld px-2.75 py-2 text-[13px]"
+              placeholder="เพิ่มผลงานเด่น / ตัวเลขที่ทำได้..."
               value={hl}
-              onChange={e => setHl(e.target.value)} 
-              onKeyDown={e => e.key === 'Enter' && addHl()} 
+              onChange={e => setHl(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addHl()}
             />
             <button className="btn green sm" onClick={addHl}>＋</button>
           </div>
@@ -209,10 +209,10 @@ function ProjectDrawer({ p, onClose }) {
           <div className="font-pixel2 text-[12px] text-text-dim tracking-[0.5px] mt-5 mb-2.25">ความคืบหน้า</div>
           <div className="flex gap-1.5">
             {[25, 50, 75, 100].map(v => (
-              <button 
-                key={v} 
-                className={'btn sm ' + (live.progress === v ? '' : 'ghost')} 
-                onClick={() => upd({ progress: v, status: v >= 100 ? 'เสร็จแล้ว' : 'กำลังทำ' })} 
+              <button
+                key={v}
+                className={'btn sm ' + (live.progress === v ? '' : 'ghost')}
+                onClick={() => upd({ progress: v, status: v >= 100 ? 'เสร็จแล้ว' : 'กำลังทำ' })}
                 style={{ flex: 1 }}
               >
                 {v}%
@@ -233,7 +233,7 @@ function CreateProject({ onClose }) {
   const [period, setPeriod] = useS('2026');
   const [summary, setSummary] = useS('');
   const [tags, setTags] = useS('');
-  
+
   const create = () => {
     const t = title.trim() || 'โปรเจกต์ใหม่';
     const id = 'p' + Date.now().toString().slice(-6);

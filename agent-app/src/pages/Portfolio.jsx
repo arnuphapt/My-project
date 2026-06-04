@@ -1,7 +1,7 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice, fmt } from '../store';
 import { Win, Row, Bar, StatusDot, PageHead, Modal, Rarity, ClassTag, SumCard } from '../components/UI.jsx';
-import '../../../image-slot.js';
+import '../store/image-slot.js';
 
 /* ============ PORTFOLIO (tabbed) ============ */
 function Portfolio() {
@@ -35,8 +35,8 @@ function SimPortfolio() {
 
   return (
     <div>
-      <PageHead 
-        title="พอร์ตจำลอง" 
+      <PageHead
+        title="พอร์ตจำลอง"
         sub="ฝึกลงทุนด้วยเงินจำลอง · ราคาขยับเรียลไทม์ทุก 2 วินาที"
         right={
           <div className="flex gap-2.5">
@@ -84,8 +84,8 @@ function SimPortfolio() {
                       <td className="text-right text-text">{fmt.n(r.qty, r.qty < 1 ? 4 : 0)}</td>
                       <td className="text-right">
                         <div className="text-white">{r.cur === 'USD' ? '$' : '฿'}{fmt.n(r.price, r.price < 1 ? 4 : 2)}</div>
-                        <div 
-                          className="text-[11px]" 
+                        <div
+                          className="text-[11px]"
                           style={{ color: r.dayPct >= 0 ? 'var(--green)' : 'var(--red)' }}
                         >
                           {fmt.pct(r.dayPct, 2)}
@@ -94,8 +94,8 @@ function SimPortfolio() {
                       <td className="text-right text-text">{r.cur === 'USD' ? '$' : '฿'}{fmt.n(r.mv, 0)}</td>
                       <td className="text-right">
                         <div style={{ color: r.pnl >= 0 ? 'var(--green)' : 'var(--red)' }}>{fmt.money(r.pnl, r.cur, 0)}</div>
-                        <div 
-                          className="text-[11px]" 
+                        <div
+                          className="text-[11px]"
                           style={{ color: r.pnl >= 0 ? 'var(--green)' : 'var(--red)' }}
                         >
                           {fmt.pct(r.pnlPct, 1)}
@@ -131,8 +131,8 @@ function SimPortfolio() {
             {list.map(m => {
               const ch = (m.price - m.prevClose) / m.prevClose * 100;
               return (
-                <div 
-                  key={m.symbol} 
+                <div
+                  key={m.symbol}
                   className="flex items-center gap-2.5 p-[8px_6px] rounded-[7px] hover:bg-[#283c8c]/20 transition-colors duration-200"
                 >
                   <ClassTag cls={m.cls} />
@@ -142,17 +142,17 @@ function SimPortfolio() {
                   </div>
                   <div className="text-right font-mono">
                     <div className="text-white text-[14px]">{m.cur === 'USD' ? '$' : '฿'}{fmt.n(m.price, m.price < 1 ? 4 : 2)}</div>
-                    <div 
-                      className="text-[11px]" 
+                    <div
+                      className="text-[11px]"
                       style={{ color: ch >= 0 ? 'var(--green)' : 'var(--red)' }}
                     >
                       {fmt.pct(ch, 2)}
                     </div>
                   </div>
                   <button className="btn green sm" onClick={() => setTrade({ sym: m.symbol, side: 'buy' })}>ซื้อ</button>
-                  <button 
-                    className="btn red sm ghost p-[4px_6px]" 
-                    title="ลบออกจาก Market" 
+                  <button
+                    className="btn red sm ghost p-[4px_6px]"
+                    title="ลบออกจาก Market"
                     onClick={() => confirm('ลบ ' + m.symbol + ' ออกจากรายการ?') && OfficeStore.removeFavorite(m.symbol)}
                   >
                     ✕
@@ -180,8 +180,8 @@ function TxnLog() {
         {s.txns.map((t, i) => (
           <div key={i} className="flex gap-2 items-center">
             <span className="text-text-mute">{t.t}</span>
-            <span 
-              className="w-8.5" 
+            <span
+              className="w-8.5"
               style={{ color: t.type === 'BUY' ? 'var(--green)' : 'var(--red)' }}
             >
               {t.type === 'BUY' ? 'ซื้อ' : 'ขาย'}
@@ -204,12 +204,12 @@ function TradeModal({ sym, side, onClose }) {
   const m = s.market[sym];
   const held = s.holdings.find(h => h.symbol === sym);
   const [mode, setMode] = useS(side);
-  
+
   const initialQty = m.cls === 'CRYPTO' ? 0.01 : 1;
   const [qty, setQty] = useS(String(initialQty));
   const [costStr, setCostStr] = useS(String(initialQty * m.price));
   const [err, setErr] = useS('');
-  
+
   const handleQtyChange = (v) => {
     setQty(v);
     const n = parseFloat(v);
@@ -242,13 +242,13 @@ function TradeModal({ sym, side, onClose }) {
   const cost = parseFloat(costStr) || 0;
   const ccy = m.cur === 'USD' ? 'usd' : 'thb';
   const cash = s.cash[ccy];
-  
+
   const go = () => {
     const r = mode === 'buy' ? OfficeStore.buy(sym, q) : OfficeStore.sell(sym, q);
     if (!r.ok) { setErr(r.msg); return; }
     onClose();
   };
-  
+
   return (
     <Modal title={(mode === 'buy' ? 'ซื้อ ' : 'ขาย ') + sym} onClose={onClose} width={440}>
       <div className="flex items-center justify-between mb-3.5">
@@ -265,7 +265,7 @@ function TradeModal({ sym, side, onClose }) {
         <button className={'btn ' + (mode === 'buy' ? 'green' : 'ghost')} style={{ flex: 1 }} onClick={() => { setMode('buy'); setErr(''); }}>ซื้อ</button>
         <button className={'btn ' + (mode === 'sell' ? 'red' : 'ghost')} style={{ flex: 1 }} onClick={() => { setMode('sell'); setErr(''); }}>ขาย</button>
       </div>
-      
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="lbl">จำนวนหุ้น{held ? ' · มี ' + fmt.n(held.qty, held.qty < 1 ? 4 : 0) : ''}</label>
@@ -276,7 +276,7 @@ function TradeModal({ sym, side, onClose }) {
           <input className="fld" type="number" value={costStr} onChange={e => handleCostChange(e.target.value)} step="any" min="0" />
         </div>
       </div>
-      
+
       <div className="flex gap-1.5 mt-2">
         <button className="btn ghost sm flex-1" onClick={() => setPercent(0.25)}>25%</button>
         <button className="btn ghost sm flex-1" onClick={() => setPercent(0.50)}>50%</button>
@@ -299,10 +299,10 @@ function DepositModal({ onClose }) {
   const [s] = useOffice();
   const [ccy, setCcy] = useS('thb');
   const [mode, setMode] = useS('set');
-  
+
   // Keep input in sync with current balance when switching currency or mode (if in set mode)
   const [amt, setAmt] = useS(String(s.cash.thb));
-  
+
   useE(() => {
     if (mode === 'set') setAmt(String(s.cash[ccy]));
     else setAmt('100000');
@@ -311,7 +311,7 @@ function DepositModal({ onClose }) {
   return (
     <Modal title="จัดการงบประมาณ (Budget)" onClose={onClose} width={420}>
       <p className="text-text-dim text-[13px] mt-0">ตั้งค่ายอดเงินสดคงเหลือ หรือเติมเงินจำลองเข้าพอร์ต</p>
-      
+
       <div className="flex gap-2 mb-3.5">
         <button className={'btn ' + (mode === 'set' ? 'cyan' : 'ghost')} style={{ flex: 1 }} onClick={() => setMode('set')}>✎ แก้ไขยอดใหม่</button>
         <button className={'btn ' + (mode === 'add' ? 'gold' : 'ghost')} style={{ flex: 1 }} onClick={() => setMode('add')}>＋ เติมเงินเพิ่ม</button>
@@ -321,10 +321,10 @@ function DepositModal({ onClose }) {
         <button className={'btn ' + (ccy === 'thb' ? 'ghost on' : 'ghost')} style={{ flex: 1 }} onClick={() => setCcy('thb')}>บาท ฿</button>
         <button className={'btn ' + (ccy === 'usd' ? 'ghost on' : 'ghost')} style={{ flex: 1 }} onClick={() => setCcy('usd')}>ดอลลาร์ $</button>
       </div>
-      
+
       <label className="lbl">จำนวนเงิน</label>
       <input className="fld" type="number" value={amt} onChange={e => setAmt(e.target.value)} />
-      
+
       <div className="flex gap-1.5 mt-2">
         {(ccy === 'thb' ? [0, 50000, 100000, 500000, 1000000] : [0, 1000, 5000, 10000, 50000]).map(x => (
           <button key={x} className="btn ghost sm" onClick={() => setAmt(String(x))}>
@@ -332,9 +332,9 @@ function DepositModal({ onClose }) {
           </button>
         ))}
       </div>
-      
-      <button 
-        className={'w-full mt-4.5 btn ' + (mode === 'add' ? 'gold' : 'cyan')} 
+
+      <button
+        className={'w-full mt-4.5 btn ' + (mode === 'add' ? 'gold' : 'cyan')}
         onClick={() => {
           const val = parseFloat(amt) || 0;
           if (mode === 'add') OfficeStore.deposit(ccy, val);
@@ -351,7 +351,7 @@ function DepositModal({ onClose }) {
 function MarketSearch() {
   const [q, setQ] = useS('');
   const [results, setResults] = useS([]);
-  
+
   useE(() => {
     if (q.trim().length < 1) { setResults([]); return; }
     const timer = setTimeout(async () => {
@@ -361,7 +361,7 @@ function MarketSearch() {
           const data = await res.json();
           setResults(data.quotes || []);
         }
-      } catch (e) {}
+      } catch (e) { }
     }, 400);
     return () => clearTimeout(timer);
   }, [q]);
@@ -371,15 +371,15 @@ function MarketSearch() {
     if (r.quoteType === 'CRYPTOCURRENCY') cls = 'CRYPTO';
     else if (r.exchDisp === 'SET') cls = 'SET';
     else if (r.quoteType === 'MUTUALFUND' || r.quoteType === 'ETF') cls = 'FUND';
-    
+
     OfficeStore.addFavorite({
-       symbol: r.symbol,
-       name: r.shortname || r.longname || r.symbol,
-       cls: cls,
-       price: 1, 
-       cur: (cls === 'SET' || cls === 'FUND') ? 'THB' : 'USD',
-       prevClose: 1,
-       seed: 1
+      symbol: r.symbol,
+      name: r.shortname || r.longname || r.symbol,
+      cls: cls,
+      price: 1,
+      cur: (cls === 'SET' || cls === 'FUND') ? 'THB' : 'USD',
+      prevClose: 1,
+      seed: 1
     });
     setQ('');
     setResults([]);
@@ -387,21 +387,21 @@ function MarketSearch() {
 
   return (
     <div className="mb-3">
-      <input 
-        className="fld" 
-        placeholder="🔍 ค้นหาชื่อหุ้น, คริปโต (เช่น AAPL, BTC)..." 
-        value={q} 
-        onChange={e => setQ(e.target.value)} 
+      <input
+        className="fld"
+        placeholder="🔍 ค้นหาชื่อหุ้น, คริปโต (เช่น AAPL, BTC)..."
+        value={q}
+        onChange={e => setQ(e.target.value)}
       />
-      
+
       {results.length > 0 && (
         <div className="bg-[#080a12] border border-line rounded-lg mt-2 max-h-[300px] overflow-auto shadow-[0_4px_12px_rgba(0,0,0,0.3)]">
           <div className="p-[6px_12px] bg-white/5 text-[11px] text-text-dim border-b border-line">
             ผลการค้นหา (คลิกเพื่อเพิ่มลง Market)
           </div>
           {results.map((r, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="p-[8px_12px] cursor-pointer border-b border-white/5 flex justify-between hover:bg-[#283c8c]/30 transition-colors duration-200"
               onClick={() => add(r)}
             >
@@ -430,15 +430,15 @@ function LiveTrading() {
 
   return (
     <div>
-      <PageHead 
-        title="ลงทุนจริง · LIVE" 
+      <PageHead
+        title="ลงทุนจริง · LIVE"
         sub="เชื่อม TradingView เพื่อรันบอทเทรดอัตโนมัติ — ส่วนนี้กำลังพัฒนา ตั้งค่าล่วงหน้าได้"
         right={
-          <span 
+          <span
             className="chip px-[11px] py-1.5"
-            style={{ 
-              color: L.connected ? 'var(--green)' : 'var(--gold)', 
-              borderColor: (L.connected ? 'var(--green)' : 'var(--gold)') + '66' 
+            style={{
+              color: L.connected ? 'var(--green)' : 'var(--gold)',
+              borderColor: (L.connected ? 'var(--green)' : 'var(--gold)') + '66'
             }}
           >
             <span className={'mr-0.5 sdot s-' + (L.connected ? 'working' : 'idle')}></span>
@@ -486,8 +486,8 @@ function LiveTrading() {
           </div>
           <div className="font-mono text-[10px] text-text-mute mt-1.5">วาง URL นี้ในช่อง Webhook ของ Alert บน TradingView</div>
 
-          <button 
-            className={'btn ' + (L.connected ? 'red' : 'green')} 
+          <button
+            className={'btn ' + (L.connected ? 'red' : 'green')}
             style={{ width: '100%', marginTop: 16 }}
             disabled={!canConnect && !L.connected}
             onClick={() => { upd({ connected: !L.connected, botOn: false }); window.electronAPI?.saveLog('info', 'Exchange connection status: ' + (!L.connected ? 'Connected' : 'Disconnected')); }}
@@ -499,11 +499,11 @@ function LiveTrading() {
         {/* BOT CONFIG */}
         <div className="flex flex-col gap-3.5">
           <Win title="BOT CONTROL · ตั้งค่าบอท" bodyStyle={{ padding: 16 }}>
-            <div 
+            <div
               className="flex items-center justify-between p-[12px_14px] rounded-[9px] mb-3.5"
-              style={{ 
-                background: L.botOn ? 'rgba(60,229,148,.08)' : 'rgba(8,10,18,.5)', 
-                border: '1px solid ' + (L.botOn ? 'rgba(60,229,148,.4)' : 'var(--line)') 
+              style={{
+                background: L.botOn ? 'rgba(60,229,148,.08)' : 'rgba(8,10,18,.5)',
+                border: '1px solid ' + (L.botOn ? 'rgba(60,229,148,.4)' : 'var(--line)')
               }}
             >
               <div>
@@ -532,15 +532,15 @@ function LiveTrading() {
       </div>
 
       {/* CHART */}
-      <Win 
-        title="TRADINGVIEW CHART" 
-        className="mt-3.5" 
+      <Win
+        title="TRADINGVIEW CHART"
+        className="mt-3.5"
         right={<span className="tag mr-1.5">{L.exchange}</span>}
         bodyStyle={{ padding: 0 }}
       >
         <div className="relative h-[300px]">
-          <image-slot 
-            id="tv-chart" 
+          <image-slot
+            id="tv-chart"
             shape="rect"
             placeholder="ฝังกราฟ TradingView ที่นี่ (วางสกรีนช็อต/วิดเจ็ตกราฟ)"
             className="absolute inset-0 w-full h-full"
@@ -553,17 +553,17 @@ function LiveTrading() {
 
 function Toggle({ on, disabled, onClick }) {
   return (
-    <div 
-      onClick={() => !disabled && onClick()} 
+    <div
+      onClick={() => !disabled && onClick()}
       className="w-[50px] h-7 rounded-[14px] relative transition-all duration-150 flex-none"
-      style={{ 
-        cursor: disabled ? 'not-allowed' : 'pointer', 
-        background: on ? 'var(--green)' : '#2a3650', 
-        opacity: disabled ? 0.4 : 1, 
-        border: '1px solid ' + (on ? 'var(--green)' : 'var(--line)') 
+      style={{
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        background: on ? 'var(--green)' : '#2a3650',
+        opacity: disabled ? 0.4 : 1,
+        border: '1px solid ' + (on ? 'var(--green)' : 'var(--line)')
       }}
     >
-      <div 
+      <div
         className="absolute top-0.5 w-[22px] h-[22px] rounded-[50%] bg-white transition-all duration-150 shadow-[0_2px_4px_rgba(0,0,0,0.4)]"
         style={{ left: on ? 24 : 2 }}
       />
@@ -578,13 +578,13 @@ function SliderRow({ label, value, unit, min, max, step, onChange, compact }) {
         <span className="text-[13px] text-text-dim">{label}</span>
         <span className="font-mono text-[14px] text-cyan">{unit === '$' ? '$' + fmt.compact(value) : value + unit}</span>
       </div>
-      <input 
-        type="range" 
-        min={min} 
-        max={max} 
-        step={step} 
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
         value={value}
-        onChange={e => onChange(parseFloat(e.target.value))} 
+        onChange={e => onChange(parseFloat(e.target.value))}
         className="w-full"
         style={{ accentColor: 'var(--cyan)' }}
       />
