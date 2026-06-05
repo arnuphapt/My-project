@@ -36,6 +36,10 @@ def upload_asset(upload: schemas.AssetUpload):
         folder = "identity"
     elif upload.id.startswith("proj-"):
         folder = "projects"
+    elif upload.id.startswith("asset-"):
+        parts = upload.id.split("-")
+        if len(parts) >= 2:
+            folder = parts[1]
         
     assets_dir = os.path.join(os.path.dirname(__file__), "..", "agent-app", "src", "assets", folder)
     os.makedirs(assets_dir, exist_ok=True)
@@ -55,6 +59,33 @@ def upload_asset(upload: schemas.AssetUpload):
         
     # Return the relative Vite path so the browser can load it correctly
     return {"url": f"/src/assets/{folder}/{filename}"}
+
+@app.get("/assets/list")
+def list_assets():
+    import os
+    assets_dir = os.path.join(os.path.dirname(__file__), "..", "agent-app", "src", "assets")
+    
+    files_by_folder = {}
+    if os.path.exists(assets_dir):
+        for root, dirs, files in os.walk(assets_dir):
+            if "node_modules" in root or ".git" in root:
+                continue
+            
+            rel_path = os.path.relpath(root, assets_dir)
+            if rel_path == ".":
+                folder_key = "root"
+            else:
+                folder_key = rel_path.replace("\\", "/")
+                
+            file_list = []
+            for f in files:
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg')):
+                    file_list.append(f"/src/assets/{folder_key}/{f}" if folder_key != "root" else f"/src/assets/{f}")
+            
+            if file_list:
+                files_by_folder[folder_key] = file_list
+                
+    return files_by_folder
 
 @app.get("/proxy/yfinance/{symbol}")
 def proxy_yfinance(symbol: str):

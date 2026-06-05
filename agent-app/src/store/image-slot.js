@@ -118,7 +118,7 @@
     
     saving = true;
     const payload = { key: 'image_slots', value: JSON.stringify(slots) };
-    promise = fetch('http://127.0.0.1:8000/settings/', {
+    const promise = fetch('http://127.0.0.1:8000/settings/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -253,7 +253,7 @@
         '  <img part="image" alt="" draggable="false" style="display:none">' +
         '  <div class="empty" part="empty">' + icon +
         '    <div class="cap"></div>' +
-        '    <div class="sub">or <u data-act="browse-files">browse files</u> / <u data-act="browse-assets">assets</u></div></div>' +
+        '    <div class="sub">or <u>browse files</u></div></div>' +
         '  <div class="ring" part="ring"></div>' +
         '</div>' +
         '<div class="spill">' +
@@ -282,14 +282,7 @@
       // disconnect/reconnect (e.g. React remount) doesn't stack handlers.
       this._empty.addEventListener('click', (e) => {
         if (!this.hasAttribute('data-editable')) return;
-        const act = e.target && e.target.getAttribute && e.target.getAttribute('data-act');
-        if (act === 'browse-assets') {
-          e.stopPropagation();
-          const evt = new CustomEvent('browse-assets', { detail: { id: this.id } });
-          window.dispatchEvent(evt);
-        } else {
-          this._input.click();
-        }
+        this._input.click();
       });
       root.addEventListener('click', (e) => {
         if (!this.hasAttribute('data-editable')) return;
@@ -640,7 +633,7 @@
       // Content. The sidecar is also writable by the agent's write_file
       // tool, so its value isn't guaranteed canvas-originated. We accept data:image/ and file:///
       let stored = this.id ? getSlot(this.id) : this._local;
-      if (stored && stored.u && !/^data:image\//i.test(stored.u) && !/^file:\/\//i.test(stored.u)) stored = null;
+      if (stored && stored.u && !/^data:image\//i.test(stored.u) && !/^file:\/\//i.test(stored.u) && !/^\//.test(stored.u) && !/^http/i.test(stored.u)) stored = null;
       const srcAttr = this.getAttribute('src') || '';
       this._userUrl = (stored && stored.u) || null;
       const url = this._userUrl || srcAttr;

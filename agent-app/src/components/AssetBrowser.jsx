@@ -7,23 +7,14 @@ export function AssetBrowser({ onClose, onSelect }) {
   const [loading, setLoading] = useS(true);
 
   useE(() => {
-    fetch('http://127.0.0.1:8000/settings/')
+    fetch('http://127.0.0.1:8000/assets/list')
       .then(res => res.json())
-      .then(arr => {
-        const item = arr.find(x => x.key === 'image_slots');
-        if (item && item.value) {
-          const slots = JSON.parse(item.value);
-          const urls = [];
-          for (const key in slots) {
-            if (key.startsWith('asset-')) {
-              const val = slots[key];
-              const u = typeof val === 'string' ? val : val.u;
-              if (u) urls.push(u);
-            }
-          }
-          // Remove duplicates
-          setAssets([...new Set(urls)].reverse());
+      .then(data => {
+        const urls = [];
+        for (const folder in data) {
+          urls.push(...data[folder]);
         }
+        setAssets(urls.reverse());
         setLoading(false);
       })
       .catch(err => {

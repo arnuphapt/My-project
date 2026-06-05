@@ -170,7 +170,10 @@ function Settings() {
                     {(cfg.sysName1 || 'M').trim()[0] || 'M'}
                   </div>
                 </div>
-                <div className="font-mono text-[10px] text-text-mute mt-1.5 text-center w-[88px]">ลากรูปมาวาง</div>
+                <div className="flex flex-col items-center mt-1.5 w-[88px]">
+                  <div className="font-mono text-[10px] text-text-mute">ลากรูปมาวาง</div>
+                  <button className="text-[10px] text-cyan hover:underline mt-0.5" onClick={() => window.dispatchEvent(new CustomEvent('browse-assets', { detail: { id: 'sys-logo' } }))}>เลือกจาก Assets</button>
+                </div>
               </div>
               <div className="flex-1">
                 <label className="lbl">ชื่อระบบ</label>
@@ -240,6 +243,9 @@ function Settings() {
                 <label className="lbl">รูปโปรไฟล์</label>
                 <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border-2 border-[#ff5168] shadow-[0_0_14px_rgba(255,81,104,0.4)]">
                   <image-slot id="player-avatar" editable="true" shape="rounded" radius="12" placeholder="YOU" className="absolute inset-0 w-[72px] h-[72px]"/>
+                </div>
+                <div className="flex justify-center mt-1.5 w-[72px]">
+                  <button className="text-[10px] text-cyan hover:underline leading-tight text-center" onClick={() => window.dispatchEvent(new CustomEvent('browse-assets', { detail: { id: 'player-avatar' } }))}>เลือกจาก<br/>Assets</button>
                 </div>
               </div>
               <div className="flex-1">
