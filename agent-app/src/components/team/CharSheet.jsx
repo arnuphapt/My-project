@@ -51,7 +51,7 @@ export function CharSheet({ a, onBack }) {
             <div className="inner" style={{ aspectRatio: '1 / 1' }}>
               <image-slot id={a.isCeo ? 'player-avatar' : 'card-' + a.id} shape="rect" placeholder={a.name}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}/>
-              <div className="lp" style={{ fontSize: 64, color: m.col, textShadow: '0 0 26px ' + m.glow }}>{a.name[0]}</div>
+              <div className="slot-letter lp" style={{ fontSize: 64, color: m.col, textShadow: '0 0 26px ' + m.glow }}>{a.name[0]}</div>
             </div>
           </div>
           <div style={{ textAlign: 'center' }}>

@@ -11,7 +11,7 @@ function OrgAva({ slot, letter, c }) {
     <div className="org-ava" style={{ '--c': c }}>
       <image-slot id={slot} shape="circle" placeholder={letter}
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}></image-slot>
-      <div className="lp">{letter}</div>
+      <div className="slot-letter lp">{letter}</div>
     </div>
   );
 }

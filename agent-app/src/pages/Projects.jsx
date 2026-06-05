@@ -275,7 +275,7 @@ function CreateProject({ onClose }) {
   };
 
   return (
-    <Modal title="เพิ่มโปรเจกต์ใหม่" onClose={onClose} width={500}>
+    <Modal title="เพิ่มโปรเจกต์ใหม่" th={true} onClose={onClose} width={500}>
       <label className="lbl">ชื่อโปรเจกต์</label>
       <input className="fld" placeholder="เช่น AI Trading Dashboard" value={title} onChange={e => setTitle(e.target.value)} />
       <div className="flex gap-2.5 mt-3">

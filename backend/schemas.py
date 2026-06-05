@@ -16,6 +16,7 @@ class AgentBase(BaseModel):
     salary: Optional[float] = 0.5
     desc: str
     model: Optional[str] = "sonnet"
+    effort: Optional[int] = 4
     skillMd: Optional[str] = ""
 
 class AgentCreate(AgentBase):

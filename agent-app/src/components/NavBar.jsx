@@ -46,9 +46,9 @@ export function NavBar(){
     <div className="nav">
       <div onClick={() => goTo('settings')} title="ตั้งค่าระบบ" className="flex items-center gap-2.5 mr-3.5 min-w-0 cursor-pointer">
         <div className="w-[38px] h-[38px] rounded-[9px] relative flex-none border border-[#2f456e] shadow-[0_4px_12px_rgba(0,0,0,0.4)] overflow-hidden bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[14px] text-white">{logoLetter}</div>
           <image-slot id="sys-logo" shape="rounded" radius="8" placeholder=""
             className="absolute inset-0 w-[38px] h-[38px]"></image-slot>
+          <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[14px] text-white">{logoLetter}</div>
         </div>
         <div className="leading-[1.2] min-w-0">
           <div className="font-pixel text-[10px] text-white tracking-[1px]">{cfg.sysName1 || 'MY'}</div>

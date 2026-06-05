@@ -23,7 +23,7 @@ export function CharCard({ a, onClick }) {
       <div style={{ position: 'relative', aspectRatio: '1 / 1', background: '#0a0e1c' }}>
         <image-slot id={a.isCeo ? 'player-avatar' : 'card-' + a.id} shape="rect" placeholder={a.name}
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}/>
-        <div style={{
+        <div className="slot-letter" style={{
           position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
           pointerEvents: 'none', fontFamily: 'var(--pixel)', fontSize: 40, color: m.col, textShadow: '0 0 18px ' + m.glow,
         }}>{a.name[0]}</div>

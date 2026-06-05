@@ -17,9 +17,9 @@ export const DEFAULT_MODELS = {
 };
 
 export const DEFAULT_MODEL_INFO = {
-  opus:   { label: 'Claude Opus',   tier: 'FRONTIER', col: '#ffce4a', glow: 'rgba(255,206,74,.35)', desc: 'ฉลาดสูงสุด · เหมาะกับงานซับซ้อน' },
-  sonnet: { label: 'Claude Sonnet', tier: 'BALANCED', col: '#b06bff', glow: 'rgba(176,107,255,.35)', desc: 'สมดุลความเร็ว-คุณภาพ · ใช้งานทั่วไป' },
-  haiku:  { label: 'Claude Haiku',  tier: 'SWIFT',    col: '#4db4ff', glow: 'rgba(77,180,255,.35)', desc: 'เร็วที่สุด · งานเบา ตอบไว' },
+  opus:   { label: 'Claude Opus',   tier: 'FRONTIER', col: '#ffce4a', glow: 'rgba(255,206,74,.35)', desc: 'ฉลาดสูงสุด · เหมาะกับงานซับซ้อน', max: 5 },
+  sonnet: { label: 'Claude Sonnet', tier: 'BALANCED', col: '#b06bff', glow: 'rgba(176,107,255,.35)', desc: 'สมดุลความเร็ว-คุณภาพ · ใช้งานทั่วไป', max: 4 },
+  haiku:  { label: 'Claude Haiku',  tier: 'SWIFT',    col: '#4db4ff', glow: 'rgba(77,180,255,.35)', desc: 'เร็วที่สุด · งานเบา ตอบไว', max: 0 },
 };
 
 export const DEFAULT_ROLE_PRESETS = [
@@ -33,6 +33,12 @@ export const DEFAULT_ROLE_PRESETS = [
   { en: 'RESEARCHER', th: 'นักวิจัย',    icon: '🔬', desc: 'ค้นคว้า สรุป รายงาน' },
 ];
 
+export const DEFAULT_PSTATUS = {
+  'กำลังทำ': ['#ffce4a', 'r-legend'],
+  'เสร็จแล้ว': ['#3ce594', 'r-rare'],
+  'พัก': ['#9aa6cf', 'r-common'],
+};
+
 /** Get current team config from store (or defaults) */
 export function getTeamCfg() {
   const custom = OfficeStore.getState().settings?.teamConfig || {};
@@ -41,6 +47,7 @@ export function getTeamCfg() {
     MODELS: custom.MODELS || DEFAULT_MODELS,
     MODEL_INFO: custom.MODEL_INFO || DEFAULT_MODEL_INFO,
     ROLE_PRESETS: custom.ROLE_PRESETS || DEFAULT_ROLE_PRESETS,
+    PSTATUS: custom.PSTATUS || DEFAULT_PSTATUS,
   };
 }
 
@@ -68,4 +75,7 @@ export function abilityDesc(a, skill) {
 if (typeof window !== 'undefined') {
   Object.defineProperty(window, 'SENIOR', { get: () => getTeamCfg().SENIOR });
   Object.defineProperty(window, 'MODELS', { get: () => getTeamCfg().MODELS });
+  Object.defineProperty(window, 'MODEL_INFO', { get: () => getTeamCfg().MODEL_INFO });
+  Object.defineProperty(window, 'ROLE_PRESETS', { get: () => getTeamCfg().ROLE_PRESETS });
+  Object.defineProperty(window, 'PSTATUS', { get: () => getTeamCfg().PSTATUS });
 }

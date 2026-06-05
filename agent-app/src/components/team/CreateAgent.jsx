@@ -58,8 +58,14 @@ export function CreateAgent({ onClose }) {
     setSaving(true);
     const nm = name.trim() || 'Agent';
     const id = nm.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString().slice(-4);
+    const sm = cfg.SENIOR[seniority];
     const rarityMap = { ceo: 'legend', secretary: 'legend', senior: 'legend', mid: 'epic', junior: 'rare', newgrad: 'common' };
-    const newAgent  = { id, name: nm, roleEn, roleTh, rarity: rarityMap[seniority] || 'rare', seniority, status: 'idle', lv: 1, salary: 0.5, desc: 'พนักงานใหม่ พร้อมรับงาน ' + roleTh, model, skillMd: `# ${nm}'s Skills\n\n- **${roleTh}** — ทักษะพื้นฐาน` };
+    const newAgent  = { 
+      id, name: nm, roleEn, roleTh, rarity: sm.en || rarityMap[seniority] || 'rare', seniority, 
+      status: 'idle', lv: 1, salary: 0.5, desc: 'พนักงานใหม่ พร้อมรับงาน ' + roleTh, model, 
+      effort: (mm.max || 4),
+      skillMd: `# ${nm}'s Skills\n\n- **${roleTh}** — ทักษะพื้นฐาน` 
+    };
     try {
       await createAgent(newAgent);
       window.electronAPI?.saveLog('info', 'Created new agent: ' + nm);
@@ -137,7 +143,7 @@ export function CreateAgent({ onClose }) {
             {/* STEP 1 — model */}
             {step === 1 && (
               <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>เลือก AI Model</div>
+                <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>เลือก AI Model <span style={{color:'var(--text-mute)',fontWeight:400,textTransform:'none'}}>(โมเดลที่ใช้ กำหนดเพดานความทุ่มเท)</span></div>
                 {Object.keys(cfg.MODEL_INFO).map(mk => {
                   const mi = cfg.MODEL_INFO[mk]; const active = model === mk;
                   return (
@@ -148,6 +154,7 @@ export function CreateAgent({ onClose }) {
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <span style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 15, color: active ? 'var(--white)' : 'var(--text-dim)' }}>{mi.label}</span>
                           <span style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, padding: '3px 7px', borderRadius: 4, color: '#000', background: mi.col }}>{mi.tier}</span>
+                          <span style={{ fontFamily: 'var(--mono)', fontSize: 9, opacity: 0.7, color: mi.col }}>{mi.max > 0 ? '★'.repeat(mi.max) : '—'}</span>
                         </div>
                         <div style={{ fontFamily: 'var(--thai)', fontSize: 13, color: 'var(--text-mute)', lineHeight: 1.4 }}>{mi.desc}</div>
                       </div>

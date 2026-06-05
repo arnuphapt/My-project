@@ -1,6 +1,7 @@
 import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../../store';
 import { updateAgent, deleteAgent } from '../../api/agents.js';
+import { getTeamCfg } from './teamConfig.js';
 
 /* ── Agent Chat ── */
 export function AgentChat({ a }) {
@@ -110,11 +111,15 @@ export function AgentTasks({ a }) {
 export function AgentProfile({ a }) {
   const [role, setRole] = useS(a.roleTh);
   const [desc, setDesc] = useS(a.desc);
+  const [effort, setEffort] = useS(a.effort || 1);
   const skills = a.skills || [];
+  const cfg = getTeamCfg();
+  const modelInfo = cfg.MODEL_INFO[a.model] || cfg.MODEL_INFO.sonnet;
+  const curMax = modelInfo.max || 0;
 
   const save = async () => {
     try {
-      await updateAgent(a.id, { ...a, roleTh: role, desc });
+      await updateAgent(a.id, { ...a, roleTh: role, desc, effort });
       window.electronAPI?.saveLog('info', 'Updated agent profile: ' + a.name);
       OfficeStore.syncBackendData();
     } catch (err) { console.error(err); alert('Failed to update agent'); }
@@ -140,6 +145,17 @@ export function AgentProfile({ a }) {
       <input  className="fld" value={role} onChange={e => setRole(e.target.value)}/>
       <label className="lbl mt-3">คำอธิบายหน้าที่</label>
       <textarea className="fld" rows="3" value={desc} onChange={e => setDesc(e.target.value)}/>
+      <label className="lbl mt-3">ตั้งระดับความทุ่มเท (Effort)</label>
+      {curMax > 0 
+        ? <div style={{display:'flex', gap:6, marginTop:6}}>
+            {Array.from({length: curMax}).map((_, i) => {
+              const v = i + 1;
+              return <button key={v} className={'btn sm ' + (effort === v ? '' : 'ghost')} onClick={() => setEffort(v)}
+                style={{flex:1, ...(effort === v ? {borderColor: modelInfo.col, color: modelInfo.col} : {})}}>{v}★</button>;
+            })}
+          </div>
+        : <div style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--text-mute)', padding:'7px 2px'}}>— โมเดลนี้ทำงานแบบเร็ว ไม่นับ effort</div>
+      }
       <div className="flex gap-2 mt-4">
         <button className="btn green flex-1" onClick={save}>บันทึก</button>
         <button className="btn red"          onClick={fire}>ปลดออก</button>

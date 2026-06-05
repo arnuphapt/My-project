@@ -14,6 +14,30 @@ const ACCENTS = [
   ['rose', '#ff6b9d', 'ชมพู'],
   ['custom', '', 'กำหนดเอง'],
 ];
+const PALETTE = ['#ff5168','#ff8a3d','#ffce4a','#3ce594','#2fe0c2','#46b6ff','#7c5cff','#b06bff','#ff6b9d','#9aa6cf'];
+
+function Swatch({ value, onChange }) {
+  const [open, setOpen] = useS(false);
+  return (
+    <div className="relative flex-none">
+      <button onClick={() => setOpen(o => !o)} title="เลือกสี"
+        className="w-[30px] h-[30px] rounded-[7px] cursor-pointer"
+        style={{ background: value, border: '2px solid ' + (open ? '#fff' : 'rgba(255,255,255,.25)'), boxShadow: '0 0 10px ' + value + '66' }}></button>
+      {open && (
+        <>
+          <div onClick={() => setOpen(false)} className="fixed inset-0 z-[40]"></div>
+          <div className="absolute top-[36px] left-0 z-[41] grid grid-cols-5 gap-1.5 p-2 bg-panel-solid border border-line-bright rounded-[9px] shadow-[0_8px_24px_rgba(0,0,0,.5)] w-[166px]">
+            {PALETTE.map(c => (
+              <button key={c} onClick={() => { onChange(c); setOpen(false); }}
+                className="w-6 h-6 rounded-md cursor-pointer"
+                style={{ background: c, border: value === c ? '2px solid #fff' : '2px solid transparent' }}></button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 function Settings() {
   const [s] = useOffice();
@@ -31,8 +55,6 @@ function Settings() {
     saveTimeout.current = setTimeout(async () => {
       try {
         for (const [key, val] of Object.entries(patch)) {
-          // If val is an object (like teamConfig), we must stringify it or handle it properly in backend.
-          // Assuming saveSetting handles strings best, we JSON.stringify objects.
           const toSave = typeof val === 'object' ? JSON.stringify(val) : String(val);
           await saveSetting(key, toSave);
         }
@@ -46,6 +68,34 @@ function Settings() {
   };
 
   const F = (key, val) => upd({ [key]: val });
+  
+  // Helpers for nested team config
+  const tc = cfg.teamConfig || getTeamCfg();
+  const setSeniority = (tier, field, val) => {
+    const updated = { ...tc.SENIOR, [tier]: { ...tc.SENIOR[tier], [field]: val } };
+    F('teamConfig', { ...tc, SENIOR: updated });
+  };
+  const setModel = (m, field, val) => {
+    const updated = { ...tc.MODEL_INFO, [m]: { ...tc.MODEL_INFO[m], [field]: val } };
+    F('teamConfig', { ...tc, MODEL_INFO: updated });
+  };
+  const setPStatus = (k, val) => {
+    const updated = { ...tc.PSTATUS, [k]: [val, tc.PSTATUS[k][1]] };
+    F('teamConfig', { ...tc, PSTATUS: updated });
+  };
+  
+  const presets = Array.isArray(tc.ROLE_PRESETS) && tc.ROLE_PRESETS.length ? tc.ROLE_PRESETS : (window.ROLE_PRESETS || []);
+  const ps = tc.PSTATUS || window.PSTATUS || {};
+
+  const [npEn, setNpEn] = useS(''); const [npTh, setNpTh] = useS('');
+  const addPreset = () => { 
+    const en = (npEn.trim() || npTh.trim()).toUpperCase(); 
+    const th = npTh.trim() || npEn.trim();
+    if (!th) return; 
+    F('teamConfig', { ...tc, ROLE_PRESETS: [...presets, { en, th, icon: '✨', desc: 'รายละเอียด' }] }); 
+    setNpEn(''); setNpTh(''); 
+  };
+  const delPreset = i => F('teamConfig', { ...tc, ROLE_PRESETS: presets.filter((_, j) => j !== i) });
 
   const [geminiKey, setGeminiKey] = useS('');
 
@@ -94,32 +144,30 @@ function Settings() {
       <div className="grid grid-cols-[1fr_1fr] gap-4 items-start">
         {/* ---------- LEFT COLUMN ---------- */}
         <div className="flex flex-col gap-4">
-          
           <Win title="SYSTEM IDENTITY" bodyStyle={{ padding: 18 }}>
             <SecTitle>ตัวตนของระบบ</SecTitle>
-
             <div className="flex gap-4 items-start mb-4">
               <div className="flex-none">
                 <label className="lbl">โลโก้</label>
                 <div className="w-[88px] h-[88px] rounded-xl relative overflow-hidden border border-[#2f456e] bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
+                  <image-slot id="sys-logo" shape="rounded" radius="12" className="absolute inset-0 w-[88px] h-[88px]"/>
+                  <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
                     {(cfg.sysName1 || 'M').trim()[0] || 'M'}
                   </div>
-                  <image-slot id="sys-logo" shape="rounded" radius="12" className="absolute inset-0 w-[88px] h-[88px]"/>
                 </div>
+                <div className="font-mono text-[10px] text-text-mute mt-1.5 text-center w-[88px]">ลากรูปมาวาง</div>
               </div>
-
               <div className="flex-1">
                 <label className="lbl">ชื่อระบบ</label>
                 <div className="flex gap-2">
                   <input className="fld uppercase" value={cfg.sysName1 || ''} maxLength={10} onChange={e => F('sysName1', e.target.value)} placeholder="MY"/>
                   <input className="fld uppercase" value={cfg.sysName2 || ''} maxLength={12} onChange={e => F('sysName2', e.target.value)} placeholder="OFFICE"/>
                 </div>
+                <div className="font-mono text-[10px] text-text-mute mt-1.25">2 บรรทัด — โชว์มุมซ้ายบน</div>
                 <label className="lbl mt-3.25">คำโปรย (Tagline)</label>
                 <input className="fld" value={cfg.tagline || ''} onChange={e => F('tagline', e.target.value)} placeholder="ระบบจัดการชีวิตของฉัน"/>
               </div>
             </div>
-
             <label className="lbl">สีหลักของระบบ (Accent Color)</label>
             <div className="flex gap-2.25 mt-1 items-center">
               {ACCENTS.map(([id, hex, th]) => (
@@ -156,7 +204,6 @@ function Settings() {
                 />
               )}
             </div>
-            {cfg.accent === 'custom' && <div className="font-mono text-[10px] text-text-mute mt-1.5">รหัสสี: {cfg.customAccentColor || '#46b6ff'}</div>}
           </Win>
 
           <Win title="API CONFIGURATION" accent="purple" bodyStyle={{ padding: 18 }}>
@@ -167,13 +214,16 @@ function Settings() {
               บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
             </div>
           </Win>
-          
-          <Win title="MY PROFILE" accent="gold" bodyStyle={{ padding: 18 }}>
-            <SecTitle>ประวัติของฉัน</SecTitle>
+        </div>
+
+        {/* ---------- RIGHT COLUMN ---------- */}
+        <div className="flex flex-col gap-4">
+          <Win title="CEO · เจ้าของบริษัท" accent="rose" bodyStyle={{ padding: 18 }}>
+            <SecTitle>ข้อมูลเจ้าของ</SecTitle>
             <div className="flex gap-3.5 items-start mb-3.5">
               <div className="flex-none">
                 <label className="lbl">รูปโปรไฟล์</label>
-                <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border border-line">
+                <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border-2 border-[#ff5168] shadow-[0_0_14px_rgba(255,81,104,0.4)]">
                   <image-slot id="player-avatar" shape="rounded" radius="12" placeholder="YOU" className="absolute inset-0 w-[72px] h-[72px]"/>
                 </div>
               </div>
@@ -181,94 +231,126 @@ function Settings() {
                 <label className="lbl">ชื่อ-นามสกุล</label>
                 <input className="fld" value={cfg.ownerName || ''} onChange={e => F('ownerName', e.target.value)} placeholder="ชื่อของคุณ" />
                 <label className="lbl mt-2.75">ตำแหน่ง / บทบาท</label>
-                <input className="fld" value={cfg.ownerRole || ''} onChange={e => F('ownerRole', e.target.value)} placeholder="เช่น Founder / Developer" />
+                <input className="fld" value={cfg.ownerRole || ''} onChange={e => F('ownerRole', e.target.value)} placeholder="เช่น Founder / CEO" />
               </div>
             </div>
-            <label className="lbl mt-3.25">เกี่ยวกับฉัน (Bio)</label>
-            <textarea className="fld" rows="3" value={cfg.bio || ''} onChange={e => F('bio', e.target.value)} placeholder="เล่าสั้นๆ ว่าคุณคือใคร"/>
-          </Win>
-        </div>
-
-        {/* ---------- RIGHT COLUMN ---------- */}
-        <div className="flex flex-col gap-4">
-          <Win title="TEAM CONFIGURATION" accent="cyan" bodyStyle={{ padding: 18 }}>
-            <SecTitle>จัดการข้อมูลการจ้างพนักงาน (Create Agent Modal)</SecTitle>
-            <TeamConfigEditor teamConfig={cfg.teamConfig || getTeamCfg()} onUpdate={(newCfg) => F('teamConfig', newCfg)} />
+            <label className="lbl">เกี่ยวกับฉัน (Bio)</label>
+            <textarea className="fld" rows="3" value={cfg.bio || ''} onChange={e => F('bio', e.target.value)} placeholder="เล่าสั้นๆ ว่าคุณคือใคร ถนัดอะไร..."/>
+            <div className="font-mono text-[10.5px] text-text-mute mt-2">
+              ชื่อ/รูปนี้จะไปแสดงเป็นการ์ด CEO ในหน้า Team, Org Chart
+            </div>
           </Win>
         </div>
       </div>
-    </div>
-  );
-}
 
-/* ============ TEAM CONFIG EDITOR ============ */
-function TeamConfigEditor({ teamConfig, onUpdate }) {
-  const [tab, setTab] = useS('roles'); // roles | models | senior
-  
-  const updateRoles = (roles) => onUpdate({ ...teamConfig, ROLE_PRESETS: roles });
-  const updateModels = (models) => onUpdate({ ...teamConfig, MODEL_INFO: models });
-  const updateSenior = (senior) => onUpdate({ ...teamConfig, SENIOR: senior });
-
-  return (
-    <div>
-      <div className="flex gap-2 mb-4 p-1.25 rounded-[11px] bg-[#080a12]/60 border border-line w-fit">
-        <button className={'pf-tab' + (tab === 'roles' ? ' on' : '')} onClick={() => setTab('roles')}>บทบาท</button>
-        <button className={'pf-tab' + (tab === 'models' ? ' on' : '')} onClick={() => setTab('models')}>โมเดล AI</button>
-        <button className={'pf-tab' + (tab === 'senior' ? ' on' : '')} onClick={() => setTab('senior')}>ระดับ (Seniority)</button>
+      {/* ===================== SYSTEM CUSTOMIZATION ===================== */}
+      <div className="font-pixel text-[11px] tracking-[1px] text-gold my-[26px] flex items-center gap-[9px] [text-shadow:0_0_8px_rgba(255,206,74,.25)]">
+        ❖ ปรับแต่งระบบ <span className="flex-1 h-[1px] bg-line"></span>
       </div>
 
-      {tab === 'roles' && (
-        <div className="flex flex-col gap-2">
-          <div className="font-mono text-[11px] text-text-mute mb-1">ตั้งค่าตำแหน่งพนักงานที่เลือกได้ตอนจ้าง</div>
-          {teamConfig.ROLE_PRESETS.map((r, i) => (
-            <div key={i} className="flex gap-2 items-start bg-[#0b0e16] p-2 rounded-lg border border-line">
-              <input className="fld text-center px-1" style={{ width: 45, flex: 'none' }} value={r.icon} onChange={e => { const arr = [...teamConfig.ROLE_PRESETS]; arr[i].icon = e.target.value; updateRoles(arr); }} />
-              <div className="flex-1 flex flex-col gap-1.5" style={{ minWidth: 0 }}>
-                <div className="flex gap-2">
-                  <input className="fld" style={{ flex: 1, minWidth: 0 }} value={r.th} placeholder="ชื่อไทย" onChange={e => { const arr = [...teamConfig.ROLE_PRESETS]; arr[i].th = e.target.value; updateRoles(arr); }} />
-                  <input className="fld" style={{ flex: 1, minWidth: 0 }} value={r.en} placeholder="ชื่อ ENG" onChange={e => { const arr = [...teamConfig.ROLE_PRESETS]; arr[i].en = e.target.value; updateRoles(arr); }} />
+      <div className="grid grid-cols-[1fr_1fr] gap-4 items-start">
+        
+        {/* ---------- SENIORITY TIERS ---------- */}
+        <Win title="ระดับตำแหน่ง · SENIORITY" bodyStyle={{ padding: 18 }}
+          right={<span className="tag mr-1.5">สี + ชื่อ</span>}>
+          <div className="font-mono text-[11px] text-text-mute mb-3.25 leading-[1.5]">
+            ปรับชื่อและสีของแต่ละระดับ — มีผลทันทีกับการ์ดในหน้า Team และ Org Chart
+          </div>
+          <div className="flex flex-col gap-2.5">
+            {Object.keys(window.SENIOR_ORDER ? window.SENIOR_ORDER : tc.SENIOR).map(k => {
+              const t = tc.SENIOR[k];
+              if (!t) return null;
+              return (
+                <div key={k} className="flex items-center gap-[11px]">
+                  <Swatch value={t.col} onChange={c => setSeniority(k, 'col', c)}/>
+                  <input className="fld px-2.75 py-1.75 text-[13px]" value={t.label} onChange={e => setSeniority(k, 'label', e.target.value)} style={{ flex: 1, minWidth: 0 }}/>
+                  <span className="font-pixel text-[8px] tracking-[0.5px] w-[74px] text-right flex-none" style={{color: t.col}}>{t.en}</span>
                 </div>
-                <input className="fld" style={{ width: '100%' }} value={r.desc} placeholder="คำอธิบายสั้นๆ" onChange={e => { const arr = [...teamConfig.ROLE_PRESETS]; arr[i].desc = e.target.value; updateRoles(arr); }} />
-              </div>
-              <button className="btn red sm ghost p-[4px_6px] flex-none" onClick={() => { const arr = teamConfig.ROLE_PRESETS.filter((_, idx) => idx !== i); updateRoles(arr); }}>✕</button>
-            </div>
-          ))}
-          <button className="btn ghost sm mt-2" onClick={() => updateRoles([...teamConfig.ROLE_PRESETS, { en: 'NEW', th: 'ใหม่', icon: '✨', desc: 'รายละเอียด' }])}>＋ เพิ่มบทบาท</button>
-        </div>
-      )}
+              );
+            })}
+          </div>
+        </Win>
 
-      {tab === 'models' && (
-        <div className="flex flex-col gap-2">
-          <div className="font-mono text-[11px] text-text-mute mb-1">จัดการโมเดล AI ที่มีให้เลือกใช้งาน</div>
-          {Object.entries(teamConfig.MODEL_INFO).map(([key, m]) => (
-            <div key={key} className="flex flex-col gap-2 bg-[#0b0e16] p-3 rounded-lg border border-line">
-              <div className="flex gap-2 items-center">
-                <input className="fld font-mono text-[12px] text-cyan" style={{ width: 85, flex: 'none' }} value={key} disabled title="Key หลัก (เปลี่ยนไม่ได้)" />
-                <input className="fld" style={{ flex: 1, minWidth: 0 }} value={m.label} placeholder="ชื่อโมเดล" onChange={e => updateModels({ ...teamConfig.MODEL_INFO, [key]: { ...m, label: e.target.value } })} />
-                <input type="color" className="w-[30px] h-[30px] rounded cursor-pointer border-none p-0 bg-transparent flex-none" value={m.col} onChange={e => updateModels({ ...teamConfig.MODEL_INFO, [key]: { ...m, col: e.target.value, glow: e.target.value + '55' } })} />
-              </div>
-              <div className="flex gap-2">
-                <input className="fld" style={{ width: 85, flex: 'none' }} value={m.tier} placeholder="Tier" onChange={e => updateModels({ ...teamConfig.MODEL_INFO, [key]: { ...m, tier: e.target.value } })} />
-                <input className="fld" style={{ flex: 1, minWidth: 0 }} value={m.desc} placeholder="คำอธิบาย" onChange={e => updateModels({ ...teamConfig.MODEL_INFO, [key]: { ...m, desc: e.target.value } })} />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+        {/* ---------- MODELS ---------- */}
+        <Win title="โมเดล AI · MODELS" bodyStyle={{ padding: 18 }}
+          right={<span className="tag mr-1.5">ชื่อ · สี · effort</span>}>
+          <div className="font-mono text-[11px] text-text-mute mb-3.25 leading-[1.5]">
+            ตั้งชื่อโมเดล + สี และ <span className="text-gold">เพดาน effort (ดาวสูงสุด)</span> ของแต่ละรุ่น — Opus แรงสุดได้ดาวเยอะกว่า
+          </div>
+          <div className="flex flex-col gap-3.25">
+            {Object.keys(tc.MODEL_INFO).map(k => {
+              const m = tc.MODEL_INFO[k];
+              return (
+                <div key={k} className="flex flex-col gap-1.75 p-[11px_12px] bg-[#080c1a]/50 border border-line rounded-lg">
+                  <div className="flex items-center gap-2.5">
+                    <Swatch value={m.col} onChange={c => setModel(k, 'col', c)}/>
+                    <input className="fld px-2.5 py-1.75 text-[13px]" value={m.label} onChange={e => setModel(k, 'label', e.target.value)} placeholder="ชื่อย่อ" style={{ width: 90, flex: 'none' }}/>
+                    <input className="fld px-2.5 py-1.75 text-[13px]" value={m.full || m.label} onChange={e => setModel(k, 'full', e.target.value)} placeholder="ชื่อเต็ม" style={{ flex: 1, minWidth: 0 }}/>
+                  </div>
+                  <div className="flex items-center gap-2.25 mt-1">
+                    <span className="font-pixel2 font-bold text-[10px] text-text-dim tracking-[0.5px] flex-none">เพดาน EFFORT</span>
+                    <button onClick={() => setModel(k, 'max', 0)} title="ไม่มี effort"
+                      className="cursor-pointer bg-transparent rounded-[5px] px-1.75 py-0.5 font-mono text-[11px]"
+                      style={{ border: '1px solid ' + ((m.max || 0) === 0 ? m.col : 'var(--line)'), color: (m.max || 0) === 0 ? m.col : 'var(--text-mute)' }}>ปิด</button>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map(v => (
+                        <button key={v} onClick={() => setModel(k, 'max', v)}
+                          className="cursor-pointer bg-transparent border-none p-0 text-[17px] leading-none"
+                          style={{ color: v <= (m.max || 0) ? m.col : '#2a3450', textShadow: v <= (m.max || 0) ? '0 0 6px ' + m.col + '77' : 'none' }}>★</button>
+                      ))}
+                    </div>
+                    <span className="font-mono text-[12px] ml-auto" style={{ color: m.col }}>{(m.max || 0) > 0 ? ('สูงสุด ' + m.max + '★') : 'ไม่มี effort'}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Win>
 
-      {tab === 'senior' && (
-        <div className="flex flex-col gap-2">
-          <div className="font-mono text-[11px] text-text-mute mb-1">จัดการระดับ Seniority (จำนวนดาวมีผลต่อความสามารถ)</div>
-          {Object.entries(teamConfig.SENIOR).map(([key, s]) => (
-            <div key={key} className="flex gap-2 items-center bg-[#0b0e16] p-2.5 rounded-lg border border-line">
-              <div className="font-mono text-[11px] text-text-mute" style={{ width: 65, flex: 'none' }}>{key}</div>
-              <input className="fld" style={{ flex: 1, minWidth: 0 }} value={s.label} onChange={e => updateSenior({ ...teamConfig.SENIOR, [key]: { ...s, label: e.target.value } })} />
-              <input className="fld text-center" style={{ width: 45, flex: 'none' }} type="number" min="1" max="5" value={s.stars} onChange={e => updateSenior({ ...teamConfig.SENIOR, [key]: { ...s, stars: parseInt(e.target.value) || 1 } })} title="จำนวนดาว" />
-              <input type="color" className="w-[30px] h-[30px] rounded cursor-pointer border-none p-0 bg-transparent flex-none" value={s.col} onChange={e => updateSenior({ ...teamConfig.SENIOR, [key]: { ...s, col: e.target.value, glow: e.target.value + '55' } })} />
-            </div>
-          ))}
-        </div>
-      )}
+        {/* ---------- PROJECT STATUS ---------- */}
+        <Win title="สถานะโปรเจกต์ · STATUS" bodyStyle={{ padding: 18 }}
+          right={<span className="tag mr-1.5">สี</span>}>
+          <div className="font-mono text-[11px] text-text-mute mb-3.25 leading-[1.5]">
+            สีประจำสถานะ ใช้กับการ์ดและหน้ารายละเอียดโปรเจกต์
+          </div>
+          <div className="flex flex-col gap-[11px]">
+            {Object.keys(ps).map(k => (
+              <div key={k} className="flex items-center gap-3">
+                <Swatch value={ps[k][0]} onChange={c => setPStatus(k, c)}/>
+                <span className="chip px-3 py-1.25 text-[13px]" style={{ color: ps[k][0], borderColor: ps[k][0] + '66' }}>{k}</span>
+              </div>
+            ))}
+          </div>
+        </Win>
+
+        {/* ---------- ROLE PRESETS ---------- */}
+        <Win title="ตำแหน่งงานเริ่มต้น · ROLES" bodyStyle={{ padding: 18 }}
+          right={<span className="tag mr-1.5">{presets.length}</span>}>
+          <div className="font-mono text-[11px] text-text-mute mb-3.25 leading-[1.5]">
+            ตัวเลือกบทบาทเวลา “เพิ่มพนักงาน” — เพิ่ม/ลบได้เอง
+          </div>
+          <div className="flex flex-wrap gap-1.75 mb-3.5">
+            {presets.map((r, i) => (
+              <span key={i} className="chip text-[12.5px] p-[6px_9px_6px_11px] text-cyan border-cyan/40 gap-1.75">
+                {r.th}<span className="font-mono text-[9px] text-text-mute">{r.en}</span>
+                <i onClick={() => delPreset(i)} className="cursor-pointer text-text-mute font-mono text-[13px] hover:text-red">×</i>
+              </span>
+            ))}
+            {presets.length === 0 && <div className="empty w-full text-center py-2">ยังไม่มีตำแหน่ง</div>}
+          </div>
+          <div className="flex gap-2">
+            <input className="fld px-2.75 py-2 text-[13px]" placeholder="ชื่อไทย เช่น นักการตลาด" value={npTh}
+              onChange={e => setNpTh(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPreset()} style={{ flex: 1, minWidth: 0 }}/>
+            <input className="fld px-2.75 py-2 text-[13px] uppercase" placeholder="EN" value={npEn} onChange={e => setNpEn(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addPreset()} style={{ width: 80, flex: 'none' }}/>
+            <button className="btn green sm px-3" onClick={addPreset}>＋</button>
+          </div>
+        </Win>
+      </div>
+
+      <div className="text-center text-text-mute font-mono text-[11px] mt-[18px] mb-2">
+        ทุกการแก้ไขถูกบันทึกอัตโนมัติ · เก็บไว้ในเครื่องนี้
+      </div>
     </div>
   );
 }
