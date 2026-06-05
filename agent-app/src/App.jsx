@@ -13,7 +13,45 @@ import Projects from './pages/Projects.jsx';
 import Assets from './pages/Assets.jsx';
 import Settings from './pages/Settings.jsx';
 import SystemLogs from './pages/SystemLogs.jsx';
+import {
+  HashRouter,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useLocation,
+} from 'react-router-dom';
 
+/* ============ ROUTE SYNC ============
+   Keeps s.route in-sync with the URL so existing pages that read
+   s.route (e.g. Dashboard quick-links) still work correctly.
+   Navigation goes through the router; store is updated reactively.
+============================================ */
+function RouteSync() {
+  const [s, set] = useOffice();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // When store route changes (e.g. a button inside Dashboard calls set({route:'team'}))
+  // push that route into the URL.
+  useE(() => {
+    const targetPath = '/' + s.route;
+    if (location.pathname !== targetPath) {
+      navigate(targetPath, { replace: false });
+    }
+  }, [s.route]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // When the URL changes (back/forward, or direct hash navigation)
+  // update the store so all components see the right route.
+  useE(() => {
+    const routeFromUrl = location.pathname.replace(/^\//, '') || 'dashboard';
+    if (s.route !== routeFromUrl) {
+      set({ route: routeFromUrl });
+    }
+  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return null;
+}
 
 /* ============ APP ROOT ============ */
 function App() {
@@ -27,27 +65,29 @@ function App() {
     document.documentElement.style.setProperty('--cyan', map[accent] || map.cyan);
   }, [accent]);
 
-  const route = s.route;
-  const Page = {
-    dashboard: Dashboard,
-    warroom: WarRoom,
-    portfolio: Portfolio,
-    projects: Projects,
-    team: Team,
-    orgchart: OrgChart,
-    secretary: Secretary,
-    assets: Assets,
-    systemlogs: SystemLogs,
-    settings: Settings,
-  }[route] || Dashboard;
-
   return (
-    <div className="h-screen flex flex-col">
-      <NavBar />
-      <div className="view flicker" key={route}>
-        <Page />
+    <HashRouter>
+      <RouteSync />
+      <div className="h-screen flex flex-col">
+        <NavBar />
+        <div className="view flicker">
+          <Routes>
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/warroom" element={<WarRoom />} />
+            <Route path="/portfolio" element={<Portfolio />} />
+            <Route path="/projects" element={<Projects />} />
+            <Route path="/team" element={<Team />} />
+            <Route path="/orgchart" element={<OrgChart />} />
+            <Route path="/secretary" element={<Secretary />} />
+            <Route path="/assets" element={<Assets />} />
+            <Route path="/systemlogs" element={<SystemLogs />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </HashRouter>
   );
 }
 
