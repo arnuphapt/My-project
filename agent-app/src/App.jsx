@@ -59,17 +59,13 @@ function App() {
   useE(() => { OfficeStore.startTicker(); }, []);
 
   // apply accent color globally
-  const accent = (s.settings && s.settings.accent) || 'cyan';
+  const accent = s.settings?.accent || 'cyan';
+  const customColor = s.settings?.customAccentColor;
   useE(() => {
     const map = { cyan: '#46b6ff', teal: '#2fe0c2', violet: '#9d6bff', gold: '#ffce4a', rose: '#ff6b9d' };
-    let hex = map.cyan;
-    if (accent.startsWith('#')) {
-      hex = accent;
-    } else if (map[accent]) {
-      hex = map[accent];
-    }
-    document.documentElement.style.setProperty('--cyan', hex);
-  }, [accent]);
+    const color = (accent === 'custom' && customColor) ? customColor : (map[accent] || map.cyan);
+    document.documentElement.style.setProperty('--cyan', color);
+  }, [accent, customColor]);
 
   return (
     <HashRouter>

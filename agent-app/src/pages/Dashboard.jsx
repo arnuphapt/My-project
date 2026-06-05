@@ -2,7 +2,6 @@ import React, { useState as useS, useEffect as useE, useRef as useR } from 'reac
 import { OfficeStore, useOffice, fmt } from '../store';
 import { Win, Row, StatusDot, PageHead, Bar } from '../components/UI.jsx';
 import '../store/image-slot.js';
-import TestGemini from '../TestGemini.jsx';
 import { checkApiHealth } from '../api/health.js';
 
 /* ============ DASHBOARD / WARROOM ============ */
@@ -35,13 +34,10 @@ function Dashboard() {
           <Bubble name="Devin" x="20%" y="62%" color="#4db4ff" text="กำลังคอมไพล์... 555" />
         </div>
         {/* bottom floating windows */}
-        <div className="grid grid-cols-2 gap-3 mt-3 flex-none">
-          <TradingPanel v={v} />
+        <div className="mt-3 flex-none">
           <TeamChatMini />
         </div>
 
-        {/* Gemini Test Panel */}
-        <TestGemini />
       </div>
 
       {/* RIGHT RAIL */}
@@ -222,22 +218,6 @@ function LofiPanel() {
   );
 }
 
-function TradingPanel({ v }) {
-  const [s, set] = useOffice();
-  const today = v.dayPnlUSD;
-  const wins = v.rows.filter(r => r.dayPnl >= 0).length, losses = v.rows.length - wins;
-  return (
-    <Win title="V2 TRADING" right={<span className="tag mr-1.5">sim</span>}>
-      <Row k="PnL วันนี้" v={fmt.money(today, 'USD')} cls={today >= 0 ? 'pos' : 'neg'} />
-      <Row k="กำไรลอยตัว" v={fmt.money(v.unrealUSD, 'USD')} cls={v.unrealUSD >= 0 ? 'pos' : 'neg'} />
-      <Row k="W / L วันนี้" v={wins + 'W / ' + losses + 'L · ' + (v.rows.length ? Math.round(wins / v.rows.length * 100) : 0) + '%'} />
-      <div className="mt-2 font-pixel text-[9px] text-text-dim tracking-[0.5px]">
-        OPEN POSITIONS ({v.rows.length})
-      </div>
-      <button className="btn sm w-full mt-2" onClick={() => set({ route: 'portfolio' })}>เปิดพอร์ต →</button>
-    </Win>
-  );
-}
 
 function TeamChatMini() {
   const [s] = useOffice();
@@ -326,6 +306,6 @@ function ApiStatusPanel() {
   );
 }
 
-Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TradingPanel, TeamChatMini, Bubble, ApiStatusPanel });
+Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TeamChatMini, Bubble, ApiStatusPanel });
 
 export default Dashboard;

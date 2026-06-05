@@ -1,6 +1,5 @@
-import { OfficeStore } from '../../store';
-
 /* ============ TEAM — shared constants & helpers ============ */
+import { OfficeStore } from '../../store';
 
 export const DEFAULT_SENIOR = {
   ceo:      { label: 'CEO',       en: 'CEO',       stars: 5, col: '#ff5168', glow: 'rgba(255,81,104,.5)' },
@@ -34,59 +33,27 @@ export const DEFAULT_ROLE_PRESETS = [
   { en: 'RESEARCHER', th: 'นักวิจัย',    icon: '🔬', desc: 'ค้นคว้า สรุป รายงาน' },
 ];
 
-export function getSenior() {
-  const st = OfficeStore.getState();
-  if (st && st.settings && st.settings.customSenior) {
-    return { ...DEFAULT_SENIOR, ...st.settings.customSenior };
-  }
-  return DEFAULT_SENIOR;
+/** Get current team config from store (or defaults) */
+export function getTeamCfg() {
+  const custom = OfficeStore.getState().settings?.teamConfig || {};
+  return {
+    SENIOR: custom.SENIOR || DEFAULT_SENIOR,
+    MODELS: custom.MODELS || DEFAULT_MODELS,
+    MODEL_INFO: custom.MODEL_INFO || DEFAULT_MODEL_INFO,
+    ROLE_PRESETS: custom.ROLE_PRESETS || DEFAULT_ROLE_PRESETS,
+  };
 }
 
-export function getModels() {
-  const st = OfficeStore.getState();
-  if (st && st.settings && st.settings.customModelInfo) {
-    const cmi = st.settings.customModelInfo;
-    const res = { ...DEFAULT_MODELS };
-    for (const key of Object.keys(cmi)) {
-      if (res[key]) {
-        res[key] = {
-          ...res[key],
-          col: cmi[key].col || res[key].col,
-          full: cmi[key].label || res[key].full,
-        };
-      }
-    }
-    if (st.settings.customModels) {
-      return { ...res, ...st.settings.customModels };
-    }
-    return res;
-  }
-  if (st && st.settings && st.settings.customModels) {
-    return { ...DEFAULT_MODELS, ...st.settings.customModels };
-  }
-  return DEFAULT_MODELS;
-}
-
-export function getModelInfo() {
-  const st = OfficeStore.getState();
-  if (st && st.settings && st.settings.customModelInfo) {
-    return { ...DEFAULT_MODEL_INFO, ...st.settings.customModelInfo };
-  }
-  return DEFAULT_MODEL_INFO;
-}
-
-export function getRolePresets() {
-  const st = OfficeStore.getState();
-  if (st && st.settings && st.settings.customRoles) {
-    return st.settings.customRoles;
-  }
-  return DEFAULT_ROLE_PRESETS;
-}
+/** Backwards compatibility constants (used if explicit reference is needed) */
+export const SENIOR       = DEFAULT_SENIOR;
+export const MODELS       = DEFAULT_MODELS;
+export const MODEL_INFO   = DEFAULT_MODEL_INFO;
+export const ROLE_PRESETS = DEFAULT_ROLE_PRESETS;
 
 /** Get seniority meta for an agent */
-export const mdl    = a => getSenior()[a.seniority] || getSenior().mid;
+export const mdl = a => getTeamCfg().SENIOR[a.seniority] || getTeamCfg().SENIOR.mid;
 /** Get model meta for an agent */
-export const mdlMod = a => getModels()[a.model]     || getModels().sonnet;
+export const mdlMod = a => getTeamCfg().MODEL_INFO[a.model]  || getTeamCfg().MODEL_INFO.sonnet;
 
 /** Pull a skill description from skill.md bullets */
 export function abilityDesc(a, skill) {
@@ -97,8 +64,8 @@ export function abilityDesc(a, skill) {
   return 'ทักษะประจำตัวของ ' + a.name + ' ใช้ในงานสาย ' + a.roleTh + '.';
 }
 
-// Expose to window for legacy compatibility (OrgChart etc.)
+// Expose to window for legacy compatibility
 if (typeof window !== 'undefined') {
-  Object.defineProperty(window, 'SENIOR', { get: getSenior });
-  Object.defineProperty(window, 'MODELS', { get: getModels });
+  Object.defineProperty(window, 'SENIOR', { get: () => getTeamCfg().SENIOR });
+  Object.defineProperty(window, 'MODELS', { get: () => getTeamCfg().MODELS });
 }

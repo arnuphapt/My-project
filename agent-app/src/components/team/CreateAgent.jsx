@@ -1,14 +1,13 @@
 import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
 import { OfficeStore } from '../../store';
 import { createAgent } from '../../api/agents.js';
-import { getSenior, getModelInfo, getRolePresets } from './teamConfig.js';
+import { getTeamCfg } from './teamConfig.js';
 
 /* ── Live preview card ── */
 function PreviewCard({ name, roleEn, roleTh, seniority, model }) {
-  const SENIOR = getSenior();
-  const MODEL_INFO = getModelInfo();
-  const m  = SENIOR[seniority] || SENIOR.mid;
-  const mm = MODEL_INFO[model] || MODEL_INFO.sonnet;
+  const cfg = getTeamCfg();
+  const m  = cfg.SENIOR[seniority] || cfg.SENIOR.mid;
+  const mm = cfg.MODEL_INFO[model] || cfg.MODEL_INFO.sonnet;
   const initial = (name.trim() || '?')[0].toUpperCase();
   return (
     <div style={{
@@ -49,12 +48,9 @@ export function CreateAgent({ onClose }) {
 
   useE(() => { if (step === 0 && inputRef.current) inputRef.current.focus(); }, [step]);
 
-  const SENIOR = getSenior();
-  const MODEL_INFO = getModelInfo();
-  const ROLE_PRESETS = getRolePresets();
-
-  const m  = SENIOR[seniority]    || SENIOR.mid;
-  const mm = MODEL_INFO[model]    || MODEL_INFO.sonnet;
+  const cfg = getTeamCfg();
+  const m  = cfg.SENIOR[seniority]    || cfg.SENIOR.mid;
+  const mm = cfg.MODEL_INFO[model]    || cfg.MODEL_INFO.sonnet;
   const STEPS = ['ตัวตน', 'โมเดล', 'ยืนยัน'];
 
   const create = async () => {
@@ -110,7 +106,7 @@ export function CreateAgent({ onClose }) {
                 <div>
                   <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 10 }}>บทบาทหน้าที่</div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    {ROLE_PRESETS.map(r => (
+                    {cfg.ROLE_PRESETS.map(r => (
                       <button key={r.en} onClick={() => { setRoleEn(r.en); setRoleTh(r.th); }} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, background: roleEn === r.en ? 'rgba(40,60,110,.55)' : 'rgba(12,16,32,.6)', border: `1px solid ${roleEn === r.en ? m.col + '88' : '#1e2d50'}`, cursor: 'pointer', transition: '.15s', textAlign: 'left', boxShadow: roleEn === r.en ? `inset 0 0 16px ${m.glow}22` : 'none' }}>
                         <span style={{ fontSize: 18 }}>{r.icon}</span>
                         <div>
@@ -123,9 +119,9 @@ export function CreateAgent({ onClose }) {
                 </div>
                 <div>
                   <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 10 }}>ระดับประสบการณ์</div>
-                  <div style={{ display: 'flex', gap: 7 }}>
-                    {['senior','mid','junior','newgrad'].map(s => {
-                      const sm = SENIOR[s]; const active = seniority === s;
+                  <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 4 }}>
+                    {Object.keys(cfg.SENIOR).filter(s => s !== 'ceo' && s !== 'secretary').map(s => {
+                      const sm = cfg.SENIOR[s]; const active = seniority === s;
                       return (
                         <button key={s} onClick={() => setSeniority(s)} style={{ flex: 1, padding: '10px 4px', borderRadius: 8, cursor: 'pointer', transition: '.15s', background: active ? 'rgba(40,52,80,.7)' : 'rgba(10,14,28,.6)', border: `1px solid ${active ? sm.col + '99' : '#1e2d50'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, boxShadow: active ? `0 0 14px ${sm.glow}44` : 'none' }}>
                           <span style={{ fontSize: 13, color: active ? sm.col : 'var(--text-mute)' }}>{'★'.repeat(sm.stars)}</span>
@@ -142,8 +138,8 @@ export function CreateAgent({ onClose }) {
             {step === 1 && (
               <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>เลือก AI Model</div>
-                {['opus','sonnet','haiku'].map(mk => {
-                  const mi = MODEL_INFO[mk]; const active = model === mk;
+                {Object.keys(cfg.MODEL_INFO).map(mk => {
+                  const mi = cfg.MODEL_INFO[mk]; const active = model === mk;
                   return (
                     <button key={mk} onClick={() => setModel(mk)} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 18px', borderRadius: 10, background: active ? 'linear-gradient(135deg, rgba(20,28,60,.9), rgba(14,20,44,.9))' : 'rgba(10,14,28,.6)', border: `1px solid ${active ? mi.col : '#1e2d50'}`, cursor: 'pointer', transition: '.2s', textAlign: 'left', position: 'relative', overflow: 'hidden', boxShadow: active ? `0 0 0 1px ${mi.col}33, inset 0 0 24px ${mi.glow}22` : 'none' }}>
                       {active && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: `linear-gradient(90deg, transparent, ${mi.col}, transparent)` }}/>}
