@@ -4,6 +4,22 @@ import { Win, StatusDot, Rarity, PageHead } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { UserCheck, Coffee, Send } from 'lucide-react';
 
+/* ── Chat Avatar Helper ── */
+function ChatAvatar({ slot, letter, color }) {
+  return (
+    <div className="relative flex-none rounded-full overflow-hidden" style={{
+      width: 34, height: 34,
+      boxShadow: `0 0 0 2px ${color}, 0 0 12px ${color}55`,
+      background: '#0a0e1c'
+    }}>
+      <image-slot id={slot} shape="circle" placeholder={letter}
+        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }} />
+      <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[13px]"
+        style={{ color }}>{letter}</div>
+    </div>
+  );
+}
+
 /* ============ SECRETARY ============ */
 function Secretary() {
   const [s] = useOffice();
@@ -59,6 +75,10 @@ function Secretary() {
         messages: [{
           role: 'user', content:
             `คุณคือ "${sec.name}" ตำแหน่ง ${sec.roleTh} ของออฟฟิศ AI ส่วนตัวของเจ้านาย. บุคลิก: ขี้เล่น มีอารมณ์ขัน อบอุ่น แต่ทำงานเป๊ะ พูดไทย กระชับ ใส่อิโมจิพอประมาณ.
+
+นี่คือคัมภีร์ข้อมูลบทบาทและรายละเอียดหน้าที่ของคุณ (.skill.md):
+${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏิบัติการ'}
+
 ทีมที่คุณสั่งงานได้: ${roster}.
 หน้าที่: คุยกับเจ้านาย ช่วยวางแผน และเมื่อเจ้านายอยากให้ทำงานอะไร ให้มอบหมายงานต่อให้ AI ในทีมที่เหมาะสม.
 เวลาจะมอบงาน ให้พิมพ์บรรทัดแยกในรูปแบบ: DISPATCH: <agentId> | <รายละเอียดงาน> (พิมพ์ได้หลายบรรทัดถ้ามอบหลายงาน) แล้วค่อยตามด้วยข้อความสรุปสั้นๆถึงเจ้านาย.
@@ -129,28 +149,48 @@ function Secretary() {
                 <div className="text-[15px] text-text-dim leading-relaxed">สวัสดีเจ้านาย! ฉัน {sec.name} เอง 😎<br />บอกมาได้เลยว่าอยากให้จัดการอะไร เดี๋ยวฉันสั่งทีมให้</div>
               </div>
             )}
-            {log.map((m, i) => (
-              <div key={i} className="max-w-[82%]" style={{ alignSelf: m.from === 'u' ? 'flex-end' : 'flex-start' }}>
-                {m.from === 'a' && (
-                  <div
-                    className="font-mono text-[11px] mb-0.5"
-                    style={{ color: sec.color }}
-                  >
-                    {sec.name}
+            {log.map((m, i) => {
+              const isU = m.from === 'u';
+              const cfg = s.settings || {};
+              const ceoName = (cfg.ownerName || '').trim() || 'CEO';
+              const ceoRole = (cfg.ownerRole || 'CEO').toUpperCase();
+              return (
+                <div key={i} className="flex gap-2.5 max-w-[88%]" style={{
+                  flexDirection: isU ? 'row-reverse' : 'row',
+                  alignItems: 'flex-start',
+                  alignSelf: isU ? 'flex-end' : 'flex-start'
+                }}>
+                  <ChatAvatar
+                    slot={isU ? 'player-avatar' : `card-${sec.id}`}
+                    letter={isU ? ceoName[0] : sec.name[0]}
+                    color={isU ? '#ff5168' : sec.color || '#ffce4a'}
+                  />
+                  <div className="min-w-0">
+                    <div className="font-mono text-[11px] mb-1" style={{
+                      color: isU ? '#ff8a97' : sec.color || 'var(--gold)',
+                      textAlign: isU ? 'right' : 'left'
+                    }}>
+                      {isU ? ceoRole : sec.name.toUpperCase()}
+                    </div>
+                    <div
+                      className="rounded-xl px-3.5 py-2.5 text-[14.5px] leading-relaxed text-white whitespace-pre-wrap"
+                      style={{
+                        background: isU ? 'linear-gradient(180deg,#27408f,#1a2a64)' : 'rgba(40,32,12,.55)',
+                        border: '1px solid ' + (isU ? 'var(--line-bright)' : 'rgba(255,206,74,.4)')
+                      }}
+                    >
+                      {m.text}
+                    </div>
                   </div>
-                )}
-                <div
-                  className="rounded-xl px-3.5 py-2.5 text-[14.5px] leading-relaxed text-white whitespace-pre-wrap"
-                  style={{
-                    background: m.from === 'u' ? 'linear-gradient(180deg,#27408f,#1a2a64)' : 'rgba(40,32,12,.55)',
-                    border: '1px solid ' + (m.from === 'u' ? 'var(--line-bright)' : 'rgba(255,206,74,.4)')
-                  }}
-                >
-                  {m.text}
                 </div>
+              );
+            })}
+            {busy && (
+              <div className="flex items-center gap-2.5 self-start">
+                <ChatAvatar slot={`card-${sec.id}`} letter={sec.name[0]} color={sec.color || '#ffce4a'} />
+                <div className="text-gold font-mono text-[13px]">{sec.name} กำลังคิด… ☕</div>
               </div>
-            ))}
-            {busy && <div className="self-start text-gold font-mono text-[13px]">{sec.name} กำลังคิด… ☕</div>}
+            )}
           </div>
           {log.length === 0 && (
             <div className="flex gap-[7px] flex-wrap px-[18px] pb-3">

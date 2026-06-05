@@ -101,14 +101,28 @@ function Settings() {
   const [geminiKey, setGeminiKey] = useS('');
 
   useE(() => {
-    if (window.electronAPI) {
-      window.electronAPI.getSetting('gemini_api_key').then(k => setGeminiKey(k || ''));
+    if (cfg.gemini_api_key) {
+      setGeminiKey(cfg.gemini_api_key);
+    } else if (window.electronAPI) {
+      window.electronAPI.getSetting('gemini_api_key').then(k => {
+        if (k) {
+          setGeminiKey(k);
+          saveSetting('gemini_api_key', k);
+        }
+      });
     }
-  }, []);
+  }, [cfg.gemini_api_key]);
 
-  const handleKeySave = (val) => {
+  const handleKeySave = async (val) => {
     setGeminiKey(val);
-    if (window.electronAPI) window.electronAPI.saveSetting('gemini_api_key', val);
+    if (window.electronAPI) {
+      window.electronAPI.saveSetting('gemini_api_key', val);
+    }
+    try {
+      await saveSetting('gemini_api_key', val);
+    } catch (err) {
+      console.error("Failed to save gemini_api_key to backend DB:", err);
+    }
   };
 
   const reset = async () => {
