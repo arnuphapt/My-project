@@ -2,6 +2,7 @@ import React, { useState as useS, useEffect as useE, useRef as useR } from 'reac
 import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, PageHead } from '../components/UI.jsx';
 import '../store/image-slot.js';
+import { UserCheck, Coffee, Send } from 'lucide-react';
 
 /* ============ SECRETARY ============ */
 function Secretary() {
@@ -38,7 +39,7 @@ function Secretary() {
       <div className="max-w-[1180px] mx-auto px-[22px] py-5 h-full flex flex-col">
         <PageHead title="SECRETARY" sub="ยังไม่มีเลขาในทีม" />
         <div className="m-auto text-center text-text-mute">
-          <div className="text-[40px] mb-2.5">👩‍💼</div>
+          <UserCheck size={40} className="text-cyan mx-auto mb-3" />
           <div className="text-[16px] text-white mb-1.5">คุณยังไม่ได้จ้างเลขา</div>
           <div className="text-[14px] text-text-dim">โปรดไปที่หน้า TEAM และเพิ่มพนักงานที่มีบทบาท "เลขา" หรือ "SECRETARY"</div>
         </div>
@@ -124,7 +125,7 @@ function Secretary() {
           <div ref={boxRef} className="flex-1 overflow-auto p-[18px] flex flex-col gap-[11px] min-h-0">
             {log.length === 0 && (
               <div className="m-auto text-center text-text-mute max-w-[380px]">
-                <div className="text-[40px] mb-2.5">☕</div>
+                <Coffee size={40} className="text-gold mx-auto mb-3" />
                 <div className="text-[15px] text-text-dim leading-relaxed">สวัสดีเจ้านาย! ฉัน {sec.name} เอง 😎<br />บอกมาได้เลยว่าอยากให้จัดการอะไร เดี๋ยวฉันสั่งทีมให้</div>
               </div>
             )}
@@ -158,7 +159,7 @@ function Secretary() {
           )}
           <div className="flex gap-2.5 px-[18px] py-3 border-t border-line">
             <input className="fld flex-1" placeholder={`พิมพ์สั่งงาน ${sec.name}...`} value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
-            <button className="btn gold" onClick={() => send()} disabled={busy}>ส่ง ▶</button>
+            <button className="btn gold flex items-center gap-1.5" onClick={() => send()} disabled={busy}>ส่ง <Send className="w-3.5 h-3.5" /></button>
           </div>
         </Win>
       </div>

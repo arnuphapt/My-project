@@ -1,12 +1,17 @@
 import React from 'react';
 import { StatusDot } from '../UI.jsx';
 import { mdl, mdlMod } from './teamConfig.js';
+import { Star, Crown } from 'lucide-react';
 
 function CsStars({ a }) {
   const m = mdl(a);
   return (
-    <span className="cs-stars">
-      {[0,1,2,3,4].map(i => <span key={i} className={i < m.stars ? '' : 'off'}>★</span>)}
+    <span className="cs-stars inline-flex items-center gap-0.5">
+      {[0,1,2,3,4].map(i => (
+        <span key={i} className={i < m.stars ? '' : 'off'}>
+          <Star className="w-2.5 h-2.5 fill-current inline" style={{ verticalAlign: 'middle', marginTop: -2 }} />
+        </span>
+      ))}
     </span>
   );
 }
@@ -31,7 +36,7 @@ export function CharCard({ a, onClick }) {
           <span className="cs-tier" style={{ '--rcol': m.col, '--rglow': m.glow }}>{m.en}</span>
         </div>
         {a.isCeo
-          ? <div style={{ position: 'absolute', top: 8, right: 9, fontSize: 13 }}>👑</div>
+          ? <div style={{ position: 'absolute', top: 8, right: 9, color: 'var(--gold)', filter: 'drop-shadow(0 0 4px rgba(255,206,74,0.4))' }}><Crown className="w-4 h-4" /></div>
           : <div style={{
               position: 'absolute', top: 8, right: 9, fontFamily: 'var(--mono)', fontSize: 10,
               color: mdlMod(a).col, background: 'rgba(8,12,26,.7)',

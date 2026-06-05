@@ -1,4 +1,5 @@
 import React from 'react';
+import { Minus, X } from 'lucide-react';
 
 export function Modal({ title, th, onClose, children, width=520 }){
   return (
@@ -14,8 +15,8 @@ export function Modal({ title, th, onClose, children, width=520 }){
             {title}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onClose} className="w-7 h-7 rounded-[6px] border border-[#2a3c6a] bg-[#141c32]/60 text-text-mute text-[14px] cursor-pointer flex items-center justify-center hover:text-white hover:border-cyan transition-colors" style={{ paddingBottom: 6 }}>_</button>
-            <button onClick={onClose} className="w-7 h-7 rounded-[6px] border border-[#2a3c6a] bg-[#141c32]/60 text-text-mute text-[16px] cursor-pointer flex items-center justify-center hover:text-white hover:border-red hover:text-red transition-colors">×</button>
+            <button onClick={onClose} className="w-7 h-7 rounded-[6px] border border-[#2a3c6a] bg-[#141c32]/60 text-text-mute cursor-pointer flex items-center justify-center hover:text-white hover:border-cyan transition-colors"><Minus className="w-3.5 h-3.5" /></button>
+            <button onClick={onClose} className="w-7 h-7 rounded-[6px] border border-[#2a3c6a] bg-[#141c32]/60 text-text-mute cursor-pointer flex items-center justify-center hover:text-white hover:border-red hover:text-red transition-colors"><X className="w-4 h-4" /></button>
           </div>
         </div>
 

@@ -5,14 +5,23 @@ import { mdl, mdlMod, abilityDesc } from './teamConfig.js';
 import { CodexPanel } from './CodexPanel.jsx';
 import { AgentChat, AgentTasks, AgentProfile } from './AgentActions.jsx';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Pencil, MessageSquare, Plus, Star, Crown, Gem } from 'lucide-react';
 
 function CsStars({ a }) {
   const m = mdl(a);
-  return <span className="cs-stars">{[0,1,2,3,4].map(i => <span key={i} className={i < m.stars ? '' : 'off'}>★</span>)}</span>;
+  return (
+    <span className="cs-stars inline-flex items-center gap-0.5">
+      {[0,1,2,3,4].map(i => (
+        <span key={i} className={i < m.stars ? '' : 'off'}>
+          <Star className="w-2.5 h-2.5 fill-current inline" style={{ verticalAlign: 'middle', marginTop: -2 }} />
+        </span>
+      ))}
+    </span>
+  );
 }
 function ModelChip({ a, style }) {
   const mm = mdlMod(a);
-  return <span className="cs-modelchip" style={{ '--rcol': mm.col, ...style }}>◇ {mm.full}</span>;
+  return <span className="cs-modelchip inline-flex items-center gap-1" style={{ '--rcol': mm.col, ...style }}><Gem className="w-2.5 h-2.5" /> {mm.full}</span>;
 }
 function CsBar({ pct, from, to }) {
   return <div className="bar" style={{ height: 10 }}><i style={{ width: Math.max(0, Math.min(100, pct)) + '%', background: 'linear-gradient(90deg,' + from + ',' + to + ')' }}/></div>;
@@ -32,15 +41,17 @@ export function CharSheet({ a, onBack }) {
 
   return (
     <div className="cs-page">
-      <div className="cs-top">
-        <span className="cs-back" onClick={onBack}>← ทีม</span>
+      <div className="cs-top flex items-center gap-3">
+        <span className="cs-back flex items-center gap-1.5 cursor-pointer" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4" /> ทีม
+        </span>
         <span style={{ flex: 1 }}/>
         {isCeo
-          ? <button className="btn sm ghost" onClick={() => { OfficeStore.setState({ route: 'settings' }); navigate('/settings'); }}>✎ แก้โปรไฟล์เจ้าของ</button>
+          ? <button className="btn sm ghost" onClick={() => { OfficeStore.setState({ route: 'settings' }); navigate('/settings'); }}><Pencil className="w-3 h-3" /> แก้โปรไฟล์เจ้าของ</button>
           : <>
-              <button className="btn sm ghost" onClick={() => setAct('chat')}>🗨 คุยงาน</button>
-              <button className="btn sm ghost" onClick={() => setAct('tasks')}>＋ มอบงาน</button>
-              <button className="btn sm ghost" onClick={() => setAct('profile')}>✎ แก้บทบาท</button>
+              <button className="btn sm ghost" onClick={() => setAct('chat')}><MessageSquare className="w-3 h-3" /> คุยงาน</button>
+              <button className="btn sm ghost" onClick={() => setAct('tasks')}><Plus className="w-3 h-3" /> มอบงาน</button>
+              <button className="btn sm ghost" onClick={() => setAct('profile')}><Pencil className="w-3 h-3" /> แก้บทบาท</button>
             </>}
       </div>
 
@@ -86,7 +97,7 @@ export function CharSheet({ a, onBack }) {
               <CsStars a={a}/>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 3 }}>
                 <div style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 10, color: 'var(--text-dim)', letterSpacing: .5 }}>{isCeo ? 'ประเภท' : 'โมเดล'}</div>
-                {isCeo ? <span className="cs-modelchip" style={{ '--rcol': m.col }}>👑 เจ้าของบริษัท</span> : <ModelChip a={a}/>}
+                {isCeo ? <span className="cs-modelchip inline-flex items-center gap-1" style={{ '--rcol': m.col }}><Crown className="w-3 h-3 text-gold" /> เจ้าของบริษัท</span> : <ModelChip a={a}/>}
               </div>
             </div>
             <div style={{ borderTop: '1px solid var(--line)', paddingTop: 11, fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 11, color: m.col, letterSpacing: .5, lineHeight: 1.7 }}>❖ ทักษะ {skills.length} รายการ</div>

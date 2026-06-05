@@ -2,19 +2,49 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useOffice, fmt } from '../store';
 import { Bar } from './Bar';
+import {
+  LayoutDashboard,
+  Radio,
+  TrendingUp,
+  Briefcase,
+  Users,
+  Network,
+  MessageSquare,
+  FolderOpen,
+  FileText,
+  Settings as SettingsIcon,
+  Coins,
+  Gem
+} from 'lucide-react';
 
 const NAV = [
-  ['dashboard','DASHBOARD','🏠'],
-  ['warroom','WARROOM','🛰️'],
-  ['portfolio','PORTFOLIO','📈'],
-  ['projects','PROJECTS','💼'],
-  ['team','TEAM','👥'],
-  ['orgchart','ORG CHART','📊'],
-  ['secretary','SECRETARY','💬'],
-  ['assets','ASSETS','🗂️'],
-  ['systemlogs','SYSTEM LOGS','📝'],
-  ['settings','SETTINGS','⚙️'],
+  ['dashboard','DASHBOARD'],
+  ['warroom','WARROOM'],
+  ['portfolio','PORTFOLIO'],
+  ['projects','PROJECTS'],
+  ['team','TEAM'],
+  ['orgchart','ORG CHART'],
+  ['secretary','SECRETARY'],
+  ['assets','ASSETS'],
+  ['systemlogs','SYSTEM LOGS'],
+  ['settings','SETTINGS'],
 ];
+
+function NavIcon({ id, className }) {
+  switch (id) {
+    case 'dashboard': return <LayoutDashboard className={className} />;
+    case 'warroom': return <Radio className={className} />;
+    case 'portfolio': return <TrendingUp className={className} />;
+    case 'projects': return <Briefcase className={className} />;
+    case 'team': return <Users className={className} />;
+    case 'orgchart': return <Network className={className} />;
+    case 'secretary': return <MessageSquare className={className} />;
+    case 'assets': return <FolderOpen className={className} />;
+    case 'systemlogs': return <FileText className={className} />;
+    case 'settings': return <SettingsIcon className={className} />;
+    default: return null;
+  }
+}
 
 export function NavBar(){
   const [s, set] = useOffice();
@@ -56,22 +86,22 @@ export function NavBar(){
         </div>
       </div>
       <div className="flex gap-1 flex-1">
-        {NAV.map(([id, lb, ic]) => (
+        {NAV.map(([id, lb]) => (
           <div
             key={id}
             className={'nav-item' + (activeRoute === id ? ' on' : '')}
             onClick={() => goTo(id)}
           >
-            <span className="ic">{ic}</span><span className="lb">{lb}</span>
+            <span className="ic flex items-center justify-center"><NavIcon id={id} className="w-4 h-4" /></span><span className="lb">{lb}</span>
           </div>
         ))}
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-[7px] font-mono text-[15px] text-gold">
-          <span className="text-[16px]">🪙</span>{fmt.n(p.coins, 0)}
+          <Coins className="w-4 h-4 text-gold" />{fmt.n(p.coins, 0)}
         </div>
         <div className="flex items-center gap-[7px] font-mono text-[15px] text-purple">
-          <span className="text-[16px]">💎</span>{p.gems}
+          <Gem className="w-4 h-4 text-purple" />{p.gems}
         </div>
         <div className="flex items-center gap-2.5">
           <div className="w-[42px] h-[42px] rounded-[9px] relative flex-none">

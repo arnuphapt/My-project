@@ -3,6 +3,7 @@ import { OfficeStore, useOffice, fmt } from '../store';
 import { Win, Row, StatusDot, PageHead, Bar } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { checkApiHealth } from '../api/health.js';
+import { Plus, ArrowRight, Headphones, SkipBack, Pause, Play, SkipForward, Send } from 'lucide-react';
 
 /* ============ DASHBOARD / WARROOM ============ */
 function Dashboard() {
@@ -97,7 +98,7 @@ function NetWorthPanel({ v }) {
 function AgentsPanel() {
   const [s, set] = useOffice();
   return (
-    <Win title="AI AGENTS" right={<span className="win-dots mr-1"><i onClick={() => set({ route: 'team' })}>+</i></span>}>
+    <Win title="AI AGENTS" right={<span className="win-dots mr-1"><i onClick={() => set({ route: 'team' })} className="flex items-center justify-center"><Plus className="w-2 h-2" /></i></span>}>
       <div className="flex flex-col gap-0.5">
         {s.agents.slice(0, 6).map(a => (
           <div
@@ -119,7 +120,7 @@ function AgentsPanel() {
           </div>
         ))}
       </div>
-      <button className="btn ghost sm w-full mt-2" onClick={() => set({ route: 'team' })}>จัดการทีม →</button>
+      <button className="btn ghost sm w-full mt-2 flex items-center justify-center gap-1.5" onClick={() => set({ route: 'team' })}>จัดการทีม <ArrowRight className="w-3.5 h-3.5" /></button>
     </Win>
   );
 }
@@ -201,7 +202,9 @@ function LofiPanel() {
   return (
     <Win title="LOFI BEATS TO CODE" accent="purple">
       <div className="flex gap-2.75 items-center">
-        <div className="w-[50px] h-[50px] rounded-[9px] bg-gradient-to-br from-[#6a4cb8] to-[#2f4ea8] flex items-center justify-center text-[22px] flex-none shadow-[0_4px_12px_rgba(0,0,0,0.4)]">🎧</div>
+        <div className="w-[50px] h-[50px] rounded-[9px] bg-gradient-to-br from-[#6a4cb8] to-[#2f4ea8] flex items-center justify-center flex-none shadow-[0_4px_12px_rgba(0,0,0,0.4)]">
+          <Headphones className="w-5 h-5 text-white" />
+        </div>
         <div className="flex-1 min-w-0">
           <div className="text-[11px] text-text-mute font-mono">Now Playing</div>
           <div className="text-[15px] text-white font-semibold whitespace-nowrap overflow-hidden text-ellipsis">{TRACKS[ti]}</div>
@@ -209,10 +212,12 @@ function LofiPanel() {
         </div>
       </div>
       <div className="mt-2.25"><Bar pct={pos / len * 100} tone="purple" /></div>
-      <div className="flex justify-center gap-3.5 mt-2.5 text-[18px] text-text-dim">
-        <span className="cursor-pointer" onClick={() => setTi(t => (t + TRACKS.length - 1) % TRACKS.length)}>⏮</span>
-        <span className="cursor-pointer text-cyan" onClick={() => setPlaying(p => !p)}>{playing ? '⏸' : '▶'}</span>
-        <span className="cursor-pointer" onClick={() => { setTi(t => (t + 1) % TRACKS.length); setPos(0); }}>⏭</span>
+      <div className="flex justify-center items-center gap-4 mt-2.5 text-text-dim">
+        <SkipBack className="w-4 h-4 cursor-pointer hover:text-white transition-colors" onClick={() => setTi(t => (t + TRACKS.length - 1) % TRACKS.length)} />
+        <span className="cursor-pointer text-cyan hover:text-white transition-colors flex items-center justify-center w-6 h-6 rounded-md bg-[#0a102c]/50 border border-line" onClick={() => setPlaying(p => !p)}>
+          {playing ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+        </span>
+        <SkipForward className="w-4 h-4 cursor-pointer hover:text-white transition-colors" onClick={() => { setTi(t => (t + 1) % TRACKS.length); setPos(0); }} />
       </div>
     </Win>
   );
@@ -260,7 +265,7 @@ function TeamChatMini() {
           onChange={e => setTxt(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && send()}
         />
-        <button className="btn sm" onClick={send}>▶</button>
+        <button className="btn sm" onClick={send}><Send className="w-3 h-3" /></button>
       </div>
     </Win>
   );

@@ -4,6 +4,7 @@ import { Win, PageHead } from '../UI.jsx';
 import { Toggle }    from './Toggle.jsx';
 import { SliderRow } from './SliderRow.jsx';
 import '../../store/image-slot.js';
+import { Bot, Lock } from 'lucide-react';
 
 /** Full Live Trading section (TradingView bot + config) */
 export function LiveTrading() {
@@ -28,7 +29,7 @@ export function LiveTrading() {
 
       {/* roadmap banner */}
       <div className="win flex-row items-center gap-4 p-[14px_18px] mb-4 border-[#9d6bff]/40">
-        <div className="text-[26px]">🤖</div>
+        <Bot className="w-8 h-8 text-[#9d6bff] flex-none" />
         <div className="flex-1">
           <div className="font-pixel2 font-bold text-[15px] text-white">โหมดเทรดอัตโนมัติ (Coming Soon)</div>
           <div className="text-[13px] text-text-dim mt-1 leading-normal">ตั้งค่า API + สัญญาณจาก TradingView ไว้ล่วงหน้า เมื่อระบบพร้อม บอทจะรับ alert แล้วส่งคำสั่งซื้อขายจริงให้อัตโนมัติ</div>
@@ -51,7 +52,7 @@ export function LiveTrading() {
           <input className="fld" placeholder="วาง API Key ของคุณ" value={L.apiKey} onChange={e => upd({ apiKey: e.target.value })}/>
           <label className="lbl mt-2.75">API Secret</label>
           <input className="fld" type="password" placeholder="••••••••••••" value={L.apiSecret} onChange={e => upd({ apiSecret: e.target.value })}/>
-          <div className="font-mono text-[10px] text-text-mute mt-1.5">🔒 เก็บไว้ในเครื่องนี้เท่านั้น · ยังไม่ส่งออกจริง</div>
+          <div className="font-mono text-[10px] text-text-mute mt-1.5 flex items-center gap-1"><Lock className="w-3.5 h-3.5" /> เก็บไว้ในเครื่องนี้เท่านั้น · ยังไม่ส่งออกจริง</div>
           <label className="lbl mt-3.5">TradingView Webhook URL</label>
           <div className="flex gap-1.5">
             <input className="fld font-mono text-[12px] text-cyan" readOnly value={webhook}/>

@@ -1,6 +1,7 @@
 import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../../store';
 import { renderMd } from '../SkillMd.jsx';
+import { Pencil, Plus } from 'lucide-react';
 
 /** Codex (skill.md) editor + annotations panel */
 export function CodexPanel({ a }) {
@@ -68,7 +69,7 @@ export function CodexPanel({ a }) {
           )}
           <span style={{ flex: 1 }}/>
           {!editing
-            ? <button className="btn sm gold" onClick={() => { setDraft(live.skillMd || ''); setEditing(true); }}>✎ แก้คัมภีร์</button>
+            ? <button className="btn sm gold" onClick={() => { setDraft(live.skillMd || ''); setEditing(true); }}><Pencil className="w-3 h-3" /> แก้คัมภีร์</button>
             : <div style={{ display: 'flex', gap: 6 }}>
                 <button className="btn sm ghost" onClick={() => { setEditing(false); setDraft(live.skillMd || ''); }}>ยกเลิก</button>
                 <button className="btn sm green"  onClick={saveMd}>บันทึก</button>
@@ -99,7 +100,7 @@ export function CodexPanel({ a }) {
               <textarea ref={noteRef} className="fld" rows="2" placeholder="เขียนโน้ต…" value={note}
                 onChange={e => setNote(e.target.value)} style={{ fontSize: 13, padding: '8px 10px' }}/>
               <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                <button className="btn sm green" style={{ flex: 1 }} onClick={addAnno}>＋ เพิ่มโน้ต</button>
+                <button className="btn sm green" style={{ flex: 1 }} onClick={addAnno}><Plus className="w-3 h-3" /> เพิ่มโน้ต</button>
                 <button className="btn sm ghost" onClick={() => { setPending(''); setNote(''); }}>ยกเลิก</button>
               </div>
             </div>
@@ -123,8 +124,8 @@ export function CodexPanel({ a }) {
       </div>
 
       {popup && (
-        <button className="cs-annobtn" style={{ left: popup.x, top: popup.y }}
-          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); startNote(); }}>✎ จดโน้ต</button>
+        <button className="cs-annobtn flex items-center gap-1" style={{ left: popup.x, top: popup.y }}
+          onMouseDown={e => { e.preventDefault(); e.stopPropagation(); startNote(); }}><Pencil className="w-3 h-3" /> จดโน้ต</button>
       )}
     </div>
   );

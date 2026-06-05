@@ -2,6 +2,7 @@ import React, { useState as useS, useEffect as useE, useRef as useR } from 'reac
 import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, Modal } from '../components/UI.jsx';
 import '../store/image-slot.js';
+import { Clock, Zap, Check, Move, ChevronRight, Megaphone } from 'lucide-react';
 
 /* ============ WARROOM · IMMERSIVE ISOMETRIC OFFICE ============ */
 function WarRoom() {
@@ -113,10 +114,10 @@ function WarRoom() {
       {/* ===== TOP TOOLBAR ===== */}
       <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3.5 px-3.5 py-2 rounded-[11px] bg-[#0c0f18]/82 border border-line-bright backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
         <span className="font-pixel text-[10px] text-cyan tracking-[1.5px] [text-shadow:0_0_8px_rgba(70,182,255,0.4)]">WARROOM</span>
-        <span className="font-mono text-[13px] text-white">🕐 {clock}</span>
-        <span className="font-mono text-[13px] text-green">🟢 {s.agents.filter(a => a.status !== 'idle').length}/{s.agents.length}</span>
+        <span className="font-mono text-[13px] text-white flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-cyan" /> {clock}</span>
+        <span className="font-mono text-[13px] text-green flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-green" /> {s.agents.filter(a => a.status !== 'idle').length}/{s.agents.length}</span>
         <button className={'whitespace-nowrap btn sm ' + (place ? 'green' : 'ghost')} onClick={() => setPlace(p => !p)}>
-          {place ? '✓ เสร็จแล้ว' : '🧩 จัดวางตัวละคร'}
+          {place ? <><Check className="w-3.5 h-3.5" /> เสร็จแล้ว</> : <><Move className="w-3.5 h-3.5" /> จัดวางตัวละคร</>}
         </button>
       </div>
 
@@ -129,7 +130,7 @@ function WarRoom() {
 
       {/* ===== ORDER BAR ===== */}
       <div className="absolute left-1/2 bottom-3 -translate-x-1/2 z-30 flex items-center gap-2.25 px-2.5 py-2 rounded-[11px] w-[min(560px,86%)] bg-[#0c0f18]/86 border border-line backdrop-blur-md">
-        <span className="font-pixel text-[8px] text-cyan tracking-[1px] flex-none">ORDER ALL ▸</span>
+        <span className="font-pixel text-[8px] text-cyan tracking-[1px] flex-none flex items-center gap-1">ORDER ALL <ChevronRight className="w-3 h-3 text-cyan" /></span>
         <input
           className="fld px-2.75 py-2 text-[13px] flex-1"
           placeholder="ออกคำสั่งให้ทุกคนในออฟฟิศ..."
@@ -137,7 +138,7 @@ function WarRoom() {
           onChange={e => setCmd(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && broadcast()}
         />
-        <button className="btn sm" onClick={broadcast}>📢</button>
+        <button className="btn sm" onClick={broadcast}><Megaphone className="w-3.5 h-3.5" /></button>
       </div>
 
       {open && (

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 export default function SystemLogs() {
   const [logs, setLogs] = useState([]);
@@ -47,7 +48,7 @@ export default function SystemLogs() {
           onKeyDown={e => e.key === 'Enter' && handleAddLog()}
         />
         <button className="btn ghost" onClick={handleAddLog}>เพิ่ม Log ทดสอบ</button>
-        <button className="btn ghost" onClick={fetchLogs}>รีเฟรช 🔄</button>
+        <button className="btn ghost flex items-center gap-1.5" onClick={fetchLogs}>รีเฟรช <RefreshCw className="w-3.5 h-3.5" /></button>
       </div>
 
       {/* Logs View */}

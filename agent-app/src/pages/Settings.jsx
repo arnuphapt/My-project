@@ -4,6 +4,7 @@ import { Win, PageHead } from '../components/UI.jsx';
 import { saveSetting } from '../api/settings.js';
 import { getTeamCfg } from '../components/team/teamConfig.js';
 import '../store/image-slot.js';
+import { Check, XCircle, Palette, Sliders, Star, X, Plus } from 'lucide-react';
 
 /* ============ SETTINGS ============ */
 const ACCENTS = [
@@ -58,10 +59,10 @@ function Settings() {
           const toSave = typeof val === 'object' ? JSON.stringify(val) : String(val);
           await saveSetting(key, toSave);
         }
-        setSaveStatus('บันทึกแล้ว ✓');
+        setSaveStatus(<span className="flex items-center gap-1 text-green"><Check className="w-3.5 h-3.5" /> บันทึกแล้ว</span>);
         setTimeout(() => setSaveStatus(''), 2000);
       } catch (err) {
-        setSaveStatus('บันทึกไม่สำเร็จ ❌');
+        setSaveStatus(<span className="flex items-center gap-1 text-red"><XCircle className="w-3.5 h-3.5" /> บันทึกไม่สำเร็จ</span>);
         console.error("Save setting error:", err);
       }
     }, 1000);
@@ -120,10 +121,10 @@ function Settings() {
         for (const [key, val] of Object.entries(defaultSettings)) {
           await saveSetting(key, String(val));
         }
-        setSaveStatus('รีเซ็ตสำเร็จ ✓');
+        setSaveStatus(<span className="flex items-center gap-1 text-green"><Check className="w-3.5 h-3.5" /> รีเซ็ตสำเร็จ</span>);
         setTimeout(() => setSaveStatus(''), 2000);
       } catch(err) {
-        setSaveStatus('รีเซ็ตไม่สำเร็จ ❌');
+        setSaveStatus(<span className="flex items-center gap-1 text-red"><XCircle className="w-3.5 h-3.5" /> รีเซ็ตไม่สำเร็จ</span>);
       }
     }
   };
@@ -192,7 +193,7 @@ function Settings() {
                     fontSize: id === 'custom' ? 12 : 16
                   }}
                 >
-                  {id === 'custom' ? '🎨 Custom' : (cfg.accent === id ? '✓' : '')}
+                  {id === 'custom' ? <span className="flex items-center gap-1"><Palette className="w-3.5 h-3.5" /> Custom</span> : (cfg.accent === id ? <Check className="w-4 h-4 text-[#0a0e1c] fill-current" /> : '')}
                 </button>
               ))}
               {cfg.accent === 'custom' && (
@@ -245,7 +246,7 @@ function Settings() {
 
       {/* ===================== SYSTEM CUSTOMIZATION ===================== */}
       <div className="font-pixel text-[11px] tracking-[1px] text-gold my-[26px] flex items-center gap-[9px] [text-shadow:0_0_8px_rgba(255,206,74,.25)]">
-        ❖ ปรับแต่งระบบ <span className="flex-1 h-[1px] bg-line"></span>
+        <Sliders className="w-4 h-4 text-gold flex-none" /> ปรับแต่งระบบ <span className="flex-1 h-[1px] bg-line"></span>
       </div>
 
       <div className="grid grid-cols-[1fr_1fr] gap-4 items-start">
@@ -292,11 +293,13 @@ function Settings() {
                     <button onClick={() => setModel(k, 'max', 0)} title="ไม่มี effort"
                       className="cursor-pointer bg-transparent rounded-[5px] px-1.75 py-0.5 font-mono text-[11px]"
                       style={{ border: '1px solid ' + ((m.max || 0) === 0 ? m.col : 'var(--line)'), color: (m.max || 0) === 0 ? m.col : 'var(--text-mute)' }}>ปิด</button>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 items-center">
                       {[1, 2, 3, 4, 5].map(v => (
                         <button key={v} onClick={() => setModel(k, 'max', v)}
                           className="cursor-pointer bg-transparent border-none p-0 text-[17px] leading-none"
-                          style={{ color: v <= (m.max || 0) ? m.col : '#2a3450', textShadow: v <= (m.max || 0) ? '0 0 6px ' + m.col + '77' : 'none' }}>★</button>
+                          style={{ color: v <= (m.max || 0) ? m.col : '#2a3450', textShadow: v <= (m.max || 0) ? '0 0 6px ' + m.col + '77' : 'none' }}>
+                          <Star className="w-4 h-4 fill-current" />
+                        </button>
                       ))}
                     </div>
                     <span className="font-mono text-[12px] ml-auto" style={{ color: m.col }}>{(m.max || 0) > 0 ? ('สูงสุด ' + m.max + '★') : 'ไม่มี effort'}</span>
@@ -333,7 +336,7 @@ function Settings() {
             {presets.map((r, i) => (
               <span key={i} className="chip text-[12.5px] p-[6px_9px_6px_11px] text-cyan border-cyan/40 gap-1.75">
                 {r.th}<span className="font-mono text-[9px] text-text-mute">{r.en}</span>
-                <i onClick={() => delPreset(i)} className="cursor-pointer text-text-mute font-mono text-[13px] hover:text-red">×</i>
+                <i onClick={() => delPreset(i)} className="cursor-pointer text-text-mute hover:text-red flex items-center justify-center"><X className="w-3 h-3" /></i>
               </span>
             ))}
             {presets.length === 0 && <div className="empty w-full text-center py-2">ยังไม่มีตำแหน่ง</div>}
@@ -343,7 +346,7 @@ function Settings() {
               onChange={e => setNpTh(e.target.value)} onKeyDown={e => e.key === 'Enter' && addPreset()} style={{ flex: 1, minWidth: 0 }}/>
             <input className="fld px-2.75 py-2 text-[13px] uppercase" placeholder="EN" value={npEn} onChange={e => setNpEn(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addPreset()} style={{ width: 80, flex: 'none' }}/>
-            <button className="btn green sm px-3" onClick={addPreset}>＋</button>
+            <button className="btn green sm px-3 flex items-center justify-center" onClick={addPreset}><Plus className="w-3.5 h-3.5" /></button>
           </div>
         </Win>
       </div>

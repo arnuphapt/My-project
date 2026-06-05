@@ -1,5 +1,6 @@
 import React, { useState as useS, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../store';
+import { Pencil, Check } from 'lucide-react';
 
 /* ============ SKILL.MD CODEX — renderer + view/edit ============ */
 
@@ -70,14 +71,14 @@ export function AgentSkillMd({ a }){
           </div>
         )}
         {!editing
-          ? <button className="btn sm gold" onClick={()=>{setDraft(live.skillMd||'');setEditing(true);}}>✎ แก้ไข</button>
+          ? <button className="btn sm gold" onClick={()=>{setDraft(live.skillMd||'');setEditing(true);}}><Pencil className="w-3.5 h-3.5" /> แก้ไข</button>
           : <div style={{display:'flex',gap:6}}>
               <button className="btn sm ghost" onClick={()=>{setEditing(false);setDraft(live.skillMd||'');}}>ยกเลิก</button>
               <button className="btn sm green" onClick={save}>บันทึก</button>
             </div>}
       </div>
 
-      {saved && <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)'}}>✓ บันทึกคัมภีร์แล้ว</div>}
+      {saved && <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:4}}><Check className="w-3.5 h-3.5" /> บันทึกคัมภีร์แล้ว</div>}
 
       {/* body */}
       {editing

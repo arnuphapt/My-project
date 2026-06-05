@@ -3,6 +3,7 @@ import { OfficeStore, useOffice } from '../store';
 import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { createProject, updateProject, deleteProject } from '../api/projects.js';
+import { Plus, Check, X, ArrowLeft, ArrowRight, Rocket } from 'lucide-react';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
@@ -25,7 +26,7 @@ function Projects() {
       <PageHead
         title="PROJECTS"
         sub="คลังผลงาน — เก็บสะสมไว้เป็นข้อมูลสร้าง Resume / CV ในอนาคต"
-        right={<button className="btn" onClick={() => setCreate(true)}>＋ เพิ่มโปรเจกต์</button>}
+        right={<button className="btn flex items-center gap-1.5" onClick={() => setCreate(true)}><Plus className="w-3.5 h-3.5" /> เพิ่มโปรเจกต์</button>}
       />
 
       {/* stat strip */}
@@ -33,7 +34,7 @@ function Projects() {
         <SumCard label="โปรเจกต์ทั้งหมด" main={s.projects.length + ''} sub="ในคลังผลงาน" tone="cyan" />
         <SumCard label="เสร็จสมบูรณ์" main={done + ''} sub={'จาก ' + s.projects.length + ' โปรเจกต์'} tone="pos" />
         <SumCard label="ทักษะที่สะสม" main={skills.length + ''} sub="แท็กไม่ซ้ำ" tone="gold" />
-        <SumCard label="พร้อมทำ CV" main={done > 0 ? '✓' : '…'} sub={done > 0 ? 'ส่งออกได้' : 'ยังไม่พอ'} tone={done > 0 ? 'pos' : 'cyan'} />
+        <SumCard label="พร้อมทำ CV" main={done > 0 ? <Check className="w-6 h-6 text-green inline-block" /> : '…'} sub={done > 0 ? 'ส่งออกได้' : 'ยังไม่พอ'} tone={done > 0 ? 'pos' : 'cyan'} />
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
@@ -44,7 +45,7 @@ function Projects() {
           onClick={() => setCreate(true)}
           className="win min-h-[260px] flex flex-col items-center justify-center cursor-pointer gap-2.5 !border-dashed border-cyan/40 hover:border-cyan/80 transition-colors duration-200"
         >
-          <div className="text-[34px] text-cyan">＋</div>
+          <div className="text-cyan"><Plus className="w-9 h-9" /></div>
           <div className="font-pixel2 text-[12px] text-text-dim">NEW PROJECT</div>
         </div>
       </div>
@@ -170,9 +171,9 @@ function ProjectDrawer({ p, onClose }) {
           />
           <i
             onClick={onClose}
-            className="absolute top-3 right-3.5 cursor-pointer text-white text-[22px] font-mono [text-shadow:0_0_8px_#000] z-[2]"
+            className="absolute top-3.5 right-4 cursor-pointer text-white text-[20px] font-mono [text-shadow:0_0_8px_#000] z-[2] hover:text-cyan transition-colors"
           >
-            ×
+            <X className="w-5 h-5" />
           </i>
           <div className="absolute left-0 right-0 bottom-0 px-5 pt-6 pb-3.5 bg-gradient-to-b from-transparent to-[#080c24]/95">
             <div className="flex items-center gap-2.25">
@@ -202,9 +203,9 @@ function ProjectDrawer({ p, onClose }) {
                 <span className="flex-1 text-[13.5px] text-text leading-normal">{h}</span>
                 <i
                   onClick={() => delHl(i)}
-                  className="cursor-pointer text-text-mute font-mono text-[14px]"
+                  className="cursor-pointer text-text-mute font-mono text-[14px] hover:text-red transition-colors animate-[caFadeIn_.15s_ease-out]"
                 >
-                  ×
+                  <X className="w-3.5 h-3.5" />
                 </i>
               </div>
             ))}
@@ -217,7 +218,7 @@ function ProjectDrawer({ p, onClose }) {
               onChange={e => setHl(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addHl()}
             />
-            <button className="btn green sm" onClick={addHl}>＋</button>
+            <button className="btn green sm flex items-center justify-center" onClick={addHl}><Plus className="w-3.5 h-3.5" /></button>
           </div>
 
           <div className="font-pixel2 text-[12px] text-text-dim tracking-[0.5px] mt-5 mb-2.25">TECH / SKILLS</div>
@@ -334,14 +335,14 @@ function CreateProject({ onClose }) {
             {STEPS.map((lb, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: i < step ? 'pointer' : 'default', padding: '4px 10px', borderRadius: 6, background: step === i ? 'rgba(40,60,110,.5)' : 'transparent' }} onClick={() => i < step && setStep(i)}>
-                  <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontFamily: 'var(--mono)', background: i < step ? 'var(--cyan)' : step === i ? 'rgba(40,60,110,.8)' : 'rgba(20,28,50,.6)', color: i < step ? '#000' : step === i ? 'var(--cyan)' : 'var(--text-mute)', border: `1px solid ${i <= step ? 'rgba(70,182,255,.5)' : '#23304a'}`, boxShadow: i === step ? '0 0 10px rgba(70,182,255,.3)' : 'none', transition: '.2s' }}>{i < step ? '✓' : i + 1}</div>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontFamily: 'var(--mono)', background: i < step ? 'var(--cyan)' : step === i ? 'rgba(40,60,110,.8)' : 'rgba(20,28,50,.6)', color: i < step ? '#000' : step === i ? 'var(--cyan)' : 'var(--text-mute)', border: `1px solid ${i <= step ? 'rgba(70,182,255,.5)' : '#23304a'}`, boxShadow: i === step ? '0 0 10px rgba(70,182,255,.3)' : 'none', transition: '.2s' }}>{i < step ? <Check className="w-3 h-3" /> : i + 1}</div>
                   <span style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 11, color: step === i ? 'var(--white)' : 'var(--text-mute)', letterSpacing: .3 }}>{lb}</span>
                 </div>
                 {i < STEPS.length - 1 && <div style={{ width: 28, height: 1, background: i < step ? 'rgba(70,182,255,.4)' : '#1e2d50', margin: '0 2px' }}/>}
               </div>
             ))}
           </div>
-          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid #2a3c6a', background: 'rgba(10,14,34,.7)', color: 'var(--text-mute)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid #2a3c6a', background: 'rgba(10,14,34,.7)', color: 'var(--text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyItems: 'center', justifyContent: 'center' }}><X className="w-4 h-4" /></button>
         </div>
 
         {/* body */}
@@ -415,14 +416,14 @@ function CreateProject({ onClose }) {
             {/* nav buttons */}
             <div style={{ marginTop: 'auto', paddingTop: 24, display: 'flex', gap: 10 }}>
               {step > 0 && (
-                <button onClick={() => setStep(s => s - 1)} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 12, color: 'var(--text-dim)', background: 'rgba(14,18,36,.8)', border: '1px solid #2a3c6a', borderRadius: 8, padding: '11px 18px', cursor: 'pointer' }}>← ย้อนกลับ</button>
+                <button onClick={() => setStep(s => s - 1)} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 12, color: 'var(--text-dim)', background: 'rgba(14,18,36,.8)', border: '1px solid #2a3c6a', borderRadius: 8, padding: '11px 18px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}><ArrowLeft className="w-4 h-4" /> ย้อนกลับ</button>
               )}
               <div style={{ flex: 1 }}/>
               {step < 2 ? (
-                <button onClick={() => setStep(s => s + 1)} disabled={step === 0 && !title.trim()} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 13, color: step === 0 && !title.trim() ? 'var(--text-mute)' : '#000', background: step === 0 && !title.trim() ? 'rgba(20,28,50,.8)' : 'linear-gradient(180deg, var(--cyan), #2080cc)', border: `1px solid ${step === 0 && !title.trim() ? '#2a3c6a' : 'var(--cyan)'}`, borderRadius: 8, padding: '11px 22px', cursor: step === 0 && !title.trim() ? 'not-allowed' : 'pointer', boxShadow: step === 0 && !title.trim() ? 'none' : '0 4px 14px rgba(70,182,255,.3)', opacity: step === 0 && !title.trim() ? .5 : 1, transition: '.15s' }}>ถัดไป →</button>
+                <button onClick={() => setStep(s => s + 1)} disabled={step === 0 && !title.trim()} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 13, color: step === 0 && !title.trim() ? 'var(--text-mute)' : '#000', background: step === 0 && !title.trim() ? 'rgba(20,28,50,.8)' : 'linear-gradient(180deg, var(--cyan), #2080cc)', border: `1px solid ${step === 0 && !title.trim() ? '#2a3c6a' : 'var(--cyan)'}`, borderRadius: 8, padding: '11px 22px', cursor: step === 0 && !title.trim() ? 'not-allowed' : 'pointer', boxShadow: step === 0 && !title.trim() ? 'none' : '0 4px 14px rgba(70,182,255,.3)', opacity: step === 0 && !title.trim() ? .5 : 1, transition: '.15s', display: 'flex', alignItems: 'center', gap: 6 }}>ถัดไป <ArrowRight className="w-4 h-4" /></button>
               ) : (
                 <button onClick={create} disabled={saving} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 14, color: '#000', background: done ? 'linear-gradient(180deg, #3ce594, #1f9a5e)' : 'linear-gradient(180deg, var(--cyan), #2080cc)', border: `1px solid ${done ? '#3ce594' : 'var(--cyan)'}`, borderRadius: 8, padding: '13px 28px', cursor: saving ? 'wait' : 'pointer', boxShadow: `0 4px 18px ${done ? 'rgba(60,229,148,.4)' : 'rgba(70,182,255,.3)'}`, opacity: saving ? .7 : 1, transition: '.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  {saving && !done ? <><span style={{ animation: 'caSpinner .8s linear infinite', display: 'inline-block' }}>◌</span> กำลังสร้าง…</> : done ? '✓ สำเร็จ!' : '🚀 เพิ่มโปรเจกต์'}
+                  {saving && !done ? <><span style={{ animation: 'caSpinner .8s linear infinite', display: 'inline-block' }}>◌</span> กำลังสร้าง…</> : done ? <><Check className="w-4 h-4 text-green" /> สำเร็จ!</> : <><Rocket className="w-4 h-4" /> เพิ่มเข้าคลังผลงาน</>}
                 </button>
               )}
             </div>

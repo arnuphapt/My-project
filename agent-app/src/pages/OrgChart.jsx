@@ -2,6 +2,7 @@ import React from 'react';
 import { useOffice } from '../store';
 import { PageHead, StatusDot } from '../components/UI.jsx';
 import '../store/image-slot.js';
+import { ArrowRight, ArrowDown, MessageSquare } from 'lucide-react';
 
 /* ============ ORG CHART — company hierarchy ============ */
 /* CEO (you) → JOYURI (secretary) → team members */
@@ -30,8 +31,12 @@ function MemberNode({ a, onClick }) {
           <span className="org-tier" style={{ '--c': m.col }}>{m.en}</span>
           <span className="org-mdl" style={{ '--c2': mm.col }}>{mm.label}</span>
         </div>
-        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: open ? 'var(--gold)' : 'var(--text-mute)', marginTop: 1 }}>
-          {open ? ('▸ ' + open + ' งานค้าง') : 'ว่าง'}
+        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: open ? 'var(--gold)' : 'var(--text-mute)', marginTop: 1, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
+          {open ? (
+            <>
+              <ArrowRight className="w-3 h-3 text-gold flex-none" /> {open} งานค้าง
+            </>
+          ) : 'ว่าง'}
         </div>
       </div>
     </div>
@@ -70,7 +75,7 @@ function OrgChart() {
             </div>
           </div>
 
-          <div className="org-link"><span>สั่งงาน ↓</span></div>
+          <div className="org-link"><span className="flex items-center gap-1">สั่งงาน <ArrowDown className="w-3.5 h-3.5 text-cyan" /></span></div>
 
           {/* Secretary — JOYURI */}
           {sec && (
@@ -84,12 +89,12 @@ function OrgChart() {
                   <span className="org-tier" style={{ '--c': sm.col }}>{sm.en}</span>
                   <span className="org-mdl" style={{ '--c2': smm.col }}>{smm.label}</span>
                 </div>
-                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-dim)', marginTop: 2 }}>คุมทีม {team.length} คน · กดเพื่อสั่งงาน 🗨</div>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-dim)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>คุมทีม {team.length} คน · กดเพื่อสั่งงาน <MessageSquare className="w-3 h-3 text-gold" /></div>
               </div>
             </div>
           )}
 
-          <div className="org-link"><span>กระจายงาน ↓</span></div>
+          <div className="org-link"><span className="flex items-center gap-1">กระจายงาน <ArrowDown className="w-3.5 h-3.5 text-cyan" /></span></div>
 
           {/* Team */}
           <div className="org-buswrap">

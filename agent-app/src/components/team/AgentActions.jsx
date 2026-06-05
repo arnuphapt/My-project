@@ -1,4 +1,5 @@
 import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
+import { Send, Check, Star } from 'lucide-react';
 import { OfficeStore, useOffice } from '../../store';
 import { updateAgent, deleteAgent } from '../../api/agents.js';
 import { getTeamCfg } from './teamConfig.js';
@@ -45,7 +46,7 @@ export function AgentChat({ a }) {
       <div className="flex gap-2">
         <input className="fld flex-1" placeholder={'คุยกับ ' + a.name + '...'} value={txt}
           onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()}/>
-        <button className="btn" onClick={send} disabled={busy}>▶</button>
+        <button className="btn" onClick={send} disabled={busy}><Send className="w-3.5 h-3.5" /></button>
       </div>
     </div>
   );
@@ -93,7 +94,7 @@ export function AgentTasks({ a }) {
             className="flex gap-2.5 items-center px-3 py-2.5 bg-[#060a1e]/50 border border-line rounded-lg cursor-pointer">
             <div className="w-5 h-5 rounded-[5px] border border-line-bright flex-none flex items-center justify-center text-green"
               style={{ background: tk.done ? 'rgba(60,229,148,.18)' : 'transparent' }}>
-              {tk.done ? '✓' : ''}
+              {tk.done ? <Check className="w-3.5 h-3.5" /> : ''}
             </div>
             <span className="flex-1 text-[14px]"
               style={{ color: tk.done ? 'var(--text-mute)' : 'var(--text)', textDecoration: tk.done ? 'line-through' : 'none' }}>
@@ -151,7 +152,7 @@ export function AgentProfile({ a }) {
             {Array.from({length: curMax}).map((_, i) => {
               const v = i + 1;
               return <button key={v} className={'btn sm ' + (effort === v ? '' : 'ghost')} onClick={() => setEffort(v)}
-                style={{flex:1, ...(effort === v ? {borderColor: modelInfo.col, color: modelInfo.col} : {})}}>{v}★</button>;
+                style={{flex:1, ...(effort === v ? {borderColor: modelInfo.col, color: modelInfo.col} : {})}}>{v} <Star className="w-3 h-3 fill-current inline-block ml-0.5" /></button>;
             })}
           </div>
         : <div style={{fontFamily:'var(--mono)', fontSize:12, color:'var(--text-mute)', padding:'7px 2px'}}>— โมเดลนี้ทำงานแบบเร็ว ไม่นับ effort</div>

@@ -2,6 +2,7 @@ import React, { useState as useS, useEffect as useE } from 'react';
 import { useOffice } from '../store';
 import { PageHead } from '../components/UI.jsx';
 import '../store/image-slot.js';
+import { Plus } from 'lucide-react';
 import { CharCard }    from '../components/team/CharCard.jsx';
 import { CharSheet }   from '../components/team/CharSheet.jsx';
 import { CreateAgent } from '../components/team/CreateAgent.jsx';
@@ -37,7 +38,7 @@ function Team() {
         <PageHead
           title="TEAM"
           sub={'CEO + พนักงาน AI · ' + (s.agents.length + 1) + ' คน · กดเพื่อดูโปรไฟล์ + คัมภีร์ skill.md'}
-          right={<button className="btn gold" onClick={() => setCreate(true)}>＋ เพิ่มพนักงาน</button>}
+          right={<button className="btn gold flex items-center gap-1.5" onClick={() => setCreate(true)}><Plus className="w-3.5 h-3.5" /> เพิ่มพนักงาน</button>}
         />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(214px,1fr))', gap: 16 }}>
           <CharCard a={ceo} onClick={() => setOpenId('__ceo')} />
@@ -48,7 +49,7 @@ function Team() {
             display: 'flex', flexDirection: 'column', alignItems: 'center',
             justifyContent: 'center', minHeight: 268, gap: 10,
           }}>
-            <div style={{ fontSize: 38, color: 'var(--cyan)' }}>＋</div>
+            <div style={{ color: 'var(--cyan)' }}><Plus className="w-10 h-10" /></div>
             <div style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 12, color: 'var(--text-dim)' }}>เพิ่มพนักงาน</div>
           </div>
         </div>
