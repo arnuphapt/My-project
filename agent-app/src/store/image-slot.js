@@ -76,9 +76,13 @@
   function load() {
     if (loadP) return loadP;
     
-    const fetcher = (window.electronAPI && window.electronAPI.getImageSlots)
-      ? window.electronAPI.getImageSlots().then(str => str ? JSON.parse(str) : null).catch(()=>null)
-      : fetch(STATE_FILE).then((r) => (r.ok ? r.json() : null)).catch(()=>null);
+    const fetcher = fetch('http://127.0.0.1:8000/settings/')
+      .then(r => r.json())
+      .then(arr => {
+        const item = arr.find(x => x.key === 'image_slots');
+        return item ? JSON.parse(item.value) : null;
+      })
+      .catch(()=>null);
 
     loadP = fetcher
       .then((j) => {
@@ -113,14 +117,12 @@
     if (saving) { saveDirty = true; return; }
     
     saving = true;
-    let promise;
-    if (window.electronAPI && window.electronAPI.saveImageSlots) {
-      promise = window.electronAPI.saveImageSlots(JSON.stringify(slots));
-    } else {
-      const w = window.omelette && window.omelette.writeFile;
-      if (!w) { saving = false; return; }
-      promise = Promise.resolve(w(STATE_FILE, JSON.stringify(slots)));
-    }
+    const payload = { key: 'image_slots', value: JSON.stringify(slots) };
+    promise = fetch('http://127.0.0.1:8000/settings/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     
     promise.catch(() => {})
       .then(() => { saving = false; if (saveDirty) { saveDirty = false; save(); } });
@@ -493,6 +495,16 @@
 
         if (window.electronAPI && window.electronAPI.saveAssetFile && this.id) {
           url = await window.electronAPI.saveAssetFile(this.id, url);
+        } else if (this.id) {
+          const res = await fetch('http://127.0.0.1:8000/upload/asset/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: this.id, dataUrl: url })
+          });
+          if (res.ok) {
+            const json = await res.json();
+            url = json.url;
+          }
         }
 
         // Only exit reframe once the new image is in hand — a rejected type

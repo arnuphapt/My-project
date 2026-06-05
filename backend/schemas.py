@@ -1,6 +1,10 @@
 from pydantic import BaseModel
 from typing import Optional, List
 
+class AssetUpload(BaseModel):
+    id: str
+    dataUrl: str
+
 class AgentBase(BaseModel):
     name: str
     roleEn: str

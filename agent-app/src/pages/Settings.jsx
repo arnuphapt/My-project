@@ -1,6 +1,7 @@
 import React, { useState as useS, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, PageHead } from '../components/UI.jsx';
+import { saveSetting, deleteSetting } from '../api/settings.js';
 import '../store/image-slot.js';
 
 /* ============ SETTINGS ============ */
@@ -15,7 +16,30 @@ const ACCENTS = [
 function Settings() {
   const [s] = useOffice();
   const cfg = s.settings || {};
-  const upd = patch => OfficeStore.setState(st => ({ ...st, settings: { ...st.settings, ...patch } }), { now: true });
+  const [saveStatus, setSaveStatus] = useS(''); // 'saving' | 'saved' | ''
+  const saveTimeout = React.useRef(null);
+
+  const upd = patch => {
+    OfficeStore.setState(st => ({ ...st, settings: { ...st.settings, ...patch } }), { now: true });
+    
+    // Auto-save to database with debounce
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    setSaveStatus('กำลังบันทึก...');
+    
+    saveTimeout.current = setTimeout(async () => {
+      try {
+        for (const [key, val] of Object.entries(patch)) {
+          await saveSetting(key, String(val));
+        }
+        setSaveStatus('บันทึกแล้ว ✓');
+        setTimeout(() => setSaveStatus(''), 2000);
+      } catch (err) {
+        setSaveStatus('บันทึกไม่สำเร็จ ❌');
+        console.error("Save setting error:", err);
+      }
+    }, 1000);
+  };
+
   const F = (key, val) => upd({ [key]: val });
 
   const [geminiKey, setGeminiKey] = useS('');
@@ -34,10 +58,24 @@ function Settings() {
   const filled = ['ownerName', 'ownerRole', 'email', 'bio'].filter(k => (cfg[k] || '').trim()).length;
   const pct = Math.round(filled / 4 * 100);
 
-  const reset = () => {
+  const reset = async () => {
     if (confirm('คืนค่าตั้งต้นทั้งหมด? (ชื่อระบบ โลโก้ และประวัติจะถูกล้าง)')) {
-      OfficeStore.setState(st => ({ ...st, settings: { ...window.SEED.settings } }), { now: true });
+      const defaultSettings = window.SEED.settings;
+      OfficeStore.setState(st => ({ ...st, settings: { ...defaultSettings } }), { now: true });
       window.electronAPI?.saveLog('warning', 'System reset to default settings');
+      
+      setSaveStatus('กำลังรีเซ็ต...');
+      try {
+        // Here we could delete all existing settings first if we want a clean slate
+        // but for safety, we just overwrite them with defaults
+        for (const [key, val] of Object.entries(defaultSettings)) {
+          await saveSetting(key, String(val));
+        }
+        setSaveStatus('รีเซ็ตสำเร็จ ✓');
+        setTimeout(() => setSaveStatus(''), 2000);
+      } catch(err) {
+        setSaveStatus('รีเซ็ตไม่สำเร็จ ❌');
+      }
     }
   };
 
@@ -46,7 +84,12 @@ function Settings() {
       <PageHead
         title="SETTINGS"
         sub="ตั้งค่าตัวตนของระบบ และกรอกประวัติของคุณ — ข้อมูลนี้ใช้สร้าง Resume / CV ต่อได้"
-        right={<button className="btn ghost" onClick={reset}>คืนค่าตั้งต้น</button>}
+        right={
+          <div className="flex items-center gap-3">
+            {saveStatus && <span className="text-[12px] font-mono text-cyan">{saveStatus}</span>}
+            <button className="btn ghost" onClick={reset}>คืนค่าตั้งต้น</button>
+          </div>
+        }
       />
 
       <div className="grid grid-cols-2 gap-4 items-start">

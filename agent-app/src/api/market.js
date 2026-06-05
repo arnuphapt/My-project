@@ -19,7 +19,7 @@ export async function fetchMarketData() {
        if (s.market[sym].cls === 'CRYPTO' && !sym.includes('-')) querySym = `${sym}-USD`;
        else if (s.market[sym].cls === 'SET' && !sym.includes('.')) querySym = `${sym}.BK`;
        
-       const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${querySym}`);
+       const res = await fetch(`http://127.0.0.1:8000/proxy/yfinance/${querySym}`);
        if (res.ok) {
          const data = await res.json();
          const meta = data?.chart?.result?.[0]?.meta;
@@ -38,7 +38,7 @@ export async function fetchMarketData() {
     
     // Fetch FX
     try {
-      const fxRes = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/THB=X`);
+      const fxRes = await fetch(`http://127.0.0.1:8000/proxy/yfinance/THB=X`);
       if (fxRes.ok) {
         const data = await fxRes.json();
         const meta = data?.chart?.result?.[0]?.meta;

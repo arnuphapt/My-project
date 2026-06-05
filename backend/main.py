@@ -24,6 +24,51 @@ app.add_middleware(
 def read_root():
     return {"message": "Welcome to Office AI API!"}
 
+@app.post("/upload/asset/")
+def upload_asset(upload: schemas.AssetUpload):
+    import base64
+    import os
+    import time
+    import re
+    
+    folder = "gallery"
+    if upload.id.startswith("sys-") or upload.id.startswith("player-"):
+        folder = "identity"
+    elif upload.id.startswith("proj-"):
+        folder = "projects"
+        
+    assets_dir = os.path.join(os.path.dirname(__file__), "..", "agent-app", "src", "assets", folder)
+    os.makedirs(assets_dir, exist_ok=True)
+    
+    match = re.match(r"^data:([A-Za-z-+/\.]+);base64,(.+)$", upload.dataUrl)
+    if not match:
+        raise HTTPException(status_code=400, detail="Invalid input string")
+        
+    ext = match.group(1).split("/")[1] if "/" in match.group(1) else "webp"
+    buffer = base64.b64decode(match.group(2))
+    
+    filename = f"{upload.id}-{int(time.time()*1000)}.{ext}"
+    filepath = os.path.join(assets_dir, filename)
+    
+    with open(filepath, "wb") as f:
+        f.write(buffer)
+        
+    # Return the relative Vite path so the browser can load it correctly
+    return {"url": f"/src/assets/{folder}/{filename}"}
+
+@app.get("/proxy/yfinance/{symbol}")
+def proxy_yfinance(symbol: str):
+    import urllib.request
+    import json
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
+    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
+    try:
+        with urllib.request.urlopen(req) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.get("/agents/", response_model=List[schemas.Agent])
 def read_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     agents = crud.get_agents(db, skip=skip, limit=limit)
