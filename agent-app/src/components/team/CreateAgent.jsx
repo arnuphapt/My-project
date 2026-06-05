@@ -1,10 +1,12 @@
 import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
 import { OfficeStore } from '../../store';
 import { createAgent } from '../../api/agents.js';
-import { SENIOR, MODEL_INFO, ROLE_PRESETS } from './teamConfig.js';
+import { getSenior, getModelInfo, getRolePresets } from './teamConfig.js';
 
 /* ── Live preview card ── */
 function PreviewCard({ name, roleEn, roleTh, seniority, model }) {
+  const SENIOR = getSenior();
+  const MODEL_INFO = getModelInfo();
   const m  = SENIOR[seniority] || SENIOR.mid;
   const mm = MODEL_INFO[model] || MODEL_INFO.sonnet;
   const initial = (name.trim() || '?')[0].toUpperCase();
@@ -46,6 +48,10 @@ export function CreateAgent({ onClose }) {
   const inputRef = useR(null);
 
   useE(() => { if (step === 0 && inputRef.current) inputRef.current.focus(); }, [step]);
+
+  const SENIOR = getSenior();
+  const MODEL_INFO = getModelInfo();
+  const ROLE_PRESETS = getRolePresets();
 
   const m  = SENIOR[seniority]    || SENIOR.mid;
   const mm = MODEL_INFO[model]    || MODEL_INFO.sonnet;
