@@ -2,10 +2,11 @@ import React, { useState as useS, useRef as useR, useEffect as useE } from 'reac
 import { OfficeStore } from '../../store';
 import { createAgent } from '../../api/agents.js';
 import { getTeamCfg } from './teamConfig.js';
-import { Star, Gem, Check, X, ArrowLeft, ArrowRight, Rocket, Cpu } from 'lucide-react';
+import { Star, Gem, Check, X, ArrowLeft, ArrowRight, Rocket, Cpu, Image } from 'lucide-react';
+import { AssetBrowser } from '../AssetBrowser.jsx';
 
 /* ── Live preview card ── */
-function PreviewCard({ name, roleEn, roleTh, seniority, model }) {
+function PreviewCard({ name, roleEn, roleTh, seniority, model, selectedImage }) {
   const cfg = getTeamCfg();
   const m  = cfg.SENIOR[seniority] || cfg.SENIOR.mid;
   const mm = cfg.MODEL_INFO[model] || cfg.MODEL_INFO.sonnet;
@@ -20,7 +21,11 @@ function PreviewCard({ name, roleEn, roleTh, seniority, model }) {
       <div style={{ flex: 1, background: `radial-gradient(ellipse at 50% 30%, ${m.col}22 0%, transparent 65%), #070a1c`, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}>
         <div style={{ position: 'absolute', top: 9, left: 9, fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: '#0a0a14', background: m.col, padding: '4px 8px', borderRadius: 4, boxShadow: `0 2px 0 #000, 0 0 12px ${m.glow}` }}>{m.en}</div>
         <div style={{ position: 'absolute', top: 9, right: 9, fontFamily: 'var(--mono)', fontSize: 9, color: mm.col, background: 'rgba(8,12,26,.8)', border: `1px solid ${mm.col}66`, borderRadius: 5, padding: '3px 7px' }}>{mm.tier}</div>
-        <div style={{ fontFamily: 'var(--pixel)', fontSize: 64, color: m.col, textShadow: `0 0 30px ${m.glow}, 0 0 60px ${m.glow}44`, lineHeight: 1, userSelect: 'none', animation: 'caPreviewPulse 3s ease-in-out infinite' }}>{initial}</div>
+        {selectedImage ? (
+          <img src={selectedImage} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} alt="" />
+        ) : (
+          <div style={{ fontFamily: 'var(--pixel)', fontSize: 64, color: m.col, textShadow: `0 0 30px ${m.glow}, 0 0 60px ${m.glow}44`, lineHeight: 1, userSelect: 'none', animation: 'caPreviewPulse 3s ease-in-out infinite' }}>{initial}</div>
+        )}
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 60, background: 'linear-gradient(180deg, transparent, rgba(6,9,18,.95))' }}/>
       </div>
       <div style={{ padding: '10px 12px 12px', borderTop: `1px solid ${m.col}44` }}>
@@ -45,6 +50,8 @@ export function CreateAgent({ onClose }) {
   const [model,     setModel]     = useS('sonnet');
   const [saving,    setSaving]    = useS(false);
   const [done,      setDone]      = useS(false);
+  const [selectedImage, setSelectedImage] = useS(null);
+  const [showAssetBrowser, setShowAssetBrowser] = useS(false);
   const inputRef = useR(null);
 
   useE(() => { if (step === 0 && inputRef.current) inputRef.current.focus(); }, [step]);
@@ -70,6 +77,7 @@ export function CreateAgent({ onClose }) {
     try {
       await createAgent(newAgent);
       window.electronAPI?.saveLog('info', 'Created new agent: ' + nm);
+      if (selectedImage) window.setImageSlot('card-' + id, { u: selectedImage, s: 1, x: 0, y: 0 });
       setDone(true);
       setTimeout(() => { OfficeStore.syncBackendData(); onClose(); }, 1200);
     } catch (err) { console.error(err); alert('Error connecting to backend API'); setSaving(false); }
@@ -108,7 +116,12 @@ export function CreateAgent({ onClose }) {
               <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>ชื่อพนักงาน</div>
-                  <input ref={inputRef} className="fld" placeholder="เช่น Nova, Atlas, Mira…" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(1)} style={{ fontSize: 18, padding: '12px 14px', letterSpacing: .4 }}/>
+                  <div style={{ display: 'flex', gap: 10 }}>
+                    <input ref={inputRef} className="fld flex-1" placeholder="เช่น Nova, Atlas, Mira…" value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(1)} style={{ fontSize: 18, padding: '12px 14px', letterSpacing: .4 }}/>
+                    <button onClick={() => setShowAssetBrowser(true)} title="เลือกรูปภาพจาก Assets" style={{ width: 48, height: 48, borderRadius: 8, background: 'rgba(12,16,32,.6)', border: '1px solid #1e2d50', color: selectedImage ? m.col : 'var(--text-mute)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '.15s', boxShadow: selectedImage ? `0 0 12px ${m.glow}44` : 'none' }}>
+                      <Image className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 10 }}>บทบาทหน้าที่</div>
@@ -215,7 +228,7 @@ export function CreateAgent({ onClose }) {
           {/* preview */}
           <div style={{ padding: '20px 18px', background: 'rgba(6,9,20,.5)', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center' }}>
             <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)' }}>PREVIEW</div>
-            <PreviewCard name={name} roleEn={roleEn} roleTh={roleTh} seniority={seniority} model={model}/>
+            <PreviewCard name={name} roleEn={roleEn} roleTh={roleTh} seniority={seniority} model={model} selectedImage={selectedImage}/>
             <div style={{ width: '100%', background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--text-mute)', lineHeight: 1.6 }}>
               <span style={{ color: mm.col }} className="inline-flex items-center gap-1"><Gem className="w-2.5 h-2.5" /> {mm.label}</span><br/>
               <span style={{ display: 'inline-flex', gap: 0.5, color: m.col }} className="align-middle">{Array.from({length: m.stars}).map((_, stIdx) => <Star key={stIdx} className="w-3.5 h-3.5 fill-current" />)}</span> {m.label}<br/>
@@ -231,6 +244,9 @@ export function CreateAgent({ onClose }) {
         @keyframes caPreviewPulse { 0%,100%{opacity:1} 50%{opacity:.78} }
         @keyframes caSpinner  { to { transform: rotate(360deg) } }
       `}</style>
+      {showAssetBrowser && (
+        <AssetBrowser onClose={() => setShowAssetBrowser(false)} onSelect={(url) => setSelectedImage(url)} />
+      )}
     </div>
   );
 }

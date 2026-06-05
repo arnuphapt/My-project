@@ -1,4 +1,4 @@
-import React, { useEffect as useE } from 'react';
+import React, { useEffect as useE, useState as useS } from 'react';
 import './assets/index.css';
 import './store/image-slot.js';
 import { OfficeStore, useOffice } from './store';
@@ -13,6 +13,7 @@ import Projects from './pages/Projects.jsx';
 import Assets from './pages/Assets.jsx';
 import Settings from './pages/Settings.jsx';
 import SystemLogs from './pages/SystemLogs.jsx';
+import { AssetBrowser } from './components/AssetBrowser.jsx';
 import {
   HashRouter,
   Routes,
@@ -56,7 +57,17 @@ function RouteSync() {
 /* ============ APP ROOT ============ */
 function App() {
   const [s] = useOffice();
+  const [abTarget, setAbTarget] = useS(null);
+
   useE(() => { OfficeStore.startTicker(); }, []);
+
+  useE(() => {
+    const handleBrowse = (e) => {
+      if (e.detail && e.detail.id) setAbTarget(e.detail.id);
+    };
+    window.addEventListener('browse-assets', handleBrowse);
+    return () => window.removeEventListener('browse-assets', handleBrowse);
+  }, []);
 
   // apply accent color globally
   const accent = s.settings?.accent || 'cyan';
@@ -89,6 +100,12 @@ function App() {
           </Routes>
         </div>
       </div>
+      {abTarget && (
+        <AssetBrowser 
+          onClose={() => setAbTarget(null)} 
+          onSelect={(url) => window.setImageSlot(abTarget, { u: url, s: 1, x: 0, y: 0 })} 
+        />
+      )}
     </HashRouter>
   );
 }

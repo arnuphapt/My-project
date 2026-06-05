@@ -204,6 +204,7 @@
     '.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;' +
     '  justify-content:center;gap:6px;text-align:center;padding:12px;box-sizing:border-box;' +
     '  cursor:pointer;user-select:none}' +
+    ':host(:not([data-editable])) .empty { cursor: default; pointer-events: none; }' +
     '.empty svg{opacity:.45}' +
     '.empty .cap{max-width:90%;font-weight:500;letter-spacing:.01em}' +
     '.empty .sub{font-size:11px}' +
@@ -252,7 +253,7 @@
         '  <img part="image" alt="" draggable="false" style="display:none">' +
         '  <div class="empty" part="empty">' + icon +
         '    <div class="cap"></div>' +
-        '    <div class="sub">or <u>browse files</u></div></div>' +
+        '    <div class="sub">or <u data-act="browse-files">browse files</u> / <u data-act="browse-assets">assets</u></div></div>' +
         '  <div class="ring" part="ring"></div>' +
         '</div>' +
         '<div class="spill">' +
@@ -279,8 +280,19 @@
       this._subFn = () => this._render();
       // Shadow-DOM listeners live with the shadow DOM — bound once here so
       // disconnect/reconnect (e.g. React remount) doesn't stack handlers.
-      this._empty.addEventListener('click', () => this._input.click());
+      this._empty.addEventListener('click', (e) => {
+        if (!this.hasAttribute('data-editable')) return;
+        const act = e.target && e.target.getAttribute && e.target.getAttribute('data-act');
+        if (act === 'browse-assets') {
+          e.stopPropagation();
+          const evt = new CustomEvent('browse-assets', { detail: { id: this.id } });
+          window.dispatchEvent(evt);
+        } else {
+          this._input.click();
+        }
+      });
       root.addEventListener('click', (e) => {
+        if (!this.hasAttribute('data-editable')) return;
         const act = e.target && e.target.getAttribute && e.target.getAttribute('data-act');
         if (act === 'replace') { this._exitReframe(true); this._input.click(); }
         if (act === 'clear') {
@@ -457,6 +469,7 @@
     // handleEvent — one listener object for all four drag events keeps the
     // add/remove symmetric and the depth counter correct.
     handleEvent(e) {
+      if (!this.hasAttribute('data-editable')) return;
       if (e.type === 'dragenter' || e.type === 'dragover') {
         // Without preventDefault the browser never fires 'drop'.
         e.preventDefault();
@@ -620,7 +633,7 @@
       this._ring.style.display = mask ? 'none' : '';
 
       // Controls and reframe entry gate on this so share links stay read-only.
-      const editable = !!(window.omelette && window.omelette.writeFile);
+      const editable = this.hasAttribute('editable') || !!(window.omelette && window.omelette.writeFile);
       this.toggleAttribute('data-editable', editable);
       this._sub.style.display = editable ? '' : 'none';
 

@@ -165,7 +165,7 @@ function Settings() {
               <div className="flex-none">
                 <label className="lbl">โลโก้</label>
                 <div className="w-[88px] h-[88px] rounded-xl relative overflow-hidden border border-[#2f456e] bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
-                  <image-slot id="sys-logo" shape="rounded" radius="12" className="absolute inset-0 w-[88px] h-[88px]"/>
+                  <image-slot id="sys-logo" editable="true" shape="rounded" radius="12" className="absolute inset-0 w-[88px] h-[88px]"/>
                   <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
                     {(cfg.sysName1 || 'M').trim()[0] || 'M'}
                   </div>
@@ -239,7 +239,7 @@ function Settings() {
               <div className="flex-none">
                 <label className="lbl">รูปโปรไฟล์</label>
                 <div className="w-[72px] h-[72px] rounded-xl relative overflow-hidden border-2 border-[#ff5168] shadow-[0_0_14px_rgba(255,81,104,0.4)]">
-                  <image-slot id="player-avatar" shape="rounded" radius="12" placeholder="YOU" className="absolute inset-0 w-[72px] h-[72px]"/>
+                  <image-slot id="player-avatar" editable="true" shape="rounded" radius="12" placeholder="YOU" className="absolute inset-0 w-[72px] h-[72px]"/>
                 </div>
               </div>
               <div className="flex-1">

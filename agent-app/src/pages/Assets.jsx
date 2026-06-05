@@ -67,6 +67,7 @@ function AssetGroup({ g, count, onAdd, onRemove }) {
           <div key={i} className="relative aspect-square">
             <image-slot
               id={'asset-' + g.id + '-' + i}
+              editable="true"
               shape={shape}
               radius="10"
               placeholder={g.name + ' #' + (i + 1)}
