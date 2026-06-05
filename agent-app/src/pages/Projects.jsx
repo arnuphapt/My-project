@@ -1,4 +1,4 @@
-import React, { useState as useS } from 'react';
+import React, { useState as useS, useRef as useR, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
@@ -248,14 +248,58 @@ function ProjectDrawer({ p, onClose }) {
   );
 }
 
+function PreviewProjectCard({ title, role, period, summary, tags, status, progress }) {
+  const [c] = PSTATUS[status] || PSTATUS['พัก'];
+  const tArr = tags.split(',').map(x => x.trim()).filter(Boolean);
+  
+  return (
+    <div className="win w-full max-w-[300px] cursor-default pointer-events-none relative z-10" style={{ background: 'linear-gradient(180deg, rgba(16,22,46,.96), rgba(9,12,24,.97))', border: '1px solid var(--line)', borderTop: `3px solid ${c}` }}>
+      <div className="relative h-[110px]">
+        <image-slot id="proj-preview" shape="rect" placeholder={'cover · ' + (title.trim() || 'NEW PROJECT')} className="absolute inset-0 w-full h-full" />
+        <div className="absolute top-2.25 right-2.25">
+          <span className="chip bg-[#060a1e]/80" style={{ color: c, borderColor: c + '66' }}>{status}</span>
+        </div>
+        <div className="absolute left-0 right-0 bottom-0 h-[46px] bg-gradient-to-b from-transparent to-[#080c24]/92" />
+      </div>
+      <div className="p-[12px_14px_14px] flex-1 border-t border-line" style={{ background: 'linear-gradient(180deg, rgba(14,20,44,.95), rgba(8,11,26,.98))' }}>
+        <div className="flex items-baseline justify-between gap-2">
+          <span className="font-pixel2 font-bold text-[16px] text-white truncate block overflow-hidden text-ellipsis whitespace-nowrap">{title.trim() || '???'}</span>
+          <span className="font-mono text-[11px] text-text-mute flex-none">{period || '2026'}</span>
+        </div>
+        <div className="text-[12px] text-cyan mt-1 font-mono">{role || 'Builder'}</div>
+        <div className="text-[13px] text-text-dim mt-2 leading-normal line-clamp-2 break-words" style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{summary || 'รายละเอียดโปรเจกต์...'}</div>
+        <div className="mt-[11px] mb-[9px]"><Bar pct={progress} tone={progress >= 100 ? 'green' : ''} /></div>
+        <div className="flex justify-between items-center">
+          <div className="flex flex-wrap gap-1.25">
+            {tArr.slice(0, 3).map(t => <span key={t} className="chip text-[10px] px-1.75 py-0.5">{t}</span>)}
+            {tArr.length > 3 && <span className="text-[11px] text-text-mute font-mono">+{tArr.length - 3}</span>}
+            {tArr.length === 0 && <span className="text-[10px] text-text-mute font-mono">NO TAGS</span>}
+          </div>
+          <span className="font-mono text-[12px]" style={{ color: c }}>{progress}%</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreateProject({ onClose }) {
+  const [step, setStep] = useS(0);
   const [title, setTitle] = useS('');
   const [role, setRole] = useS('');
   const [period, setPeriod] = useS('2026');
   const [summary, setSummary] = useS('');
   const [tags, setTags] = useS('');
+  const [saving, setSaving] = useS(false);
+  const [done, setDone] = useS(false);
+  const inputRef = useR(null);
+
+  useE(() => { if (step === 0 && inputRef.current) inputRef.current.focus(); }, [step]);
+
+  const STEPS = ['ข้อมูลหลัก', 'รายละเอียด', 'ยืนยัน'];
 
   const create = async () => {
+    if (saving) return;
+    setSaving(true);
     const t = title.trim() || 'โปรเจกต์ใหม่';
     const id = 'p' + Date.now().toString().slice(-6);
     const newProj = {
@@ -267,33 +311,144 @@ function CreateProject({ onClose }) {
     try {
       await createProject(newProj);
       OfficeStore.syncBackendData();
+      setDone(true);
+      setTimeout(() => onClose(), 1000);
     } catch (err) {
       console.error(err);
       alert('Error saving project to Backend');
+      setSaving(false);
     }
-    onClose();
   };
 
   return (
-    <Modal title="เพิ่มโปรเจกต์ใหม่" th={true} onClose={onClose} width={500}>
-      <label className="lbl">ชื่อโปรเจกต์</label>
-      <input className="fld" placeholder="เช่น AI Trading Dashboard" value={title} onChange={e => setTitle(e.target.value)} />
-      <div className="flex gap-2.5 mt-3">
-        <div className="flex-1">
-          <label className="lbl">บทบาทของคุณ</label>
-          <input className="fld" placeholder="Developer / Designer" value={role} onChange={e => setRole(e.target.value)} />
+    <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 300, background: 'rgba(3,5,18,0.82)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, animation: 'caFadeIn .18s ease-out' }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 780, background: 'linear-gradient(180deg, rgba(14,20,44,.99), rgba(8,11,26,.99))', border: '1px solid #2a3c6a', borderRadius: 14, boxShadow: '0 0 0 1px #000, 0 32px 80px rgba(0,0,0,.7), inset 0 1px 0 rgba(255,255,255,.04)', overflow: 'hidden', animation: 'caSlideUp .2s ease-out', position: 'relative' }}>
+        
+        {/* accent line */}
+        <div style={{ height: 2, background: 'linear-gradient(90deg, transparent, var(--cyan), transparent)', opacity: .7 }}/>
+
+        {/* header + steps */}
+        <div style={{ padding: '18px 22px 16px', borderBottom: '1px solid #1e2d50', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ fontFamily: 'var(--pixel)', fontSize: 12, color: 'var(--cyan)', letterSpacing: 1, textShadow: '0 0 12px rgba(70,182,255,.5)' }}>NEW PROJECT</div>
+          <div style={{ flex: 1, display: 'flex', gap: 0 }}>
+            {STEPS.map((lb, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: i < step ? 'pointer' : 'default', padding: '4px 10px', borderRadius: 6, background: step === i ? 'rgba(40,60,110,.5)' : 'transparent' }} onClick={() => i < step && setStep(i)}>
+                  <div style={{ width: 20, height: 20, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontFamily: 'var(--mono)', background: i < step ? 'var(--cyan)' : step === i ? 'rgba(40,60,110,.8)' : 'rgba(20,28,50,.6)', color: i < step ? '#000' : step === i ? 'var(--cyan)' : 'var(--text-mute)', border: `1px solid ${i <= step ? 'rgba(70,182,255,.5)' : '#23304a'}`, boxShadow: i === step ? '0 0 10px rgba(70,182,255,.3)' : 'none', transition: '.2s' }}>{i < step ? '✓' : i + 1}</div>
+                  <span style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 11, color: step === i ? 'var(--white)' : 'var(--text-mute)', letterSpacing: .3 }}>{lb}</span>
+                </div>
+                {i < STEPS.length - 1 && <div style={{ width: 28, height: 1, background: i < step ? 'rgba(70,182,255,.4)' : '#1e2d50', margin: '0 2px' }}/>}
+              </div>
+            ))}
+          </div>
+          <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 7, border: '1px solid #2a3c6a', background: 'rgba(10,14,34,.7)', color: 'var(--text-mute)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>×</button>
         </div>
-        <div className="w-[130px]">
-          <label className="lbl">ช่วงเวลา</label>
-          <input className="fld" placeholder="2026" value={period} onChange={e => setPeriod(e.target.value)} />
+
+        {/* body */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 310px', minHeight: 380 }}>
+          {/* form */}
+          <div style={{ padding: '24px 26px', borderRight: '1px solid #1a2540', display: 'flex', flexDirection: 'column', gap: 0 }}>
+
+            {/* STEP 0 — Main Info */}
+            {step === 0 && (
+              <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>ชื่อโปรเจกต์</div>
+                  <input ref={inputRef} className="fld" placeholder="เช่น AI Trading Dashboard" value={title} onChange={e => setTitle(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(1)} style={{ fontSize: 18, padding: '12px 14px', letterSpacing: .4 }}/>
+                </div>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>บทบาทของคุณ</div>
+                    <input className="fld" placeholder="Developer / Designer" value={role} onChange={e => setRole(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(1)} style={{ fontSize: 15, padding: '10px 14px' }}/>
+                  </div>
+                  <div style={{ width: 140 }}>
+                    <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>ช่วงเวลา</div>
+                    <input className="fld" placeholder="2026" value={period} onChange={e => setPeriod(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(1)} style={{ fontSize: 15, padding: '10px 14px', fontFamily: 'var(--mono)' }}/>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 1 — Details */}
+            {step === 1 && (
+              <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 20 }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>สรุปสั้นๆ</div>
+                  <textarea className="fld" rows="3" placeholder="โปรเจกต์นี้ทำอะไร แก้ปัญหาอะไร..." value={summary} onChange={e => setSummary(e.target.value)} style={{ fontSize: 14, padding: '12px 14px', lineHeight: 1.6 }}/>
+                </div>
+                <div>
+                  <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 8 }}>แท็ก / ทักษะ <span style={{ color: 'var(--text-dim)', fontWeight: 400, textTransform: 'none', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: 0 }}>(comma separated)</span></div>
+                  <input className="fld" placeholder="React, Python, UX" value={tags} onChange={e => setTags(e.target.value)} onKeyDown={e => e.key === 'Enter' && setStep(2)} style={{ fontSize: 14, padding: '10px 14px', color: 'var(--cyan)', fontFamily: 'var(--mono)' }}/>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2 — Confirm */}
+            {step === 2 && (
+              <div style={{ animation: 'caStepIn .18s ease-out', display: 'flex', flexDirection: 'column', gap: 16 }}>
+                <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)' }}>ตรวจสอบข้อมูลโปรเจกต์</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div style={{ background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '11px 13px' }}>
+                    <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>ชื่อโปรเจกต์</div>
+                    <div style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 14, color: 'var(--cyan)' }}>{title.trim() || 'โปรเจกต์ใหม่'}</div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div style={{ background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '11px 13px' }}>
+                      <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>บทบาท</div>
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--white)' }}>{role.trim() || 'Builder'}</div>
+                    </div>
+                    <div style={{ background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '11px 13px' }}>
+                      <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>ช่วงเวลา</div>
+                      <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--white)' }}>{period.trim() || '2026'}</div>
+                    </div>
+                  </div>
+                  <div style={{ background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '11px 13px' }}>
+                    <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 6 }}>ทักษะที่ใช้</div>
+                    <div style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--cyan)' }}>
+                      {tags.split(',').filter(x => x.trim()).join(' · ') || 'ยังไม่มีการระบุทักษะ'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* nav buttons */}
+            <div style={{ marginTop: 'auto', paddingTop: 24, display: 'flex', gap: 10 }}>
+              {step > 0 && (
+                <button onClick={() => setStep(s => s - 1)} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 12, color: 'var(--text-dim)', background: 'rgba(14,18,36,.8)', border: '1px solid #2a3c6a', borderRadius: 8, padding: '11px 18px', cursor: 'pointer' }}>← ย้อนกลับ</button>
+              )}
+              <div style={{ flex: 1 }}/>
+              {step < 2 ? (
+                <button onClick={() => setStep(s => s + 1)} disabled={step === 0 && !title.trim()} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 13, color: step === 0 && !title.trim() ? 'var(--text-mute)' : '#000', background: step === 0 && !title.trim() ? 'rgba(20,28,50,.8)' : 'linear-gradient(180deg, var(--cyan), #2080cc)', border: `1px solid ${step === 0 && !title.trim() ? '#2a3c6a' : 'var(--cyan)'}`, borderRadius: 8, padding: '11px 22px', cursor: step === 0 && !title.trim() ? 'not-allowed' : 'pointer', boxShadow: step === 0 && !title.trim() ? 'none' : '0 4px 14px rgba(70,182,255,.3)', opacity: step === 0 && !title.trim() ? .5 : 1, transition: '.15s' }}>ถัดไป →</button>
+              ) : (
+                <button onClick={create} disabled={saving} style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 14, color: '#000', background: done ? 'linear-gradient(180deg, #3ce594, #1f9a5e)' : 'linear-gradient(180deg, var(--cyan), #2080cc)', border: `1px solid ${done ? '#3ce594' : 'var(--cyan)'}`, borderRadius: 8, padding: '13px 28px', cursor: saving ? 'wait' : 'pointer', boxShadow: `0 4px 18px ${done ? 'rgba(60,229,148,.4)' : 'rgba(70,182,255,.3)'}`, opacity: saving ? .7 : 1, transition: '.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {saving && !done ? <><span style={{ animation: 'caSpinner .8s linear infinite', display: 'inline-block' }}>◌</span> กำลังสร้าง…</> : done ? '✓ สำเร็จ!' : '🚀 เพิ่มโปรเจกต์'}
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* preview column */}
+          <div style={{ padding: '20px 18px', background: 'rgba(6,9,20,.5)', display: 'flex', flexDirection: 'column', gap: 12, alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at top right, rgba(70,182,255,0.1) 0%, transparent 60%)', pointerEvents: 'none' }} />
+            <div style={{ fontFamily: 'var(--pixel)', fontSize: 7, letterSpacing: 1, color: 'var(--text-mute)', position: 'relative', zIndex: 1 }}>PREVIEW</div>
+            
+            <PreviewProjectCard title={title} role={role} period={period} summary={summary} tags={tags} status="กำลังทำ" progress={10} />
+            
+            <div style={{ width: '100%', background: 'rgba(10,14,28,.7)', border: '1px solid #1e2d50', borderRadius: 8, padding: '10px 12px', fontFamily: 'var(--mono)', fontSize: 10.5, color: 'var(--text-mute)', lineHeight: 1.6, position: 'relative', zIndex: 1, marginTop: 4 }}>
+              <span style={{ color: 'var(--gold)' }}>◆ DATA BINDING:</span> LIVE<br/>
+              <span style={{ color: 'var(--cyan)' }}>◆ AUTO-SAVE:</span> ENABLED<br/>
+            </div>
+          </div>
         </div>
       </div>
-      <label className="lbl mt-3">สรุปสั้นๆ</label>
-      <textarea className="fld" rows="2" placeholder="โปรเจกต์นี้ทำอะไร แก้ปัญหาอะไร..." value={summary} onChange={e => setSummary(e.target.value)} />
-      <label className="lbl mt-3">แท็ก / ทักษะ <span className="text-text-mute">(คั่นด้วย ,)</span></label>
-      <input className="fld" placeholder="React, Python, UX" value={tags} onChange={e => setTags(e.target.value)} />
-      <button className="btn w-full mt-4.5" onClick={create}>เพิ่มเข้าคลังผลงาน</button>
-    </Modal>
+      <style>{`
+        @keyframes caFadeIn   { from { opacity:0 } to { opacity:1 } }
+        @keyframes caSlideUp  { from { opacity:0; transform:translateY(16px) scale(.97) } to { opacity:1; transform:none } }
+        @keyframes caStepIn   { from { opacity:0; transform:translateX(10px) } to { opacity:1; transform:none } }
+        @keyframes caSpinner  { to { transform: rotate(360deg) } }
+      `}</style>
+    </div>
   );
 }
 
