@@ -125,17 +125,15 @@ export async function syncBackendData() {
     
     let finalAgents = agentsData;
     
-    // Auto mock if backend is empty
-    if (finalAgents.length === 0 && SEED.agents.length > 0) {
-      for (const a of SEED.agents) {
-        try { await createAgent(a); } catch (e) {}
-      }
-      finalAgents = SEED.agents;
-    }
+
 
     const formattedAgents = finalAgents.map(a => {
         // Compute UI fields that are not in the backend schema
-        const color = a.rarity === 'legend' ? '#ff5168' : a.rarity === 'epic' ? '#b06bff' : a.rarity === 'rare' ? '#4db4ff' : '#9aa6cf';
+        let color = '#9aa6cf';
+        if (a.rarity === 'legend' || a.rarity === 'CEO' || a.seniority === 'ceo') color = '#ff5168';
+        else if (a.rarity === 'SECRETARY' || a.seniority === 'secretary') color = '#ffce4a';
+        else if (a.rarity === 'epic') color = '#b06bff';
+        else if (a.rarity === 'rare') color = '#4db4ff';
         return {
           ...a,
           color,

@@ -60,10 +60,13 @@ export function CharSheet({ a, onBack }) {
         <div className="cs-left">
           <div className="cs-frame" style={{ '--rcol': m.col, '--rglow': m.glow }}>
             <div className="inner" style={{ aspectRatio: '1 / 1' }}>
-              <image-slot id={a.isCeo ? 'player-avatar' : 'card-' + a.id} shape="rect" placeholder={a.name}
+              <image-slot id={a.isCeo ? 'player-avatar' : 'card-' + a.id} editable="true" shape="rect" placeholder={a.name}
                 style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}/>
               <div className="slot-letter lp" style={{ fontSize: 64, color: m.col, textShadow: '0 0 26px ' + m.glow }}>{a.name[0]}</div>
             </div>
+          </div>
+          <div style={{ textAlign: 'center', marginTop: 6, marginBottom: 12 }}>
+            <button className="text-[10px] text-cyan hover:underline cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('browse-assets', { detail: { id: a.isCeo ? 'player-avatar' : 'card-' + a.id } }))}>เลือกรูปจาก Assets</button>
           </div>
           <div style={{ textAlign: 'center' }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>

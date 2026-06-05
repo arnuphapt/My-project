@@ -32,8 +32,7 @@ function PreviewCard({ name, roleEn, roleTh, seniority, model, selectedImage }) 
         <div style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 16, color: 'var(--white)', letterSpacing: .3 }}>{name.trim() || '???'}</div>
         <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-dim)', marginTop: 3, letterSpacing: .3 }}>{roleEn} · {roleTh}</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-          {[0,1,2,3,4].map(i => <Star key={i} className={'w-3 h-3 fill-current ' + (i < m.stars ? 'text-gold' : 'text-[#2a3450]')} />)}
-          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: mm.col, marginLeft: 4 }} className="inline-flex items-center gap-1"><Gem className="w-2.5 h-2.5" /> {mm.label}</span>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: mm.col }} className="inline-flex items-center gap-1"><Gem className="w-2.5 h-2.5" /> {mm.label}</span>
         </div>
       </div>
     </div>
@@ -55,6 +54,10 @@ export function CreateAgent({ onClose }) {
   const inputRef = useR(null);
 
   useE(() => { if (step === 0 && inputRef.current) inputRef.current.focus(); }, [step]);
+  useE(() => {
+    if (roleEn === 'SECRETARY') setSeniority('secretary');
+    else if (seniority === 'secretary') setSeniority('mid');
+  }, [roleEn]);
 
   const cfg = getTeamCfg();
   const m  = cfg.SENIOR[seniority]    || cfg.SENIOR.mid;
@@ -137,22 +140,21 @@ export function CreateAgent({ onClose }) {
                     ))}
                   </div>
                 </div>
-                <div>
-                  <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 10 }}>ระดับประสบการณ์</div>
+                {roleEn !== 'SECRETARY' && (
+                  <div>
+                    <div style={{ fontFamily: 'var(--pixel)', fontSize: 8, letterSpacing: 1, color: 'var(--text-mute)', marginBottom: 10 }}>ระดับประสบการณ์</div>
                   <div style={{ display: 'flex', gap: 7, overflowX: 'auto', paddingBottom: 4 }}>
                     {Object.keys(cfg.SENIOR).filter(s => s !== 'ceo' && s !== 'secretary').map(s => {
                       const sm = cfg.SENIOR[s]; const active = seniority === s;
                       return (
                         <button key={s} onClick={() => setSeniority(s)} style={{ flex: 1, padding: '10px 4px', borderRadius: 8, cursor: 'pointer', transition: '.15s', background: active ? 'rgba(40,52,80,.7)' : 'rgba(10,14,28,.6)', border: `1px solid ${active ? sm.col + '99' : '#1e2d50'}`, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, boxShadow: active ? `0 0 14px ${sm.glow}44` : 'none' }}>
-                          <span style={{ display: 'flex', gap: 0.5, fontSize: 13, color: active ? sm.col : 'var(--text-mute)' }}>
-                            {Array.from({length: sm.stars}).map((_, stIdx) => <Star key={stIdx} className="w-3 h-3 fill-current" />)}
-                          </span>
-                          <span style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 9, color: active ? 'var(--white)' : 'var(--text-dim)', letterSpacing: .3, textAlign: 'center' }}>{sm.label}</span>
+                          <span style={{ fontFamily: 'var(--pixel2)', fontWeight: 700, fontSize: 11, color: active ? 'var(--white)' : 'var(--text-dim)', letterSpacing: .3, textAlign: 'center' }}>{sm.label}</span>
                         </button>
                       );
                     })}
                   </div>
                 </div>
+                )}
               </div>
             )}
 

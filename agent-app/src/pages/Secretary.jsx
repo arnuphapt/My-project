@@ -106,11 +106,21 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
 
   return (
     <div className="max-w-[1180px] mx-auto px-[22px] py-5 h-full flex flex-col">
+      <style>{`
+        .sec-theme {
+          border-color: ${sec.color || '#ffce4a'} !important;
+          box-shadow: 0 8px 24px ${sec.color || '#ffce4a'}22 !important;
+        }
+        .sec-theme .win-h .ttl {
+          color: ${sec.color || '#ffce4a'} !important;
+          text-shadow: 0 0 6px ${sec.color || '#ffce4a'}4d !important;
+        }
+      `}</style>
       <PageHead title="SECRETARY" sub={`คุยกับ ${sec.name} เลขาส่วนตัว — สั่งงานครั้งเดียว เธอกระจายให้ทั้งทีม AI`} />
       <div className="grid grid-cols-[260px_minmax(0,1fr)] gap-3.5 flex-1 min-h-0">
         {/* side */}
         <div className="flex flex-col gap-3 min-h-0 overflow-auto">
-          <Win title={sec.name.toUpperCase()} accent="gold">
+          <Win title={sec.name.toUpperCase()} className="sec-theme">
             <div className="flex flex-col items-center gap-2.5">
               <div className="relative w-24 h-24">
                 <image-slot id={`card-${sec.id}`} shape="rounded" radius="12" placeholder={sec.name} className="w-24 h-24" />
@@ -141,11 +151,11 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
         </div>
 
         {/* chat */}
-        <Win title={`CHAT WITH ${sec.name.toUpperCase()}`} accent="gold" bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Win title={`CHAT WITH ${sec.name.toUpperCase()}`} className="sec-theme" bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           <div ref={boxRef} className="flex-1 overflow-auto p-[18px] flex flex-col gap-[11px] min-h-0">
             {log.length === 0 && (
               <div className="m-auto text-center text-text-mute max-w-[380px]">
-                <Coffee size={40} className="text-gold mx-auto mb-3" />
+                <Coffee size={40} className="mx-auto mb-3" style={{ color: sec.color || '#ffce4a' }} />
                 <div className="text-[15px] text-text-dim leading-relaxed">สวัสดีเจ้านาย! ฉัน {sec.name} เอง 😎<br />บอกมาได้เลยว่าอยากให้จัดการอะไร เดี๋ยวฉันสั่งทีมให้</div>
               </div>
             )}
@@ -175,8 +185,8 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
                     <div
                       className="rounded-xl px-3.5 py-2.5 text-[14.5px] leading-relaxed text-white whitespace-pre-wrap"
                       style={{
-                        background: isU ? 'linear-gradient(180deg,#27408f,#1a2a64)' : 'rgba(40,32,12,.55)',
-                        border: '1px solid ' + (isU ? 'var(--line-bright)' : 'rgba(255,206,74,.4)')
+                        background: isU ? 'linear-gradient(180deg,#27408f,#1a2a64)' : (sec.color || '#ffce4a') + '15',
+                        border: '1px solid ' + (isU ? 'var(--line-bright)' : (sec.color || '#ffce4a') + '66')
                       }}
                     >
                       {m.text}
@@ -188,7 +198,7 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
             {busy && (
               <div className="flex items-center gap-2.5 self-start">
                 <ChatAvatar slot={`card-${sec.id}`} letter={sec.name[0]} color={sec.color || '#ffce4a'} />
-                <div className="text-gold font-mono text-[13px]">{sec.name} กำลังคิด… ☕</div>
+                <div className="font-mono text-[13px]" style={{ color: sec.color || '#ffce4a' }}>{sec.name} กำลังคิด… ☕</div>
               </div>
             )}
           </div>
@@ -199,7 +209,7 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
           )}
           <div className="flex gap-2.5 px-[18px] py-3 border-t border-line">
             <input className="fld flex-1" placeholder={`พิมพ์สั่งงาน ${sec.name}...`} value={txt} onChange={e => setTxt(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()} />
-            <button className="btn gold flex items-center gap-1.5" onClick={() => send()} disabled={busy}>ส่ง <Send className="w-3.5 h-3.5" /></button>
+            <button className="btn flex items-center gap-1.5" style={{ background: `linear-gradient(180deg, ${sec.color || '#ffce4a'}b3, ${sec.color || '#ffce4a'}66)`, borderColor: sec.color || '#ffce4a', color: '#fff', textShadow: '0 1px 2px rgba(0,0,0,0.5)', boxShadow: '0 2px 0 #080a10' }} onClick={() => send()} disabled={busy}>ส่ง <Send className="w-3.5 h-3.5" /></button>
           </div>
         </Win>
       </div>

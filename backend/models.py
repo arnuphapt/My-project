@@ -15,6 +15,7 @@ class Agent(Base):
     salary = Column(Float, default=0.5)
     desc = Column(String)
     model = Column(String, default="sonnet")
+    effort = Column(Integer, default=4)
     skillMd = Column(String)
 
 class Project(Base):
