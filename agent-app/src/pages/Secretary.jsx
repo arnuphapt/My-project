@@ -31,6 +31,14 @@ function Secretary() {
   const sec = s.agents.find(a => a.roleTh.includes('เลขา') || a.roleEn.toUpperCase().includes('SECRETARY'));
   const log = s.secChat;
 
+  // Pre-fill from CEO directive
+  useE(() => {
+    if (s.secretaryDraft) {
+      setTxt(s.secretaryDraft);
+      OfficeStore.setState({ secretaryDraft: '' });
+    }
+  }, [s.secretaryDraft]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useE(() => {
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
   }, [log.length, busy]);

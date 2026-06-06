@@ -441,3 +441,90 @@ a{color:var(--cyan);}
   .proj-meta{grid-template-columns:1fr 1fr;width:100%;}
   .proj-meta-cell:nth-child(2){border-right:none;}
 }
+
+/* ===== EXEC SHEETS (CEO / Secretary) ===== */
+.cs-hero{position:relative;display:flex;gap:24px;align-items:center;padding:26px 28px;border-radius:16px;
+  border:1px solid var(--hc,#ffce4a);background:linear-gradient(115deg, var(--hb,rgba(255,206,74,.14)), rgba(10,14,30,.5) 58%);
+  box-shadow:0 0 0 1px #000, 0 0 46px var(--hg,rgba(255,206,74,.22)), inset 0 0 60px rgba(8,14,34,.5);
+  overflow:hidden;margin-bottom:20px;}
+.cs-hero::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background-image:radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px);background-size:5px 5px;}
+.cs-hero::after{content:'';position:absolute;top:-40%;right:-6%;width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle, var(--hg,rgba(255,206,74,.3)), transparent 68%);pointer-events:none;}
+.cs-hero-ava{width:130px;height:130px;border-radius:18px;position:relative;overflow:hidden;flex:none;z-index:1;
+  background:#0a0e1c;box-shadow:0 0 0 3px var(--hc,#ffce4a), 0 0 30px var(--hg,rgba(255,206,74,.4));}
+.cs-hero-ava .lp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-family:var(--pixel);font-size:48px;color:var(--hc,#ffce4a);text-shadow:0 0 24px var(--hg);}
+.cs-hero-body{flex:1;min-width:0;z-index:1;}
+.cs-kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:10px;letter-spacing:1px;
+  color:var(--hc,#ffce4a);text-shadow:0 0 10px var(--hg);margin-bottom:11px;}
+.cs-crown{position:absolute;top:10px;right:11px;z-index:2;font-size:20px;filter:drop-shadow(0 2px 4px #000);}
+.cs-kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px;}
+.cs-kpi-card{position:relative;background:rgba(10,14,30,.6);border:1px solid var(--line);
+  border-top:2px solid var(--kc,#ffce4a);border-radius:10px;padding:15px 16px;}
+.cs-kpi-v{font-family:var(--pixel);font-size:24px;color:var(--kc,#ffce4a);text-shadow:0 0 14px var(--kc,#ffce4a)55;line-height:1;margin:9px 0 6px;}
+.cs-kpi-l{font-family:var(--pixel2);font-weight:700;font-size:10px;letter-spacing:.4px;color:var(--text-dim);text-transform:uppercase;}
+.cs-kpi-s{font-family:var(--mono);font-size:11px;color:var(--text-mute);}
+/* chain of command */
+.cs-chain{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;}
+.cs-chain-node{display:flex;align-items:center;gap:12px;padding:13px 17px;border-radius:11px;
+  background:rgba(10,14,30,.6);border:1px solid var(--cc,#9aa6cf);min-width:0;}
+.cs-chain-ava{width:42px;height:42px;border-radius:10px;position:relative;overflow:hidden;flex:none;background:#0a0e1c;
+  box-shadow:0 0 0 2px var(--cc,#9aa6cf);}
+.cs-chain-ava .lp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-family:var(--pixel);font-size:15px;color:var(--cc);}
+.cs-chain-arrow{display:flex;align-items:center;justify-content:center;padding:0 6px;color:var(--text-mute);font-size:18px;}
+/* team roster (secretary) */
+.cs-roster{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.cs-roster-card{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;cursor:pointer;
+  background:rgba(10,14,30,.55);border:1px solid var(--line);border-left:3px solid var(--rc,#9aa6cf);transition:.12s;}
+.cs-roster-card:hover{transform:translateX(3px);background:rgba(40,52,80,.4);}
+.cs-roster-ava{width:38px;height:38px;border-radius:9px;position:relative;overflow:hidden;flex:none;background:#0a0e1c;
+  box-shadow:0 0 0 2px var(--rc,#9aa6cf);}
+.cs-roster-ava .lp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-family:var(--pixel);font-size:14px;color:var(--rc);}
+.cs-actionbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:22px;}
+@media (max-width:760px){
+  .cs-hero{flex-direction:column;text-align:center;align-items:center;}
+  .cs-kpi{grid-template-columns:1fr;}
+}
+
+/* ===== HEALTH ===== */
+.hp-banner{display:flex;align-items:center;gap:16px;padding:17px 22px;border-radius:12px;border:1px solid;margin-bottom:18px;}
+.hp-dot{width:11px;height:11px;border-radius:50%;flex:none;display:inline-block;}
+.hp-dot.pulse{animation:hpPulse 1s ease-in-out infinite;}
+@keyframes hpPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.hp-pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;
+  padding:4px 11px;border-radius:20px;border:1px solid;white-space:nowrap;}
+.hp-row{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto auto;gap:16px;align-items:center;
+  padding:13px 4px;border-top:1px solid var(--line);}
+.hp-row:first-child{border-top:none;}
+.hp-spark{display:flex;align-items:flex-end;gap:2px;height:26px;width:62px;}
+.hp-spark i{flex:1;border-radius:1px;min-height:2px;transition:height .25s;}
+@media (max-width:720px){
+  .hp-row{grid-template-columns:26px minmax(0,1fr) auto;gap:12px;}
+  .hp-spark{display:none;}
+}
+
+/* ===== TASKS LIST ===== */
+.tk-secline{font-family:var(--pixel);font-size:11px;letter-spacing:1.5px;color:var(--text-dim);
+  text-transform:uppercase;margin-bottom:13px;padding-left:2px;}
+.tk-item{display:flex;align-items:stretch;gap:14px;background:linear-gradient(90deg,rgba(16,22,46,.55),rgba(9,12,24,.5));
+  border:1px solid var(--line);border-left:3px solid var(--sc,#46b6ff);border-radius:9px;
+  padding:16px 18px;transition:background .12s,transform .08s;}
+.tk-item:hover{background:linear-gradient(90deg,rgba(34,46,80,.6),rgba(12,16,30,.4));}
+.tk-item-main{flex:1;min-width:0;}
+.tk-meta{display:flex;align-items:center;gap:14px;margin-bottom:9px;}
+.tk-prio,.tk-stat{font-family:var(--pixel);font-size:9px;letter-spacing:1px;}
+.tk-title{font-family:var(--pixel2);font-weight:700;font-size:16.5px;line-height:1.4;letter-spacing:.2px;
+  margin-bottom:8px;}
+.tk-cat{font-family:var(--mono);font-size:11.5px;letter-spacing:.3px;}
+.tk-side{display:flex;flex-direction:column;align-items:flex-end;justify-content:flex-start;flex:none;}
+.tk-mvrow{display:flex;align-items:center;gap:5px;}
+.tk-mv{width:26px;height:24px;border-radius:6px;cursor:pointer;border:1px solid;background:transparent;
+  font-size:12px;line-height:1;display:flex;align-items:center;justify-content:center;transition:.1s;}
+.tk-mv:hover{filter:brightness(1.15);}
+@media (max-width:620px){
+  .tk-item{flex-direction:column;}
+  .tk-side{align-items:flex-start;}
+}

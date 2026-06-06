@@ -13,6 +13,8 @@ import Projects from './pages/Projects.jsx';
 import Assets from './pages/Assets.jsx';
 import Settings from './pages/Settings.jsx';
 import SystemLogs from './pages/SystemLogs.jsx';
+import Tasks from './pages/Tasks.jsx';
+import Health from './pages/Health.jsx';
 import { AssetBrowser } from './components/AssetBrowser.jsx';
 import {
   HashRouter,
@@ -96,6 +98,8 @@ function App() {
             <Route path="/assets" element={<Assets />} />
             <Route path="/systemlogs" element={<SystemLogs />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/health" element={<Health />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

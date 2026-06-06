@@ -50,7 +50,7 @@ export function AgentSkillMd({ a }){
   const save=()=>{
     OfficeStore.setState(st=>({...st,
       agents: st.agents.map(x=>x.id===a.id?{...x, skillMd:draft}:x),
-      log:[{t:OfficeStore.clock(),who:a.name,text:'แก้คัมภีร์ skill.md',kind:'sys'},...st.log].slice(0,40),
+      log:[{t:OfficeStore.clock(),who:a.name,text:'แก้รายละเอียด skill.md',kind:'sys'},...st.log].slice(0,40),
     }),{now:true});
     setEditing(false); setSaved(true); setTimeout(()=>setSaved(false),1600);
   };
@@ -62,7 +62,7 @@ export function AgentSkillMd({ a }){
       {/* toolbar */}
       <div style={{display:'flex',alignItems:'center',gap:10,flexWrap:'wrap'}}>
         <span style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--text-dim)',flex:1,minWidth:120}}>
-          คัมภีร์ — <span style={{color:'var(--gold)'}}>{fileName}</span>
+          รายละเอียด — <span style={{color:'var(--gold)'}}>{fileName}</span>
         </span>
         {!editing && (
           <div className="codex-toggle">
@@ -78,7 +78,7 @@ export function AgentSkillMd({ a }){
             </div>}
       </div>
 
-      {saved && <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:4}}><Check className="w-3.5 h-3.5" /> บันทึกคัมภีร์แล้ว</div>}
+      {saved && <div style={{fontFamily:'var(--mono)',fontSize:11,color:'var(--green)',display:'flex',alignItems:'center',gap:4}}><Check className="w-3.5 h-3.5" /> บันทึกรายละเอียดแล้ว</div>}
 
       {/* body */}
       {editing

@@ -14,17 +14,21 @@ import {
   FileText,
   Settings as SettingsIcon,
   Coins,
-  Gem
+  Gem,
+  CheckSquare,
+  Activity,
 } from 'lucide-react';
 
 const NAV = [
   ['dashboard','DASHBOARD'],
   ['warroom','WARROOM'],
+  ['tasks','TASKS'],
   ['portfolio','PORTFOLIO'],
   ['projects','PROJECTS'],
   ['team','TEAM'],
   ['orgchart','ORG CHART'],
   ['secretary','SECRETARY'],
+  ['health','HEALTH'],
   ['assets','ASSETS'],
   ['systemlogs','SYSTEM LOGS'],
   ['settings','SETTINGS'],
@@ -34,11 +38,13 @@ function NavIcon({ id, className }) {
   switch (id) {
     case 'dashboard': return <LayoutDashboard className={className} />;
     case 'warroom': return <Radio className={className} />;
+    case 'tasks': return <CheckSquare className={className} />;
     case 'portfolio': return <TrendingUp className={className} />;
     case 'projects': return <Briefcase className={className} />;
     case 'team': return <Users className={className} />;
     case 'orgchart': return <Network className={className} />;
     case 'secretary': return <MessageSquare className={className} />;
+    case 'health': return <Activity className={className} />;
     case 'assets': return <FolderOpen className={className} />;
     case 'systemlogs': return <FileText className={className} />;
     case 'settings': return <SettingsIcon className={className} />;
