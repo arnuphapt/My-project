@@ -261,6 +261,22 @@ function Settings() {
               ชื่อ/รูปนี้จะไปแสดงเป็นการ์ด CEO ในหน้า Team, Org Chart
             </div>
           </Win>
+
+          <Win title="WARROOM CONFIGURATION" accent="teal" bodyStyle={{ padding: 18 }}>
+            <SecTitle>ฉากหลังห้องทำงาน (Warroom Background)</SecTitle>
+            <div className="flex flex-col items-center gap-2.5">
+              <div className="w-full h-[140px] rounded-xl relative overflow-hidden border border-[#2f456e] bg-[#0a0e1c] flex items-center justify-center">
+                <image-slot id="office-scene" editable="true" shape="rounded" radius="12" className="absolute inset-0 w-full h-full"/>
+                <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-mono text-[11.5px] text-text-mute px-4 text-center">
+                  ลากรูปภาพแผนผังหรือห้อง Isometric มาวางที่นี่
+                </div>
+              </div>
+              <div className="flex justify-between items-center w-full mt-1">
+                <span className="font-mono text-[10px] text-text-mute">ขนาดแนะนำ: 16:9 (เช่น 1920x1080)</span>
+                <button className="text-[10px] text-cyan hover:underline cursor-pointer" onClick={() => window.dispatchEvent(new CustomEvent('browse-assets', { detail: { id: 'office-scene' } }))}>เลือกจาก Assets</button>
+              </div>
+            </div>
+          </Win>
         </div>
       </div>
 

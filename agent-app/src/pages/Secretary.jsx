@@ -1,8 +1,8 @@
 import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { OfficeStore, useOffice } from '../store';
-import { Win, StatusDot, Rarity, PageHead } from '../components/UI.jsx';
+import { Win, StatusDot, PageHead } from '../components/UI.jsx';
 import '../store/image-slot.js';
-import { UserCheck, Coffee, Send } from 'lucide-react';
+import { UserCheck, Coffee, Send, Star, Trash2 } from 'lucide-react';
 
 /* ── Chat Avatar Helper ── */
 function ChatAvatar({ slot, letter, color }) {
@@ -45,17 +45,10 @@ function Secretary() {
 
   const push = (m) => OfficeStore.setState(st => ({ ...st, secChat: [...st.secChat, m] }), { now: true });
 
-  const dispatch = (agentId, task) => {
-    OfficeStore.setState(st => {
-      const exists = st.agents.find(a => a.id === agentId);
-      const id = exists ? agentId : st.agents.find(a => a.roleEn.toLowerCase().includes(agentId.toLowerCase()) || a.roleTh.includes(agentId))?.id;
-      if (!id) return st;
-      return {
-        ...st,
-        agents: st.agents.map(a => a.id === id ? { ...a, status: 'working', statusTh: 'ทำงานอยู่', last: 'เมื่อสักครู่', tasks: [{ text: task, done: false, t: OfficeStore.clock() }, ...a.tasks] } : a),
-        log: [{ t: OfficeStore.clock(), who: sec ? sec.name : 'System', text: 'มอบงานให้ ' + (exists ? exists.name : id) + ': ' + task, kind: 'ok' }, ...st.log].slice(0, 40),
-      };
-    }, { now: true });
+  const clearChat = () => {
+    if (window.confirm('คุณต้องการล้างประวัติการสนทนากับเลขาใช่หรือไม่?')) {
+      OfficeStore.setState(st => ({ ...st, secChat: [] }), { now: true });
+    }
   };
 
   if (!sec) {
@@ -87,23 +80,14 @@ function Secretary() {
 นี่คือคัมภีร์ข้อมูลบทบาทและรายละเอียดหน้าที่ของคุณ (.skill.md):
 ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏิบัติการ'}
 
-ทีมที่คุณสั่งงานได้: ${roster}.
-หน้าที่: คุยกับเจ้านาย ช่วยวางแผน และเมื่อเจ้านายอยากให้ทำงานอะไร ให้มอบหมายงานต่อให้ AI ในทีมที่เหมาะสม.
-เวลาจะมอบงาน ให้พิมพ์บรรทัดแยกในรูปแบบ: DISPATCH: <agentId> | <รายละเอียดงาน> (พิมพ์ได้หลายบรรทัดถ้ามอบหลายงาน) แล้วค่อยตามด้วยข้อความสรุปสั้นๆถึงเจ้านาย.
+ทีมที่คุณประสานงานด้วยได้: ${roster}.
+หน้าที่: คุยกับเจ้านาย ช่วยวางแผนงาน และแนะนำว่าควรให้ใครในทีมทำงานอะไร แต่ไม่ต้องพิมพ์รูปแบบคำสั่งพิเศษใดๆ ตอบเจ้านายตามปกติแบบคนทั่วไป.
 เจ้านายพูดว่า: "${t}"`
         }]
       });
-      // parse dispatches
-      const lines = reply.split('\n');
-      const kept = [];
-      lines.forEach(ln => {
-        const m = ln.match(/DISPATCH:\s*([a-zA-Z0-9_]+)\s*\|\s*(.+)/);
-        if (m) { dispatch(m[1].trim(), m[2].trim()); }
-        else kept.push(ln);
-      });
-      const clean = kept.join('\n').trim();
+      const clean = (reply || '').trim();
       if (clean) push({ from: 'a', text: clean });
-      else push({ from: 'a', text: 'จัดให้เรียบร้อยแล้วค่ะเจ้านาย ✅ ดูงานที่หน้า Team ได้เลย' });
+      else push({ from: 'a', text: 'ค่ะเจ้านาย ยินดีช่วยเหลือเสมอนะคะ 😊' });
     } catch (e) {
       push({ from: 'a', text: 'อุ๊ย ระบบสะดุดนิดนึง 😅 ลองพิมพ์อีกทีนะเจ้านาย' });
     }
@@ -124,7 +108,15 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
           text-shadow: 0 0 6px ${sec.color || '#ffce4a'}4d !important;
         }
       `}</style>
-      <PageHead title="SECRETARY" sub={`คุยกับ ${sec.name} เลขาส่วนตัว — สั่งงานครั้งเดียว เธอกระจายให้ทั้งทีม AI`} />
+      <PageHead
+        title="SECRETARY"
+        sub={`คุยกับ ${sec.name} เลขาส่วนตัว — สั่งงานครั้งเดียว เธอกระจายให้ทั้งทีม AI`}
+        right={
+          <button className="btn sm ghost flex items-center gap-1.5 text-text-mute hover:text-red border-line hover:border-red/30 cursor-pointer" onClick={clearChat}>
+            <Trash2 className="w-3.5 h-3.5" /> Clear Session
+          </button>
+        }
+      />
       <div className="grid grid-cols-[260px_minmax(0,1fr)] gap-3.5 flex-1 min-h-0">
         {/* side */}
         <div className="flex flex-col gap-3 min-h-0 overflow-auto">
@@ -133,13 +125,21 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
               <div className="relative w-24 h-24">
                 <image-slot id={`card-${sec.id}`} shape="rounded" radius="12" placeholder={sec.name} className="w-24 h-24" />
                 <div
-                  className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
+                  className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
                   style={{ color: sec.color, textShadow: `0 0 14px ${sec.color}b3` }}
                 >
                   {sec.name[0]}
                 </div>
               </div>
-              <Rarity r={sec.rarity} />
+              <div className="flex items-center gap-0.5" style={{ color: sec.color || '#ffce4a' }}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className="w-3.5 h-3.5 fill-current"
+                    style={{ opacity: i < (sec.effort || 4) ? 1 : 0.25 }}
+                  />
+                ))}
+              </div>
               <div className="text-center text-[13px] text-text-dim leading-normal">
                 {sec.roleTh}<br />ขี้เล่น มีอารมณ์ขัน แต่งานเป๊ะ
               </div>

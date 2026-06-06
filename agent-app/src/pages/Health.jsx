@@ -1,4 +1,4 @@
-import React, { useState as useS, useEffect as useE, useRef as useR } from 'react';
+import React, { useState as useS, useEffect as useE } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { PageHead, Win, SumCard } from '../components/UI.jsx';
 
@@ -12,32 +12,29 @@ const HSTAT = {
   checking: { label: 'กำลังตรวจ',    col: '#46b6ff' },
 };
 
-function hpMulberry(a) {
-  return function () {
-    a |= 0; a = a + 0x6D2B79F5 | 0;
-    let t = Math.imul(a ^ a >>> 15, 1 | a);
-    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-  };
-}
+
+const BASE_URL = 'http://127.0.0.1:8000';
 
 function buildEndpoints(s) {
   const L = s.live || {};
   const ex = L.exchange || 'Binance';
   const exHost = { Binance: 'api.binance.com', Bybit: 'api.bybit.com', OKX: 'www.okx.com', MT5: 'mt5.broker.net' }[ex] || 'api.exchange.com';
+  const geminiKey = s.settings?.gemini_api_key || s.settings?.llm_api_key || '';
   return [
-    { id: 'claude',   group: 'AI · ปัญญาประดิษฐ์', name: 'Claude API',         url: 'api.anthropic.com/v1/messages', icon: '🧠', base: 380 },
-    { id: 'agents',   group: 'AI · ปัญญาประดิษฐ์', name: 'Agent Runtime',       url: 'internal://office/agents',     icon: '🤖', base: 42  },
-    { id: 'exchange', group: 'การลงทุน',           name: ex + ' API',           url: exHost + '/api/v3',             icon: '📈', base: 120, gated: !L.connected },
-    { id: 'webhook',  group: 'การลงทุน',           name: 'TradingView Webhook', url: 'my-office.app/hook/…-tv',      icon: '🪝', base: 95,  gated: !L.connected },
-    { id: 'market',   group: 'การลงทุน',           name: 'Market Data Feed',    url: 'stream.market.io/ws',          icon: '📡', base: 68  },
-    { id: 'storage',  group: 'ระบบ',               name: 'Local Storage',       url: 'browser://localStorage',       icon: '💾', base: 3, real: true },
-    { id: 'cdn',      group: 'ระบบ',               name: 'Asset CDN',           url: 'unpkg.com',                    icon: '🗂️', base: 150 },
+    { id: 'backend',  group: 'AI · ปัญญาประดิษฐ์', name: 'Agent Backend',       url: BASE_URL + '/',              icon: '🤖', realUrl: BASE_URL + '/' },
+    { id: 'agents_ep',group: 'AI · ปัญญาประดิษฐ์', name: 'Agents Endpoint',     url: BASE_URL + '/agents/',       icon: '👥', realUrl: BASE_URL + '/agents/' },
+    { id: 'gemini',   group: 'AI · ปัญญาประดิษฐ์', name: 'Gemini API',          url: 'generativelanguage.googleapis.com', icon: '🧠', realUrl: geminiKey ? `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}` : null, gated: !geminiKey },
+    { id: 'exchange', group: 'การลงทุน',           name: ex + ' API',           url: exHost + '/api/v3',          icon: '📈', base: 120, gated: !L.connected },
+    { id: 'webhook',  group: 'การลงทุน',           name: 'TradingView Webhook', url: 'my-office.app/hook/…-tv',   icon: '🪝', base: 95,  gated: !L.connected },
+    { id: 'market',   group: 'การลงทุน',           name: 'Yahoo Finance Proxy', url: BASE_URL + '/proxy/yfinance/AAPL', icon: '📡', realUrl: BASE_URL + '/proxy/yfinance/AAPL' },
+    { id: 'storage',  group: 'ระบบ',               name: 'Local Storage',       url: 'browser://localStorage',   icon: '💾', localStorage: true },
+    { id: 'settings', group: 'ระบบ',               name: 'Settings Endpoint',   url: BASE_URL + '/settings/',    icon: '⚙️', realUrl: BASE_URL + '/settings/' },
   ];
 }
 
-function pingEndpoint(ep, rnd) {
-  if (ep.real) {
+async function pingEndpoint(ep) {
+  // localStorage — real sync test
+  if (ep.localStorage) {
     const t = performance.now();
     try {
       localStorage.setItem('__hp_ping', '1');
@@ -46,12 +43,23 @@ function pingEndpoint(ep, rnd) {
       return { status: 'op', latency: Math.max(1, Math.round((performance.now() - t) * 10) / 10) };
     } catch (e) { return { status: 'down', latency: 0 }; }
   }
+  // gated (not configured)
   if (ep.gated) return { status: 'idle', latency: 0 };
-  const roll = rnd();
-  const lat = Math.round(ep.base * (0.65 + rnd() * 0.9));
-  if (roll > 0.94) return { status: 'down', latency: 0 };
-  if (roll > 0.8) return { status: 'degraded', latency: Math.round(ep.base * (1.8 + rnd() * 1.2)) };
-  return { status: 'op', latency: lat };
+  // real HTTP ping
+  if (ep.realUrl) {
+    const t = performance.now();
+    try {
+      const res = await fetch(ep.realUrl, { method: 'GET', signal: AbortSignal.timeout(5000) });
+      const lat = Math.round(performance.now() - t);
+      if (!res.ok && res.status !== 401 && res.status !== 403) return { status: 'down', latency: lat };
+      return { status: lat > 800 ? 'degraded' : 'op', latency: lat };
+    } catch (e) {
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') return { status: 'down', latency: 5000 };
+      return { status: 'down', latency: 0 };
+    }
+  }
+  // mock fallback (CORS-blocked external endpoints)
+  return { status: 'idle', latency: 0 };
 }
 
 function HDot({ status, pulse }) {
@@ -94,27 +102,23 @@ export default function Health() {
   const [checking, setChecking] = useS({});
   const [lastFull, setLastFull] = useS('—');
   const [auto, setAuto] = useS(false);
-  const rndRef = useR(hpMulberry(Date.now() % 2147483647));
-  const timersRef = useR([]);
+
 
   const runOne = (ep) => {
     setChecking(c => ({ ...c, [ep.id]: true }));
-    const delay = ep.real ? 120 : (260 + Math.round(rndRef.current() * 640));
-    const t = setTimeout(() => {
-      const r = pingEndpoint(ep, rndRef.current);
+    pingEndpoint(ep).then(r => {
       setRes(prev => {
         const old = prev[ep.id] || { history: [] };
         const history = [...(old.history || []), { status: r.status, latency: r.latency }].slice(-24);
         return { ...prev, [ep.id]: { status: r.status, latency: r.latency, history, last: OfficeStore.clock() } };
       });
       setChecking(c => ({ ...c, [ep.id]: false }));
-    }, delay);
-    timersRef.current.push(t);
+    });
   };
 
   const runAll = () => { eps.forEach(ep => runOne(ep)); setLastFull(OfficeStore.clock()); };
 
-  useE(() => { runAll(); return () => timersRef.current.forEach(clearTimeout); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useE(() => { runAll(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useE(() => {
     if (!auto) return;
     const iv = setInterval(() => runAll(), 12000);

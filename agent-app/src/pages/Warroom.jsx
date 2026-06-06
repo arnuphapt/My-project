@@ -3,6 +3,8 @@ import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, Modal } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { Clock, Zap, Check, Move, ChevronRight, Megaphone } from 'lucide-react';
+import SpritesheetLib from 'react-responsive-spritesheet';
+const Spritesheet = SpritesheetLib.default || SpritesheetLib;
 
 /* ============ WARROOM · IMMERSIVE ISOMETRIC OFFICE ============ */
 function WarRoom() {
@@ -188,22 +190,16 @@ function CharToken({ a, x, y, bubble, place, dragging, onDown, onClick }) {
       <Speech text={place ? null : bubble} color={a.color} />
 
       {/* character */}
-      <div className="relative w-[74px] h-[84px] mx-auto">
+      <div className="relative w-26 h-46 mx-auto">
         <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[60px] h-3 bg-[radial-gradient(ellipse,rgba(0,0,0,0.5),transparent_70%)] rounded-[50%]"></div>
-        <div
-          className="absolute inset-0 bottom-2 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
-          style={{ color: a.color, textShadow: '0 0 12px ' + a.color + '66' }}
-        >
-          {a.name[0]}
-        </div>
-        <image-slot
-          id={'agent-' + a.id}
-          shape="rect"
-          className="absolute left-0 right-0 top-0 bottom-2 w-[74px] h-[76px]"
-          style={{
-            border: place ? '1.5px dashed ' + a.color : 'none',
-            background: place ? 'rgba(10,14,24,.4)' : 'transparent'
-          }}
+        <Spritesheet
+          image={`/src/assets/sprites/agent-${a.id}.png`}
+          widthFrame={364}
+          heightFrame={668}
+          steps={5}
+          fps={1}
+          autoplay={true}
+          loop={true}
         />
         <span className={'sdot s-' + a.status} style={{ position: 'absolute', right: 6, top: 2, width: 11, height: 11, border: '2px solid #0c0f18' }}></span>
       </div>
