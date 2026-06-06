@@ -16,6 +16,7 @@ import SystemLogs from './pages/SystemLogs.jsx';
 import Tasks from './pages/Tasks.jsx';
 import Health from './pages/Health.jsx';
 import { AssetBrowser } from './components/AssetBrowser.jsx';
+import { ToastContainer } from './components/Toast.jsx';
 import {
   HashRouter,
   Routes,
@@ -104,6 +105,7 @@ function App() {
           </Routes>
         </div>
       </div>
+      <ToastContainer />
       {abTarget && (
         <AssetBrowser 
           onClose={() => setAbTarget(null)} 

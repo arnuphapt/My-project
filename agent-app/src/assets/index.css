@@ -191,6 +191,7 @@ image-slot[data-filled] ~ .slot-letter{display:none !important;}
   background:repeating-linear-gradient(0deg, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.13) 2px 3px);}
 .flicker{animation:fl 6s infinite;}
 @keyframes fl{0%,97%,100%{opacity:1}98%{opacity:.85}}
+@keyframes toast-in{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
 
 /* nav */
 .nav{display:flex;align-items:center;gap:6px;height:62px;padding:0 16px;flex:none;

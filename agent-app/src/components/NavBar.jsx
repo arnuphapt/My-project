@@ -60,11 +60,22 @@ export function NavBar(){
   const cfg = s.settings || {};
 
   let playerLevel = p.level;
-  if (cfg.birthdate) {
-    const ageDifMs = Date.now() - new Date(cfg.birthdate).getTime();
-    if (ageDifMs > 0) {
-      const ageDate = new Date(ageDifMs);
-      playerLevel = Math.abs(ageDate.getUTCFullYear() - 1970);
+  let xp = p.xp;
+  let xpMax = p.xpMax;
+  if (cfg.ownerBirth || cfg.birthdate) {
+    const birth = new Date(cfg.ownerBirth || cfg.birthdate);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const hadBirthday = (now.getMonth() > birth.getMonth()) ||
+      (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate());
+    if (!hadBirthday) age--;
+    if (age >= 0) {
+      playerLevel = age;
+      const lastBday = new Date(birth);
+      lastBday.setFullYear(now.getFullYear() - (hadBirthday ? 0 : 1));
+      const daysSince = Math.floor((now - lastBday) / 86400000);
+      xp = daysSince;
+      xpMax = 365;
     }
   }
 
@@ -116,8 +127,8 @@ export function NavBar(){
           </div>
           <div className="leading-[1.35]">
             <div className="font-pixel text-[9px] text-white">Lv. {playerLevel}</div>
-            <div className="w-[96px] mt-[3px]"><Bar pct={p.xp/p.xpMax*100} tone="purple"/></div>
-            <div className="font-mono text-[10px] text-text-mute mt-[2px]">{fmt.n(p.xp,0)} / {fmt.n(p.xpMax,0)} XP</div>
+            <div className="w-[96px] mt-[3px]"><Bar pct={xp/xpMax*100} tone="purple"/></div>
+            <div className="font-mono text-[10px] text-text-mute mt-[2px]">{fmt.n(xp,0)} / {fmt.n(xpMax,0)} XP</div>
           </div>
         </div>
       </div>

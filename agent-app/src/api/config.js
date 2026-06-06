@@ -5,11 +5,16 @@ export async function apiFetch(endpoint, options = {}) {
   try {
     const res = await fetch(url, options);
     if (!res.ok) {
-      throw new Error(`API Error: ${res.status} ${res.statusText}`);
+      const msg = `API ${res.status}: ${res.statusText}`;
+      import('../components/Toast.jsx').then(m => m.toast(msg, 'error'));
+      throw new Error(msg);
     }
     return await res.json();
   } catch (error) {
-    console.error(`Error fetching ${url}:`, error);
+    if (error.name === 'TypeError') {
+      // network/connection error
+      import('../components/Toast.jsx').then(m => m.toast('Backend offline — ไม่สามารถเชื่อมต่อ API ได้', 'error'));
+    }
     throw error;
   }
 }

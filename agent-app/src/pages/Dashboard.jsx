@@ -286,6 +286,6 @@ function ApiStatusPanel() {
   );
 }
 
-Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TeamChatMini, Bubble, ApiStatusPanel });
+Object.assign(window, { NetWorthPanel, AgentsPanel, QuantBotPanel, CompanyStatusPanel, MarketPanel, LofiPanel, TeamChatMini, ApiStatusPanel });
 
 export default Dashboard;

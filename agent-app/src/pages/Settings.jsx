@@ -253,6 +253,8 @@ function Settings() {
                 <input className="fld" value={cfg.ownerName || ''} onChange={e => F('ownerName', e.target.value)} placeholder="ชื่อของคุณ" />
                 <label className="lbl mt-2.75">ตำแหน่ง / บทบาท</label>
                 <input className="fld" value={cfg.ownerRole || ''} onChange={e => F('ownerRole', e.target.value)} placeholder="เช่น Founder / CEO" />
+                <label className="lbl mt-2.75">วันเกิด</label>
+                <input type="date" className="fld" value={cfg.ownerBirth || ''} onChange={e => F('ownerBirth', e.target.value)} style={{ colorScheme: 'dark' }} />
               </div>
             </div>
             <label className="lbl">เกี่ยวกับฉัน (Bio)</label>
