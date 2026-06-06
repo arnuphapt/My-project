@@ -148,21 +148,6 @@ def delete_project(project_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
     return db_proj
 
-@app.get("/holdings/", response_model=List[schemas.Holding])
-def read_holdings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return crud.get_holdings(db, skip=skip, limit=limit)
-
-@app.post("/holdings/", response_model=schemas.Holding)
-def create_holding(holding: schemas.HoldingCreate, db: Session = Depends(get_db)):
-    return crud.create_holding(db=db, holding=holding)
-
-@app.delete("/holdings/{symbol}", response_model=schemas.Holding)
-def delete_holding(symbol: str, db: Session = Depends(get_db)):
-    db_holding = crud.delete_holding(db, symbol=symbol)
-    if db_holding is None:
-        raise HTTPException(status_code=404, detail="Holding not found")
-    return db_holding
-
 @app.get("/settings/", response_model=List[schemas.Setting])
 def read_settings(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     return crud.get_settings(db, skip=skip, limit=limit)

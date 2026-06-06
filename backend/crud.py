@@ -56,22 +56,6 @@ def delete_project(db: Session, project_id: str):
         db.commit()
     return db_proj
 
-def get_holdings(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.Holding).offset(skip).limit(limit).all()
-
-def create_holding(db: Session, holding: schemas.HoldingCreate):
-    db_holding = models.Holding(**holding.model_dump())
-    db.merge(db_holding) # Merge handles insert or update on primary key
-    db.commit()
-    return db_holding
-
-def delete_holding(db: Session, symbol: str):
-    db_holding = db.query(models.Holding).filter(models.Holding.symbol == symbol).first()
-    if db_holding:
-        db.delete(db_holding)
-        db.commit()
-    return db_holding
-
 def get_settings(db: Session, skip: int = 0, limit: int = 100):
     return db.query(models.Setting).offset(skip).limit(limit).all()
 

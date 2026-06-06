@@ -48,21 +48,6 @@ class Project(ProjectBase):
     class Config:
         from_attributes = True
 
-class HoldingBase(BaseModel):
-    name: str
-    cls: str
-    cur: str
-    avgPrice: float
-    amount: float
-
-class HoldingCreate(HoldingBase):
-    symbol: str
-
-class Holding(HoldingBase):
-    symbol: str
-    class Config:
-        from_attributes = True
-
 class SettingBase(BaseModel):
     value: str
 

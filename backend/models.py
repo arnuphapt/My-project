@@ -31,15 +31,6 @@ class Project(Base):
     summary = Column(String)
     highlights = Column(String)
 
-class Holding(Base):
-    __tablename__ = "holdings"
-    symbol = Column(String, primary_key=True, index=True)
-    name = Column(String)
-    cls = Column(String)
-    cur = Column(String)
-    avgPrice = Column(Float)
-    amount = Column(Float)
-
 class Setting(Base):
     __tablename__ = "settings"
     key = Column(String, primary_key=True, index=True)

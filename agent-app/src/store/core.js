@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { SEED } from './seed.js';
 import { getAgents, createAgent } from '../api/agents.js';
 import { getProjects } from '../api/projects.js';
-import { getHoldings } from '../api/portfolio.js';
 import { getSettings } from '../api/settings.js';
 
 /* ============ GLOBAL STORE ENGINE ============ */
@@ -116,10 +115,9 @@ export function useOffice() {
 // ── API Integration ───────────────────────────────────────────
 export async function syncBackendData() {
   try {
-    const [agentsData, projectsData, holdingsData, settingsData] = await Promise.all([
+    const [agentsData, projectsData, settingsData] = await Promise.all([
       getAgents(),
       getProjects(),
-      getHoldings(),
       getSettings()
     ]);
     
@@ -146,7 +144,6 @@ export async function syncBackendData() {
 
     const newState = { agents: formattedAgents };
     if (projectsData.length > 0) newState.projects = projectsData;
-    if (holdingsData.length > 0) newState.holdings = holdingsData;
     if (Object.keys(settingsData).length > 0) {
        // Merge settings over the base ones
        const mergedSettings = { ...getState().settings, ...settingsData };

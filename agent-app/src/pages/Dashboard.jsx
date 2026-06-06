@@ -30,9 +30,6 @@ function Dashboard() {
             placeholder="วางรูป pixel-art ออฟฟิศที่นี่ (isometric office scene)"
             className="absolute inset-0 w-full h-full"
           />
-          <Bubble name="Mira" x="30%" y="20%" color="#ffce4a" text="วันนี้พอร์ตเขียวนะเจ้านาย ☕" />
-          <Bubble name="Quant" x="62%" y="12%" color="#b06bff" text="NVDA +2.5% เฝ้าให้อยู่" />
-          <Bubble name="Devin" x="20%" y="62%" color="#4db4ff" text="กำลังคอมไพล์... 555" />
         </div>
         {/* bottom floating windows */}
         <div className="mt-3 flex-none">
@@ -47,28 +44,6 @@ function Dashboard() {
         <ApiStatusPanel />
         <MarketPanel />
         <LofiPanel />
-      </div>
-    </div>
-  );
-}
-
-function Bubble({ name, x, y, color, text }) {
-  return (
-    <div
-      className="absolute -translate-x-1/2 -translate-y-1/2 max-w-[180px] z-5"
-      style={{ left: x, top: y }}
-    >
-      <div
-        className="bg-[#0a102c]/92 rounded-[10px] p-[8px_11px] backdrop-blur-[4px]"
-        style={{ border: '1px solid ' + color, boxShadow: '0 0 16px ' + color + '55' }}
-      >
-        <div
-          className="font-mono text-[11px] mb-0.75"
-          style={{ color: color }}
-        >
-          {name}
-        </div>
-        <div contentEditable suppressContentEditableWarning className="text-[13px] text-white outline-none">{text}</div>
       </div>
     </div>
   );
