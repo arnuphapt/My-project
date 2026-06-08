@@ -123,22 +123,13 @@ ${sec.skillMd || 'ไม่มีคัมภีร์คู่มือปฏ�
           <Win title={sec.name.toUpperCase()} className="sec-theme">
             <div className="flex flex-col items-center gap-2.5">
               <div className="relative w-24 h-24">
-                <image-slot id={`card-${sec.id}`} shape="rounded" radius="12" placeholder={sec.name} className="w-24 h-24" />
+                <image-slot id={`card-${sec.id}`} shape="rounded" radius="12" placeholder={sec.name} className="w-24 h-24" editable />
                 <div
                   className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[26px]"
                   style={{ color: sec.color, textShadow: `0 0 14px ${sec.color}b3` }}
                 >
                   {sec.name[0]}
                 </div>
-              </div>
-              <div className="flex items-center gap-0.5" style={{ color: sec.color || '#ffce4a' }}>
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className="w-3.5 h-3.5 fill-current"
-                    style={{ opacity: i < (sec.effort || 4) ? 1 : 0.25 }}
-                  />
-                ))}
               </div>
               <div className="text-center text-[13px] text-text-dim leading-normal">
                 {sec.roleTh}<br />ขี้เล่น มีอารมณ์ขัน แต่งานเป๊ะ

@@ -17,6 +17,7 @@ import {
   Gem,
   CheckSquare,
   Activity,
+  BookOpen,
 } from 'lucide-react';
 
 const NAV = [
@@ -28,6 +29,7 @@ const NAV = [
   ['team','TEAM'],
   ['orgchart','ORG CHART'],
   ['secretary','SECRETARY'],
+  ['skills','SKILLS'],
   ['health','HEALTH'],
   ['assets','ASSETS'],
   ['systemlogs','SYSTEM LOGS'],
@@ -44,6 +46,7 @@ function NavIcon({ id, className }) {
     case 'team': return <Users className={className} />;
     case 'orgchart': return <Network className={className} />;
     case 'secretary': return <MessageSquare className={className} />;
+    case 'skills': return <BookOpen className={className} />;
     case 'health': return <Activity className={className} />;
     case 'assets': return <FolderOpen className={className} />;
     case 'systemlogs': return <FileText className={className} />;

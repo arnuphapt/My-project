@@ -9,6 +9,7 @@ import Portfolio from './pages/Portfolio.jsx';
 import Team from './pages/Team.jsx';
 import OrgChart from './pages/OrgChart.jsx';
 import Secretary from './pages/Secretary.jsx';
+import Skills from './pages/Skills.jsx';
 import Projects from './pages/Projects.jsx';
 import Assets from './pages/Assets.jsx';
 import Settings from './pages/Settings.jsx';
@@ -30,7 +31,7 @@ import {
    Keeps s.route in-sync with the URL so existing pages that read
    s.route (e.g. Dashboard quick-links) still work correctly.
    Navigation goes through the router; store is updated reactively.
-============================================ */
+ ============================================ */
 function RouteSync() {
   const [s, set] = useOffice();
   const navigate = useNavigate();
@@ -96,6 +97,7 @@ function App() {
             <Route path="/team" element={<Team />} />
             <Route path="/orgchart" element={<OrgChart />} />
             <Route path="/secretary" element={<Secretary />} />
+            <Route path="/skills" element={<Skills />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/systemlogs" element={<SystemLogs />} />
             <Route path="/settings" element={<Settings />} />

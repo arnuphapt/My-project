@@ -35,6 +35,10 @@ export function freshState() {
     agents: S.agents.map(a => ({ ...a, tasks: [] })),
     projects: S.projects.map(p => ({ ...p })),
     secChat: [],
+    syncedSkills: [],
+    syncedAgents: [],
+    syncMeta: { skills: null, team: null },
+    skillAnno: {},
     teamChat: [],
     log: [],
   };
