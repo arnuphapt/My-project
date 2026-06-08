@@ -165,9 +165,9 @@ function Settings() {
               <div className="flex-none">
                 <label className="lbl">โลโก้</label>
                 <div className="w-[88px] h-[88px] rounded-xl relative overflow-hidden border border-[#2f456e] bg-gradient-to-br from-[#2f4ea8] to-[#6a4cb8]">
-                  <image-slot id="sys-logo" editable="true" shape="rounded" radius="12" className="absolute inset-0 w-[88px] h-[88px]"/>
+                  <image-slot id="sys-logo" editable="true" shape="rounded" radius="12" src="/src/assets/logo/paradice-office-logo.png" className="absolute inset-0 w-[88px] h-[88px]"/>
                   <div className="slot-letter absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[30px] text-white">
-                    {(cfg.sysName1 || 'M').trim()[0] || 'M'}
+                    {(cfg.sysName1 || 'P').trim()[0] || 'P'}
                   </div>
                 </div>
                 <div className="flex flex-col items-center mt-1.5 w-[88px]">

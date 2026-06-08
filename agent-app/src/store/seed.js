@@ -80,7 +80,7 @@ export const warroomPos = {};
 
 // ---- Settings (system identity + owner profile for CV) ----
 export const settings = {
-  sysName1:'MY',
+  sysName1:'PARADICE',
   sysName2:'OFFICE',
   tagline:'ระบบจัดการชีวิตส่วนตัว ขับเคลื่อนด้วยทีม AI',
   ownerName:'',

@@ -3,10 +3,12 @@ import React, { useState as useS, useEffect as useE, useRef as useR } from 'reac
 import { OfficeStore, useOffice } from '../store';
 import { Rarity } from '../components/UI.jsx';
 import { renderMd } from '../components/SkillMd.jsx';
+import { SyncPicker } from '../components/SyncPicker.jsx';
+import { syncedFromCatalog, SYNC_PATHS } from '../store/catalog.js';
 import { Star } from 'lucide-react';
 
 /* skill clusters — relatedness groups */
-const SK_CLUSTERS = [
+export const SK_CLUSTERS = [
   { id:'coord',   name:'การจัดการ & ประสานงาน', en:'COORDINATION', col:'#ffce4a', glyph:'◷' },
   { id:'finance', name:'การลงทุน & การเงิน',    en:'FINANCE',      col:'#3ce594', glyph:'฿' },
   { id:'eng',     name:'พัฒนา & เทคนิค',        en:'ENGINEERING',  col:'#4db4ff', glyph:'{ }' },
@@ -15,8 +17,8 @@ const SK_CLUSTERS = [
   { id:'research',name:'ค้นคว้า & ข้อมูล',       en:'RESEARCH',     col:'#9d6bff', glyph:'⌕' },
   { id:'ops',     name:'ปฏิบัติการ',            en:'OPERATIONS',   col:'#9aa6cf', glyph:'⚙' },
 ];
-const SK_CLUSTER_BY = Object.fromEntries(SK_CLUSTERS.map(c=>[c.id,c]));
-const SK_MAP = {
+export const SK_CLUSTER_BY = Object.fromEntries(SK_CLUSTERS.map(c=>[c.id,c]));
+export const SK_MAP = {
   'วางแผนงาน':'coord','สรุปสถานะ':'coord','มอบหมายงาน':'coord','เตือนความจำ':'coord',
   'วางกลยุทธ์':'coord','ตัดสินใจ':'coord','สั่งงานเลขา':'coord','อนุมัติงบ':'finance',
   'วิเคราะห์พอร์ต':'finance','คัดหุ้น':'finance','เฝ้าราคา':'finance','รายงาน PnL':'finance',
@@ -28,7 +30,7 @@ const SK_MAP = {
   'จัดไฟล์':'ops','ตั้งนัด':'ops','เก็บกวาด':'ops',
 };
 /* short descriptions per skill (fallback generated) */
-const SK_DESC = {
+export const SK_DESC = {
   'วางแผนงาน':'แตกเป้าหมายใหญ่ออกเป็นงานย่อยที่ลงมือทำได้จริง พร้อมจัดลำดับความสำคัญ',
   'มอบหมายงาน':'เลือกพนักงานที่เหมาะกับงาน เขียนบรีฟให้ชัด แล้วส่งต่อ',
   'สรุปสถานะ':'รวบความคืบหน้าทั้งออฟฟิศให้เป็นรายงานสั้นอ่านง่าย',
@@ -47,7 +49,8 @@ const SK_DESC = {
   'หาข้อมูล':'รวบรวมข้อมูลจากหลายแหล่งให้พร้อมตัดสินใจ',
   'เปรียบเทียบ':'ทำตารางข้อดี-ข้อเสียของตัวเลือกต่างๆ',
 };
-function skClusterId(name){ return SK_MAP[name] || 'ops'; }
+export function skClusterId(name){ return SK_MAP[name] || 'ops'; }
+
 function skHash(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
 
 /* aggregate every skill across CEO + agents into the index */
@@ -424,22 +427,72 @@ function SkillDetail({ name, onBack, onOpenSkill }){
 /* ---------------- synced .md viewer ---------------- */
 function SyncedDoc({ doc, onBack }){
   const [mode,setMode]=useS('rendered');
+  const [active,setActive]=useS(0);
+  const files = doc.files || [{path:'SKILL.md', main:true, md:doc.md}];
+  const cur = files[active] || files[0];
+  const cl = SK_CLUSTER_BY[doc.cluster]||SK_CLUSTER_BY.ops;
+  const isJson = cur.json || /\.json$/i.test(cur.path);
+  const hasFolders = files.some(f=>f.path.includes('/'));
+  const folders = [...new Set(files.filter(f=>f.path.includes('/')).map(f=>f.path.split('/')[0]))];
+  const folderIcon = { references:'📁', evals:'🧪' };
+
   return (
     <div className="sk-wrap">
       <div className="cs-top">
         <span className="cs-back" onClick={onBack}>← คลังความรู้</span>
         <span style={{flex:1}}></span>
-        <div className="codex-toggle">
+        <span className="chip" style={{color:cl.col,borderColor:cl.col+'66'}}>{cl.glyph} {cl.name}</span>
+        {!isJson && <div className="codex-toggle" style={{marginLeft:8}}>
           <button className={mode==='rendered'?'on':''} onClick={()=>setMode('rendered')}>RENDERED</button>
           <button className={mode==='source'?'on':''} onClick={()=>setMode('source')}>SOURCE</button>
+        </div>}
+      </div>
+
+      {/* title */}
+      <div style={{marginBottom:18}}>
+        <div style={{fontFamily:'var(--mono)',fontSize:11,letterSpacing:1,color:'var(--gold)',marginBottom:5}}>SYNCED · claude-master/skills</div>
+        <h1 style={{fontFamily:'var(--pixel)',fontSize:24,color:'var(--white)',margin:0,letterSpacing:.3}}>{doc.name}</h1>
+        {doc.desc && <p style={{fontSize:14,color:'var(--text)',lineHeight:1.6,margin:'10px 0 0',maxWidth:640}}>{doc.desc}</p>}
+      </div>
+
+      <div className="syd-grid">
+        {/* main viewer */}
+        <div style={{minWidth:0}}>
+          <div style={{fontFamily:'var(--mono)',fontSize:12,color:cl.col,marginBottom:10}}>
+            📄 skills/{doc.catId||doc.id}/{cur.path}{cur.main?'  · ไฟล์หลัก':''}</div>
+          {isJson
+            ? <div className="codex-src">{cur.md}</div>
+            : (mode==='rendered'
+                ? <div className="cs-codex-frame"><div className="parch" dangerouslySetInnerHTML={{__html: renderMd(cur.md||'')}}/></div>
+                : <div className="codex-src">{cur.md||''}</div>)}
+        </div>
+
+        {/* sidebar: structure + files */}
+        <div style={{display:'flex',flexDirection:'column',gap:14}}>
+          {hasFolders && (
+            <div className="skd-panel">
+              <div className="skd-panel-h">STRUCTURE</div>
+              <div style={{display:'flex',gap:9,flexWrap:'wrap'}}>
+                {folders.map(fd=>(
+                  <span key={fd} className="skd-folder" style={{color:fd==='evals'?'#b06bff':cl.col}}>{folderIcon[fd]||'📁'} {fd}/</span>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="skd-panel">
+            <div className="skd-panel-h">FILES ({files.length})</div>
+            <div style={{display:'flex',flexDirection:'column'}}>
+              {files.map((f,i)=>(
+                <div key={f.path} className={'skd-file'+(i===active?' on':'')} style={{cursor:'pointer'}} onClick={()=>setActive(i)}>
+                  <span style={{color:i===active?cl.col:'var(--text-mute)'}}>{f.json||/\.json$/i.test(f.path)?'⚙':'📄'}</span>
+                  <span style={{color:i===active?'var(--white)':'var(--text-dim)'}}>{f.path}</span>
+                  {f.main && <span style={{marginLeft:'auto',fontFamily:'var(--mono)',fontSize:9.5,color:cl.col}}>MAIN</span>}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <div style={{fontFamily:'var(--mono)',fontSize:12,color:'var(--gold)',marginBottom:12}}>
-        📄 {doc.file}
-      </div>
-      {mode==='rendered'
-        ? <div className="cs-codex-frame"><div className="parch" dangerouslySetInnerHTML={{__html: renderMd(doc.md||'')}}/></div>
-        : <div className="codex-src">{doc.md||''}</div>}
     </div>
   );
 }
@@ -540,17 +593,10 @@ function Skills(){
   const [win,setWin]=useS('ALL');
   const [seed,setSeed]=useS(0);
   const [showSync,setShowSync]=useS(false);
+  const [showPicker,setShowPicker]=useS(false);
   const [view,setView]=useS({k:1,x:0,y:0});
-  const fileRef=useR(null);
   const svgRef=useR(null);
   const dragRef=useR(null);
-
-  useE(()=>{
-    if(fileRef.current){
-      fileRef.current.setAttribute('webkitdirectory','');
-      fileRef.current.setAttribute('directory','');
-    }
-  },[]);
 
   // wheel zoom (centered on cursor) + drag pan
   const svgPt=(ev)=>{ const r=svgRef.current.getBoundingClientRect(); const gW=1000,gH=640;
@@ -582,19 +628,15 @@ function Skills(){
   const usedClusters=new Set(allSkills.map(x=>x.cluster));
   const top=[...allSkills].sort((a,b)=>b.calls-a.calls).slice(0,12);
 
-  const onSync=async(e)=>{
-    const files=[...(e.target.files||[])].filter(f=>/\.md$/i.test(f.name));
-    if(!files.length){ alert('ไม่พบไฟล์ .md ในโฟลเดอร์ที่เลือก'); e.target.value=''; return; }
-    const parsed=[];
-    for(const f of files){
-      let text=''; try{ text=await f.text(); }catch(err){ text=''; }
-      const h=(text.match(/^#\s+(.+)$/m)||[])[1];
-      const name=(h||f.name.replace(/\.md$/i,'')).trim();
-      parsed.push({ id:'syn-'+skHash(f.webkitRelativePath||f.name)+'-'+parsed.length, name, md:text, file:f.webkitRelativePath||f.name });
-    }
-    const folder=(files[0].webkitRelativePath||'').split('/')[0]||'โฟลเดอร์';
-    OfficeStore.setState(st=>({...st, syncedSkills:parsed, syncMeta:{...(st.syncMeta||{}), skills:{ folder, count:parsed.length, t:OfficeStore.clock() }}}),{now:true});
-    setShowSync(true); e.target.value='';
+  const onImportSkills=(items)=>{
+    const recs=items.map(syncedFromCatalog);
+    OfficeStore.setState(st=>{
+      const have=new Set((st.syncedSkills||[]).map(x=>x.name.toLowerCase()));
+      const merged=[...(st.syncedSkills||[]), ...recs.filter(r=>!have.has(r.name.toLowerCase()))];
+      return {...st, syncedSkills:merged,
+        syncMeta:{...(st.syncMeta||{}), skills:{ folder:SYNC_PATHS.skills, count:merged.length, t:OfficeStore.clock() }}};
+    },{now:true});
+    setShowSync(true);
   };
   const clearSync=()=>OfficeStore.setState(st=>({...st, syncedSkills:[], syncMeta:{...(st.syncMeta||{}),skills:null}}),{now:true});
 
@@ -613,7 +655,6 @@ function Skills(){
 
   return (
     <div className="sk-cons">
-      <input ref={fileRef} type="file" multiple accept=".md" style={{display:'none'}} onChange={onSync}/>
 
       {/* graph */}
       <svg ref={svgRef} className="sk-svg" viewBox={'0 0 '+g.W+' '+g.H} preserveAspectRatio="xMidYMid meet"
@@ -702,7 +743,7 @@ function Skills(){
       <div className="sk-ov sk-ov-search">
         <input className="fld" placeholder="ค้นหาโหนด…" value={query} onChange={e=>setQuery(e.target.value)}
           style={{width:150,padding:'7px 11px',fontSize:13}}/>
-        <button className="btn gold sm" onClick={()=>fileRef.current&&fileRef.current.click()}>⟳ Sync</button>
+        <button className="btn gold sm" onClick={()=>setShowPicker(true)}>⟳ Sync</button>
         {synced.length>0 && <button className="btn ghost sm" onClick={()=>setShowSync(v=>!v)}>📄 {synced.length}</button>}
       </div>
 
@@ -785,6 +826,9 @@ function Skills(){
           </div>
         </div>
       )}
+
+      {showPicker && <SyncPicker kind="skills" existing={new Set((synced||[]).map(x=>x.name.toLowerCase()))}
+        onClose={()=>setShowPicker(false)} onImport={onImportSkills}/>}
     </div>
   );
 }
