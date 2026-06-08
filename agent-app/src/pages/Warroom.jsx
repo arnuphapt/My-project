@@ -194,8 +194,8 @@ function CharToken({ a, x, y, bubble, place, dragging, onDown, onClick }) {
         <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-[60px] h-3 bg-[radial-gradient(ellipse,rgba(0,0,0,0.5),transparent_70%)] rounded-[50%]"></div>
         <Spritesheet
           image={`/src/assets/sprites/agent-${a.id}.png`}
-          widthFrame={364}
-          heightFrame={668}
+          widthFrame={409}
+          heightFrame={682}
           steps={5}
           fps={1}
           autoplay={true}
