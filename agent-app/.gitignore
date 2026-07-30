@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# node-gyp native module build artifacts (node-pty, sqlite3, etc.)
+build/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
