@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveAssetFile: (id, dataUrl) => ipcRenderer.invoke('save-asset-file', { id, dataUrl }),
   saveImageSlots: (dataStr) => ipcRenderer.invoke('save-image-slots', dataStr),
   getImageSlots: () => ipcRenderer.invoke('get-image-slots'),
-  getGalleryAssets: () => ipcRenderer.invoke('get-gallery-assets')
+  getGalleryAssets: () => ipcRenderer.invoke('get-gallery-assets'),
+  scanSyncFolder: (folderPath) => ipcRenderer.invoke('scan-sync-folder', folderPath)
 });

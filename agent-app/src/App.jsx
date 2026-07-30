@@ -5,6 +5,7 @@ import { OfficeStore, useOffice } from './store';
 import { NavBar } from './components/UI.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import WarRoom from './pages/Warroom.jsx';
+import WebLive from './pages/WebLive.jsx';
 import Portfolio from './pages/Portfolio.jsx';
 import Team from './pages/Team.jsx';
 import OrgChart from './pages/OrgChart.jsx';
@@ -92,6 +93,7 @@ function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/warroom" element={<WarRoom />} />
+            <Route path="/weblive" element={<WebLive />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/team" element={<Team />} />

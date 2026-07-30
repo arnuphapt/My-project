@@ -6,16 +6,100 @@ import { SYNC_PATHS, SKILL_CATALOG, AGENT_CATALOG } from '../store/catalog';
 export function SyncPicker({ kind, existing, onClose, onImport }) {
   const isSkill = kind === 'skills';
   const path = isSkill ? SYNC_PATHS.skills : SYNC_PATHS.agents;
-  const catalog = isSkill ? SKILL_CATALOG : AGENT_CATALOG;
   const exist = existing || new Set();
+  const [catalog, setCatalog] = useS([]);
   const [scanning, setScanning] = useS(true);
+  const [requiresWeb, setRequiresWeb] = useS(false);
   const [sel, setSel] = useS(() => new Set());
   const [q, setQ] = useS('');
+  const fileRef = React.useRef(null);
 
   useE(() => {
-    const t = setTimeout(() => setScanning(false), 780);
-    return () => clearTimeout(t);
-  }, []);
+    if (fileRef.current) {
+      fileRef.current.setAttribute('webkitdirectory', '');
+      fileRef.current.setAttribute('directory', '');
+    }
+  }, [requiresWeb]);
+
+  useE(() => {
+    if (window.electronAPI && window.electronAPI.scanSyncFolder) {
+      window.electronAPI.scanSyncFolder(path).then((files) => {
+        if (isSkill) {
+          // fallback to mock for skills for now
+          setCatalog(SKILL_CATALOG);
+          setScanning(false);
+        } else {
+          const parsed = [];
+          for (const f of files) {
+            if (!f.name.toLowerCase().endsWith('.md')) continue;
+            const text = f.text;
+            const heading = (text.match(/^#\s+(.+)$/m) || [])[1];
+            const rawName = (heading || f.name.replace(/\.md$/i, '')).trim().split('·')[0].trim();
+            const name = rawName.split(/\s+/).slice(0, 2).join(' ');
+            if (!name) continue;
+            const sub = (text.match(/^>\s+(.+)$/m) || [])[1] || 'นำเข้าจากโฟลเดอร์';
+            const roleTh = sub.split('—')[0].trim().slice(0, 40);
+            const sk = [...text.matchAll(/^[-*]\s+\*\*(.+?)\*\*/gm)].map(m => m[1].trim()).slice(0, 5);
+            parsed.push({
+              id: f.name.replace(/\.md$/i, '').toLowerCase().replace(/\s+/g, '-'),
+              name,
+              role: roleTh,
+              cluster: 'ops',
+              model: 'sonnet',
+              skills: sk,
+              desc: sub,
+              md: text,
+              files: [{ path: f.name, main: true, md: text }]
+            });
+          }
+          setCatalog(parsed);
+          setScanning(false);
+        }
+      }).catch(err => {
+        console.error(err);
+        setRequiresWeb(true);
+        setScanning(false);
+      });
+    } else {
+      setRequiresWeb(true);
+      setScanning(false);
+    }
+  }, [path, isSkill]);
+
+  const onWebSync = async (e) => {
+    const files = [...(e.target.files || [])].filter(f => /\.md$/i.test(f.name));
+    if (!files.length) {
+      alert('ไม่พบไฟล์ .md ในโฟลเดอร์ที่เลือก');
+      e.target.value = '';
+      return;
+    }
+    setScanning(true);
+    if (isSkill) {
+      setCatalog(SKILL_CATALOG);
+      setRequiresWeb(false);
+      setScanning(false);
+    } else {
+      const parsed = [];
+      for (const f of files) {
+        let text = ''; try { text = await f.text(); } catch (err) { text = ''; }
+        const heading = (text.match(/^#\s+(.+)$/m) || [])[1];
+        const rawName = (heading || f.name.replace(/\.md$/i, '')).trim().split('·')[0].trim();
+        const name = rawName.split(/\s+/).slice(0, 2).join(' ');
+        if (!name) continue;
+        const sub = (text.match(/^>\s+(.+)$/m) || [])[1] || 'นำเข้าจากโฟลเดอร์';
+        const roleTh = sub.split('—')[0].trim().slice(0, 40);
+        const sk = [...text.matchAll(/^[-*]\s+\*\*(.+?)\*\*/gm)].map(m => m[1].trim()).slice(0, 5);
+        parsed.push({
+          id: f.name.replace(/\.md$/i, '').toLowerCase().replace(/\s+/g, '-'),
+          name, role: roleTh, cluster: 'ops', model: 'sonnet', skills: sk, desc: sub, md: text,
+          files: [{ path: f.name, main: true, md: text }]
+        });
+      }
+      setCatalog(parsed);
+      setRequiresWeb(false);
+      setScanning(false);
+    }
+  };
 
   const list = catalog.filter(it => !q || it.name.toLowerCase().includes(q.toLowerCase()) || (it.id || '').includes(q.toLowerCase()));
   const selectable = list.filter(it => !exist.has(it.name.toLowerCase()));
@@ -50,7 +134,16 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
           <i className="syp-x" onClick={onClose}>×</i>
         </div>
 
-        {scanning ? (
+        {requiresWeb ? (
+          <div className="syp-scan">
+            <div className="syp-scan-t" style={{marginBottom: 10, color: 'var(--text-mute)'}}>โหมด Web Browser</div>
+            <button className="btn ghost" style={{border: '1px solid var(--line)', padding: '10px 20px'}} onClick={() => fileRef.current && fileRef.current.click()}>
+              📁 เลือกโฟลเดอร์ {isSkill ? 'skills' : 'agents'}
+            </button>
+            <input ref={fileRef} type="file" multiple accept=".md" style={{ display: 'none' }} onChange={onWebSync} />
+            <div className="syp-scan-s" style={{marginTop: 10}}>เลือกโฟลเดอร์ {path} ในเครื่องของคุณ</div>
+          </div>
+        ) : scanning ? (
           <div className="syp-scan">
             <div className="syp-spin"></div>
             <div className="syp-scan-t">กำลังสแกนโฟลเดอร์…</div>

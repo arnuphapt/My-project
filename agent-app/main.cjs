@@ -133,3 +133,26 @@ ipcMain.handle('get-gallery-assets', async () => {
   scanDir(assetsDir);
   return allFiles.sort().reverse();
 });
+
+ipcMain.handle('scan-sync-folder', async (event, folderPath) => {
+  let allFiles = [];
+  try {
+    const scanDir = (dir) => {
+      if (!fs.existsSync(dir)) return;
+      const files = fs.readdirSync(dir);
+      for (const f of files) {
+        const fullPath = path.join(dir, f);
+        if (fs.statSync(fullPath).isDirectory()) {
+          scanDir(fullPath);
+        } else if (f.endsWith('.md') || f.endsWith('.json')) {
+          const content = fs.readFileSync(fullPath, 'utf8');
+          allFiles.push({ path: path.relative(folderPath, fullPath).replace(/\\/g, '/'), name: f, text: content });
+        }
+      }
+    };
+    scanDir(folderPath);
+  } catch (err) {
+    console.error("Error scanning folder:", err);
+  }
+  return allFiles;
+});

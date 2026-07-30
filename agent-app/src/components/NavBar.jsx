@@ -18,11 +18,13 @@ import {
   CheckSquare,
   Activity,
   BookOpen,
+  TerminalSquare,
 } from 'lucide-react';
 
 const NAV = [
   ['dashboard','DASHBOARD'],
   ['warroom','WARROOM'],
+  ['weblive','WEBLIVE'],
   ['tasks','TASKS'],
   ['portfolio','PORTFOLIO'],
   ['projects','PROJECTS'],
@@ -40,6 +42,7 @@ function NavIcon({ id, className }) {
   switch (id) {
     case 'dashboard': return <LayoutDashboard className={className} />;
     case 'warroom': return <Radio className={className} />;
+    case 'weblive': return <TerminalSquare className={className} />;
     case 'tasks': return <CheckSquare className={className} />;
     case 'portfolio': return <TrendingUp className={className} />;
     case 'projects': return <Briefcase className={className} />;

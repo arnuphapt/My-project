@@ -1,0 +1,32 @@
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+!.vscode/extensions.json
+.idea/
+
+# Temporary / Backup folders & archives
+New folder/
+*.zip
+*.tar.gz
+*.rar
+
+# Python & Backend
+__pycache__/
+*.py[cod]
+*$py.class
+backend/__pycache__/
+*.db
+*.sqlite3
+
+# Temp objects & build caches
+agent-app/src/assets/sprites/temp-objects/
+node_modules/
+dist/
+dist-ssr/
+*.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
