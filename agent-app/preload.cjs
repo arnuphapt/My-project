@@ -12,5 +12,21 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveImageSlots: (dataStr) => ipcRenderer.invoke('save-image-slots', dataStr),
   getImageSlots: () => ipcRenderer.invoke('get-image-slots'),
   getGalleryAssets: () => ipcRenderer.invoke('get-gallery-assets'),
-  scanSyncFolder: (folderPath) => ipcRenderer.invoke('scan-sync-folder', folderPath)
+  scanSyncFolder: (folderPath) => ipcRenderer.invoke('scan-sync-folder', folderPath),
+  ptySpawn: (sessionId, cols, rows) => ipcRenderer.invoke('pty-spawn', { sessionId, cols, rows }),
+  ptyWrite: (sessionId, data) => ipcRenderer.send('pty-write', { sessionId, data }),
+  ptyResize: (sessionId, cols, rows) => ipcRenderer.send('pty-resize', { sessionId, cols, rows }),
+  ptyKill: (sessionId) => ipcRenderer.invoke('pty-kill', { sessionId }),
+  onPtyData: (sessionId, callback) => {
+    const channel = `pty-data-${sessionId}`;
+    const listener = (event, data) => callback(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+  onPtyExit: (sessionId, callback) => {
+    const channel = `pty-exit-${sessionId}`;
+    const listener = (event, code) => callback(code);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  }
 });

@@ -1,26 +1,15 @@
 import { useState as useS, useEffect as useE, useRef as useR } from 'react';
 import { useOffice } from '../store';
 import { Mic, Send, Terminal, RotateCcw, Power } from 'lucide-react';
+import { Terminal as XTerm } from '@xterm/xterm';
+import { FitAddon } from '@xterm/addon-fit';
+import '@xterm/xterm/css/xterm.css';
 
 /* ============ WEBLIVE · AGENT SQUAD LIVE TERMINAL ============
-   พิมพ์สั่ง agent ฝั่งซ้าย → เห็น terminal log (mock) ฝั่งขวา
-   เลียนแบบ "Agent Squad WebLive" — UI mock ล้วน ยังไม่ต่อ AI จริง
+   พิมพ์สั่ง agent ฝั่งซ้าย (chat log ในระบบ) ฝั่งขวาคือ terminal จริง
+   ที่รัน shell process จริงผ่าน node-pty ใน Electron main process
+   (xterm.js renderer <-> IPC <-> node-pty) — ไม่ใช่ mock อีกต่อไป
  ============================================ */
-
-// mock terminal lines an agent "emits" after receiving an order
-const SCRIPT = (agentName, task) => [
-  { kind: 'tool', text: `Bash(cd /workspace && git log --oneline -5)` },
-  { kind: 'out', text: `9835da1 chore: update ${agentName} and team roster` },
-  { kind: 'sys', text: `Shell cwd was reset to /workspace` },
-  { kind: 'think', text: `อ่าน brief: "${task}" — วาง plan ก่อนลงมือ` },
-  { kind: 'tool', text: `Read(PLAN.md)` },
-  { kind: 'tool', text: `Bash(npm run build)` },
-  { kind: 'out', text: `✓ built in 2.4s · 0 errors` },
-  { kind: 'tool', text: `Bash(git add -A && git commit -m "feat: ${task}")` },
-  { kind: 'out', text: `[main 8745029] feat: ${task}` },
-  { kind: 'out', text: `  4 files changed, 291 insertions(+), 38 deletions(-)` },
-  { kind: 'ok', text: `✓ Cooked — งานเสร็จ callback + เขียน Diary` },
-];
 
 function WebLive() {
   const [s] = useOffice();
@@ -31,47 +20,109 @@ function WebLive() {
   const activeId = active?.id || null;
   const setActiveId = setSelId;
   const [msg, setMsg] = useS('');
-  const [lines, setLines] = useS([
-    { kind: 'sys', text: 'Agent Squad WebLive · terminal ready' },
-    { kind: 'sys', text: 'พิมพ์คำสั่งฝั่งซ้ายเพื่อมอบงานให้ agent' },
-  ]);
   const [busy, setBusy] = useS(false);
-  const termRef = useR(null);
-  const timers = useR([]);
+  const [ready, setReady] = useS(false);
+  // preload bridge missing (e.g. running in a plain browser tab, not Electron)
+  const unavailable = typeof window === 'undefined' || !window.electronAPI || !window.electronAPI.ptySpawn;
 
-  // auto-scroll terminal to bottom on new lines
+  const termContainerRef = useR(null);
+  const xtermRef = useR(null);
+  const fitAddonRef = useR(null);
+  const sessionIdRef = useR(null);
+
+  // mount real xterm.js terminal wired to a real shell via IPC + node-pty
   useE(() => {
-    if (termRef.current) termRef.current.scrollTop = termRef.current.scrollHeight;
-  }, [lines]);
+    if (unavailable) return;
 
-  // clear pending timers on unmount
-  useE(() => () => timers.current.forEach(clearTimeout), []);
+    const sessionId = `weblive-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    sessionIdRef.current = sessionId;
+    const term = new XTerm({
+      convertEol: true,
+      cursorBlink: true,
+      fontFamily: 'monospace',
+      fontSize: 13,
+      theme: { background: '#070a11' },
+    });
+    const fitAddon = new FitAddon();
+    term.loadAddon(fitAddon);
+    term.open(termContainerRef.current);
 
-  const push = (line) => setLines(ls => [...ls, line]);
+    xtermRef.current = term;
+    fitAddonRef.current = fitAddon;
 
+    let removeDataListener = null;
+    let removeExitListener = null;
+
+    let fitted = false;
+
+    // defer the first fit() to the next frame: xterm's renderer needs a layout
+    // pass on the container before it can measure cell dimensions, otherwise
+    // FitAddon.proposeDimensions() throws (reading 'scrollBarWidth' of undefined)
+    const rafId = requestAnimationFrame(() => {
+      fitAddon.fit();
+      fitted = true;
+      window.electronAPI.ptySpawn(sessionId, term.cols, term.rows).then(() => {
+        setReady(true);
+        setBusy(true);
+      });
+    });
+
+    removeDataListener = window.electronAPI.onPtyData(sessionId, (data) => {
+      term.write(data);
+    });
+    removeExitListener = window.electronAPI.onPtyExit(sessionId, () => {
+      setBusy(false);
+      term.write('\r\n[process exited]\r\n');
+    });
+
+    term.onData((data) => {
+      window.electronAPI.ptyWrite(sessionId, data);
+    });
+
+    const handleResize = () => {
+      if (!fitted) return; // ignore layout events before the terminal has done its first fit
+      fitAddon.fit();
+      window.electronAPI.ptyResize(sessionId, term.cols, term.rows);
+    };
+    window.addEventListener('resize', handleResize);
+    const resizeObserver = new ResizeObserver(handleResize);
+    if (termContainerRef.current) resizeObserver.observe(termContainerRef.current);
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', handleResize);
+      resizeObserver.disconnect();
+      if (removeDataListener) removeDataListener();
+      if (removeExitListener) removeExitListener();
+      window.electronAPI.ptyKill(sessionId);
+      term.dispose();
+    };
+  }, []);
+
+  // send chat message: writes the task as a command line into the real terminal
   const send = () => {
     const t = msg.trim();
-    if (!t || !active || busy) return;
+    if (!t || !active || !ready) return;
     setMsg('');
-    setBusy(true);
-    push({ kind: 'you', text: `> @${active.name}  ${t}` });
-
-    const script = SCRIPT(active.name, t);
-    timers.current = [];
-    script.forEach((line, i) => {
-      const id = setTimeout(() => {
-        push(line);
-        if (i === script.length - 1) setBusy(false);
-      }, 500 + i * 650);
-      timers.current.push(id);
-    });
+    if (window.electronAPI) {
+      window.electronAPI.ptyWrite(sessionIdRef.current, t + '\r');
+    }
   };
 
   const reset = () => {
-    timers.current.forEach(clearTimeout);
-    setBusy(false);
-    setLines([{ kind: 'sys', text: 'terminal cleared' }]);
+    if (xtermRef.current) xtermRef.current.clear();
   };
+
+  if (unavailable) {
+    return (
+      <div className="h-full flex items-center justify-center p-6">
+        <div className="font-mono text-[13px] text-text-mute text-center">
+          WebLive terminal ต้องรันผ่าน Electron เท่านั้น — ไม่พบ window.electronAPI<br />
+          กรุณาเปิดแอปผ่าน Electron แทนการเปิดในเบราว์เซอร์ตรงๆ
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex gap-3 p-3">
@@ -144,30 +195,9 @@ function WebLive() {
           </div>
         </div>
 
-        {/* terminal body */}
-        <div ref={termRef} className="flex-1 overflow-y-auto p-3.5 font-mono text-[12.5px] leading-[1.7]">
-          {lines.map((l, i) => <TermLine key={i} line={l} />)}
-          {busy && <div className="text-cyan animate-pulse">▌</div>}
-        </div>
+        {/* terminal body — real xterm.js mounts here */}
+        <div ref={termContainerRef} className="flex-1 overflow-hidden p-2" />
       </div>
-    </div>
-  );
-}
-
-const KIND_STYLE = {
-  you:   'text-cyan',
-  tool:  'text-[#9d6bff]',
-  out:   'text-text-dim',
-  sys:   'text-text-mute italic',
-  think: 'text-gold',
-  ok:    'text-green',
-};
-
-function TermLine({ line }) {
-  const prefix = line.kind === 'tool' ? '⏺ ' : line.kind === 'out' ? '   ' : '';
-  return (
-    <div className={KIND_STYLE[line.kind] || 'text-text'}>
-      {prefix}{line.text}
     </div>
   );
 }
