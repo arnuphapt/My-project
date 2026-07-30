@@ -141,7 +141,7 @@ export async function syncBackendData() {
           color,
           statusTh: a.status === 'idle' ? 'ว่าง' : 'กำลังทำงาน',
           last: 'เชื่อมต่อกับ API แล้ว',
-          skills: [a.roleTh],
+          skills: a.skills || [],
           tasks: []
         };
     });

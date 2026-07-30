@@ -4,6 +4,7 @@ import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { createProject, updateProject, deleteProject } from '../api/projects.js';
 import { Plus, Check, X, ArrowLeft, ArrowRight, Rocket } from 'lucide-react';
+import { SyncPicker } from '../components/SyncPicker.jsx';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
@@ -16,17 +17,48 @@ function Projects() {
   const [s] = useOffice();
   const [open, setOpen] = useS(null);   // project id
   const [create, setCreate] = useS(false);
+  const [showPicker, setShowPicker] = useS(false);
   const proj = s.projects.find(p => p.id === open);
 
   const done = s.projects.filter(p => p.status === 'เสร็จแล้ว').length;
   const skills = [...new Set(s.projects.flatMap(p => p.tags))];
+
+  const onImportProjects = (items) => {
+    OfficeStore.setState(st => {
+      const have = new Set((st.projects || []).map(x => x.title.toLowerCase()));
+      const newItems = items.filter(it => !have.has(it.title.toLowerCase())).map(it => ({
+        id: it.id || ('p-' + Date.now() + Math.random().toString(36).slice(2, 5)),
+        title: it.title,
+        role: it.role || 'Builder',
+        status: it.status || 'กำลังทำ',
+        progress: it.progress || 50,
+        period: it.period || '2026',
+        tags: it.tags || ['Project'],
+        summary: it.summary || 'รายละเอียดโปรเจกต์',
+        highlights: it.highlights || [],
+      }));
+      return { ...st, projects: [...(st.projects || []), ...newItems] };
+    }, { now: true });
+  };
+
+  const clearProjects = () => {
+    if (confirm('ล้างรายการโปรเจกต์ทั้งหมดในคลัง?')) {
+      OfficeStore.setState(st => ({ ...st, projects: [] }), { now: true });
+    }
+  };
 
   return (
     <div className="max-w-[1280px] mx-auto px-[22px] py-5">
       <PageHead
         title="PROJECTS"
         sub="คลังผลงาน — เก็บสะสมไว้เป็นข้อมูลสร้าง Resume / CV ในอนาคต"
-        right={<button className="btn flex items-center gap-1.5" onClick={() => setCreate(true)}><Plus className="w-3.5 h-3.5" /> เพิ่มโปรเจกต์</button>}
+        right={
+          <div className="flex gap-2">
+            <button className="btn gold flex items-center gap-1.5" onClick={() => setShowPicker(true)}>⟳ Sync</button>
+            {s.projects.length > 0 && <button className="btn ghost text-red border-red/40 flex items-center gap-1.5" onClick={clearProjects} title="ล้างรายการโปรเจกต์ทั้งหมด">🗑 ล้าง</button>}
+            <button className="btn flex items-center gap-1.5" onClick={() => setCreate(true)}><Plus className="w-3.5 h-3.5" /> เพิ่มโปรเจกต์</button>
+          </div>
+        }
       />
 
       {/* stat strip */}
@@ -76,6 +108,7 @@ function Projects() {
 
       {proj && <ProjectDrawer p={proj} onClose={() => setOpen(null)} />}
       {create && <CreateProject onClose={() => setCreate(false)} />}
+      {showPicker && <SyncPicker kind="projects" existing={new Set(s.projects.map(p => p.title.toLowerCase()))} onClose={() => setShowPicker(false)} onImport={onImportProjects} />}
     </div>
   );
 }

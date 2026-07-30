@@ -2,6 +2,7 @@ import React, { useState as useS } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { PageHead } from '../components/UI.jsx';
 import { Bar } from '../components/Bar.jsx';
+import { SyncPicker } from '../components/SyncPicker.jsx';
 
 /* ============ TASKS · บอร์ดรวมงานทั้งบริษัท ============ */
 
@@ -17,9 +18,17 @@ export function taskStat(tk) { return tk.status || (tk.done ? 'done' : 'open'); 
 
 export function gatherTasks(s) {
   const out = [];
+  const defaultAgent = (s.agents || [])[0] || { name: 'SYSTEM', roleEn: 'SYSTEM', color: '#ffce4a' };
   (s.agents || []).forEach(a =>
     (a.tasks || []).forEach(tk => out.push({ ...tk, status: taskStat(tk), agent: a }))
   );
+  (s.syncedTasks || []).forEach(tk => {
+    out.push({
+      ...tk,
+      status: taskStat(tk),
+      agent: tk.agent || defaultAgent,
+    });
+  });
   return out;
 }
 
@@ -109,16 +118,44 @@ function TaskItem({ tk }) {
 
 export default function Tasks() {
   const [s] = useOffice();
+  const [showPicker, setShowPicker] = useS(false);
   const all = gatherTasks(s);
   const byStatus = k => all.filter(t => t.status === k);
   const total = all.length, doneN = byStatus('done').length;
   const pct = total ? Math.round(doneN / total * 100) : 0;
+
+  const onImportTasks = (items) => {
+    OfficeStore.setState(st => {
+      const have = new Set((st.syncedTasks || []).map(x => x.text.toLowerCase()));
+      const defaultAgent = (st.agents || [])[0] || { name: 'SYSTEM', roleEn: 'SYSTEM', color: '#ffce4a' };
+      const newItems = items.filter(it => !have.has(it.text.toLowerCase())).map(it => ({
+        id: it.id || ('t-' + Date.now() + Math.random().toString(36).slice(2, 5)),
+        text: it.text || it.title,
+        status: it.status || 'open',
+        priority: it.priority || 'medium',
+        cat: it.cat || it.project || 'General',
+        t: 'Synced',
+        agent: defaultAgent
+      }));
+      return { ...st, syncedTasks: [...(st.syncedTasks || []), ...newItems] };
+    }, { now: true });
+  };
+
+  const clearTasks = () => {
+    if (confirm('ล้างรายการงานที่ซิงค์มาทั้งหมด?')) {
+      OfficeStore.setState(st => ({ ...st, syncedTasks: [] }), { now: true });
+    }
+  };
 
   return (
     <div style={{ maxWidth: 1080, margin: '0 auto', padding: '20px 22px' }}>
       <PageHead title="TASKS" sub={'รายการงานทั้งบริษัท · ' + total + ' งาน · เสร็จแล้ว ' + doneN + ' (' + pct + '%)'}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button className="btn gold sm" onClick={() => setShowPicker(true)}>⟳ Sync Tasks</button>
+            {(s.syncedTasks || []).length > 0 && (
+              <button className="btn ghost sm" style={{ color: 'var(--red)' }} onClick={clearTasks} title="ล้างงานที่ซิงค์มาทั้งหมด">🗑 ล้าง</button>
+            )}
             <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-dim)' }}>{pct}% เสร็จ</span>
             <div style={{ width: 120 }}><Bar pct={pct} tone="green" /></div>
           </div>
@@ -142,6 +179,15 @@ export default function Tasks() {
         })}
         {total === 0 && <div className="empty">ยังไม่มีงานในระบบ</div>}
       </div>
+
+      {showPicker && (
+        <SyncPicker
+          kind="tasks"
+          existing={new Set((s.syncedTasks || []).map(t => t.text.toLowerCase()))}
+          onClose={() => setShowPicker(false)}
+          onImport={onImportTasks}
+        />
+      )}
     </div>
   );
 }

@@ -26,7 +26,6 @@ function buildEndpoints(s) {
     { id: 'gemini',   group: 'AI · ปัญญาประดิษฐ์', name: 'Gemini API',          url: 'generativelanguage.googleapis.com', icon: '🧠', realUrl: geminiKey ? `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}` : null, gated: !geminiKey },
     { id: 'exchange', group: 'การลงทุน',           name: ex + ' API',           url: exHost + '/api/v3',          icon: '📈', base: 120, gated: !L.connected },
     { id: 'webhook',  group: 'การลงทุน',           name: 'TradingView Webhook', url: 'my-office.app/hook/…-tv',   icon: '🪝', base: 95,  gated: !L.connected },
-    { id: 'market',   group: 'การลงทุน',           name: 'Yahoo Finance Proxy', url: BASE_URL + '/proxy/yfinance/AAPL', icon: '📡', realUrl: BASE_URL + '/proxy/yfinance/AAPL' },
     { id: 'storage',  group: 'ระบบ',               name: 'Local Storage',       url: 'browser://localStorage',   icon: '💾', localStorage: true },
     { id: 'settings', group: 'ระบบ',               name: 'Settings Endpoint',   url: BASE_URL + '/settings/',    icon: '⚙️', realUrl: BASE_URL + '/settings/' },
   ];

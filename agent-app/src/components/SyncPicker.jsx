@@ -5,7 +5,9 @@ import { SYNC_PATHS, SKILL_CATALOG, AGENT_CATALOG } from '../store/catalog';
 /* ---------------- import picker modal ---------------- */
 export function SyncPicker({ kind, existing, onClose, onImport }) {
   const isSkill = kind === 'skills';
-  const path = isSkill ? SYNC_PATHS.skills : SYNC_PATHS.agents;
+  const isProject = kind === 'projects';
+  const isTask = kind === 'tasks';
+  const path = isSkill ? SYNC_PATHS.skills : (isProject ? SYNC_PATHS.projects : (isTask ? SYNC_PATHS.tasks : SYNC_PATHS.agents));
   const exist = existing || new Set();
   const [catalog, setCatalog] = useS([]);
   const [scanning, setScanning] = useS(true);
@@ -25,8 +27,139 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
     if (window.electronAPI && window.electronAPI.scanSyncFolder) {
       window.electronAPI.scanSyncFolder(path).then((files) => {
         if (isSkill) {
-          // fallback to mock for skills for now
-          setCatalog(SKILL_CATALOG);
+          const folderMap = new Map();
+          for (const f of files) {
+            const parts = f.path.split('/');
+            const folderName = parts.length > 1 ? parts[0] : f.name.replace(/\.(md|json)$/i, '');
+            if (!folderMap.has(folderName)) {
+              folderMap.set(folderName, []);
+            }
+            folderMap.get(folderName).push(f);
+          }
+
+          const parsed = [];
+          for (const [folderName, fList] of folderMap.entries()) {
+            const mainFile = fList.find(x => x.name.toUpperCase() === 'SKILL.MD') || fList.find(x => x.name.toLowerCase().endsWith('.md')) || fList[0];
+            const text = mainFile ? mainFile.text : '';
+            const rawHeading = (text.match(/^#\s+(.+)$/m) || [])[1] || folderName;
+            // Trim leading/trailing slashes and whitespace
+            const cleanHeading = rawHeading.replace(/^\/+|\/+$/g, '').trim();
+            const name = (cleanHeading || folderName).trim();
+            const desc = (text.match(/^>\s+(.+)$/m) || [])[1] || `ทักษะ ${name} ในระบบ`;
+            
+            parsed.push({
+              id: folderName.toLowerCase(),
+              name: name,
+              cluster: 'ops',
+              kind: 'skill',
+              desc: desc,
+              md: text,
+              files: fList.map(f => ({ path: f.path, main: f === mainFile, md: f.text, json: f.name.endsWith('.json') }))
+            });
+          }
+          setCatalog(parsed.length > 0 ? parsed : SKILL_CATALOG);
+          setScanning(false);
+        } else if (isProject) {
+          const folderMap = new Map();
+          for (const f of files) {
+            const parts = f.path.split('/');
+            const folderName = parts.length > 1 ? parts[0] : f.name.replace(/\.(md|json)$/i, '');
+            if (!folderMap.has(folderName)) {
+              folderMap.set(folderName, []);
+            }
+            folderMap.get(folderName).push(f);
+          }
+
+          const parsed = [];
+          for (const [folderName, fList] of folderMap.entries()) {
+            // Check relative path inside project folder (e.g. "overview.md" vs "be/overview.md")
+            const relPath = f => f.path.startsWith(folderName + '/') ? f.path.slice(folderName.length + 1) : f.path;
+            
+            const mainFile = fList.find(x => relPath(x).toLowerCase() === 'overview.md')
+                          || fList.find(x => relPath(x).toLowerCase() === 'index.md')
+                          || fList.find(x => x.name.toLowerCase() === 'overview.md')
+                          || fList.find(x => !relPath(x).includes('/') && x.name.toLowerCase().endsWith('.md'))
+                          || fList[0];
+            const text = mainFile ? mainFile.text : '';
+            
+            // Title is strictly derived from the project subfolder name
+            const title = folderName.trim();
+            
+            // Extract summary strictly from ## Project Summary section, with fallbacks
+            const summarySecMatch = (text.match(/##\s+Project Summary\s+([\s\S]*?)(?=\n##|\n#|$)/i) || [])[1];
+            const cleanSummarySec = summarySecMatch ? summarySecMatch.trim().split('\n\n')[0].replace(/\n/g, ' ') : null;
+            const quoteMatch = (text.match(/^>\s+(.+)$/m) || [])[1];
+            const headingMatch = (text.match(/^#\s+(.+)$/m) || [])[1];
+            const sub = cleanSummarySec || quoteMatch || (headingMatch ? headingMatch.trim() : `โปรเจกต์ ${title}`);
+            
+            // Extract tags array from frontmatter `tags: [...]` or `tags:\n  - ...`
+            let parsedTags = [];
+            const inlineTagsMatch = text.match(/^tags:\s*\[(.*?)\]/m);
+            if (inlineTagsMatch && inlineTagsMatch[1]) {
+              parsedTags = inlineTagsMatch[1].split(',').map(t => t.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+            } else {
+              const listTagsMatch = [...text.matchAll(/^tags:\s*\n((?:\s*-\s*.+\n?)+)/m)];
+              if (listTagsMatch.length && listTagsMatch[0][1]) {
+                parsedTags = listTagsMatch[0][1].split('\n').map(l => l.replace(/^\s*-\s*/, '').trim()).filter(Boolean);
+              }
+            }
+            const finalTags = parsedTags.length > 0 ? parsedTags : ['Project', 'Dev'];
+
+            parsed.push({
+              id: 'p-' + folderName.toLowerCase(),
+              title: title,
+              name: title,
+              role: 'Builder / Dev',
+              status: 'กำลังทำ',
+              progress: 50,
+              period: '2026',
+              tags: finalTags,
+              summary: sub,
+              highlights: [],
+              cluster: 'eng',
+              desc: sub,
+              files: fList.map(f => ({ path: f.path, main: f === mainFile, md: f.text }))
+            });
+          }
+          setCatalog(parsed);
+          setScanning(false);
+        } else if (isTask) {
+          const parsed = [];
+          for (const f of files) {
+            if (!f.name.toLowerCase().endsWith('.md')) continue;
+            const text = f.text;
+            const titleMatch = text.match(/title:\s*["']?([^"'\n]+)["']?/i);
+            const title = titleMatch ? titleMatch[1].trim() : f.name.replace(/\.md$/i, '');
+            
+            const projectMatch = text.match(/project:\s*["']?([^"'\n]+)["']?/i);
+            const project = projectMatch ? projectMatch[1].trim() : 'General';
+            
+            const statusMatch = text.match(/status:\s*["']?([^"'\n]+)["']?/i);
+            const rawStatus = statusMatch ? statusMatch[1].trim().toLowerCase() : 'open';
+            let status = 'open';
+            if (rawStatus.includes('progress') || rawStatus.includes('doing')) status = 'progress';
+            else if (rawStatus.includes('pending') || rawStatus.includes('hold')) status = 'pending';
+            else if (rawStatus.includes('done') || rawStatus.includes('complete') || rawStatus.includes('close')) status = 'done';
+
+            const prioMatch = text.match(/priority:\s*["']?([^"'\n]+)["']?/i);
+            const priority = prioMatch && prioMatch[1] !== 'null' ? prioMatch[1].trim().toLowerCase() : 'medium';
+
+            parsed.push({
+              id: 't-' + (f.name.replace(/\.md$/i, '').toLowerCase()),
+              text: title,
+              name: title,
+              title: title,
+              project,
+              cat: project,
+              status,
+              priority,
+              desc: `Task ${project} · ${status}`,
+              cluster: 'ops',
+              md: text,
+              files: [{ path: f.name, main: true, md: text }]
+            });
+          }
+          setCatalog(parsed);
           setScanning(false);
         } else {
           const parsed = [];
@@ -128,7 +261,7 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
         {/* header */}
         <div className="syp-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="syp-title">{isSkill ? '⟳ ซิงค์ SKILLS' : '⟳ ซิงค์ AGENTS'}</div>
+            <div className="syp-title">{isSkill ? '⟳ ซิงค์ SKILLS' : (isProject ? '⟳ ซิงค์ PROJECTS' : (isTask ? '⟳ ซิงค์ TASKS' : '⟳ ซิงค์ AGENTS'))}</div>
             <div className="syp-path">📂 {path}</div>
           </div>
           <i className="syp-x" onClick={onClose}>×</i>
@@ -138,7 +271,7 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
           <div className="syp-scan">
             <div className="syp-scan-t" style={{marginBottom: 10, color: 'var(--text-mute)'}}>โหมด Web Browser</div>
             <button className="btn ghost" style={{border: '1px solid var(--line)', padding: '10px 20px'}} onClick={() => fileRef.current && fileRef.current.click()}>
-              📁 เลือกโฟลเดอร์ {isSkill ? 'skills' : 'agents'}
+              📁 เลือกโฟลเดอร์ {isSkill ? 'skills' : (isProject ? 'projects' : (isTask ? 'tasks' : 'agents'))}
             </button>
             <input ref={fileRef} type="file" multiple accept=".md" style={{ display: 'none' }} onChange={onWebSync} />
             <div className="syp-scan-s" style={{marginTop: 10}}>เลือกโฟลเดอร์ {path} ในเครื่องของคุณ</div>
@@ -153,7 +286,7 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
           <>
             {/* toolbar */}
             <div className="syp-toolbar">
-              <span className="syp-found">พบ {list.length} {isSkill ? 'สกิล' : 'เอเจนต์'}</span>
+              <span className="syp-found">พบ {list.length} {isSkill ? 'สกิล' : (isProject ? 'โปรเจกต์' : (isTask ? 'งาน' : 'เอเจนต์'))}</span>
               <input className="fld" placeholder="ค้นหา…" value={q} onChange={e => setQ(e.target.value)}
                 style={{ flex: 1, padding: '7px 11px', fontSize: 13 }} />
               <button className="syp-selall" onClick={toggleAll}>{allSel ? '✓ ยกเลิกทั้งหมด' : 'เลือกทั้งหมด'}</button>
@@ -182,9 +315,9 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
                     </div>
                     <div className="syp-meta">
                       <span className="syp-tag" style={{ color: cl.col, borderColor: cl.col + '55' }}>{cl.name}</span>
-                      {isSkill
+                      {isSkill || isProject
                         ? <span className="syp-files">📁 {nFiles} ไฟล์</span>
-                        : <span className="syp-files" style={{ color: 'var(--text-dim)' }}>{(it.model || '').toUpperCase()} · {it.skills.length} ทักษะ</span>}
+                        : <span className="syp-files" style={{ color: 'var(--text-dim)' }}>{(it.model || '').toUpperCase()} · {(it.skills || []).length} ทักษะ</span>}
                     </div>
                   </div>
                 );

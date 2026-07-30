@@ -1,6 +1,8 @@
 export const SYNC_PATHS = {
-  skills: 'E:\\WorkSpace\\claude-master\\skills',
-  agents: 'E:\\WorkSpace\\claude-master\\agents',
+  skills: 'C:\\Users\\Asus\\.claude\\skills',
+  agents: 'C:\\Users\\Asus\\.claude\\agents',
+  projects: 'E:\\WorkSpace\\Joryui-agent\\projects',
+  tasks: 'E:\\WorkSpace\\Joryui-agent\\🐹\\inbox\\tasks',
 };
 
 /* ---- helpers to fabricate bundle file contents ---- */

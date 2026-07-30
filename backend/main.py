@@ -87,18 +87,6 @@ def list_assets():
                 
     return files_by_folder
 
-@app.get("/proxy/yfinance/{symbol}")
-def proxy_yfinance(symbol: str):
-    import urllib.request
-    import json
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'})
-    try:
-        with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            return data
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/agents/", response_model=List[schemas.Agent])
 def read_agents(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

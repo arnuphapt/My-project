@@ -53,7 +53,7 @@ export function skClusterId(name){ return SK_MAP[name] || 'ops'; }
 
 function skHash(s){ let h=2166136261>>>0; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619); } return h>>>0; }
 
-/* aggregate every skill across CEO + agents into the index */
+/* aggregate every skill across CEO + agents + syncedSkills into the index */
 function buildSkillIndex(s){
   const cfg=s.settings||{};
   const ceo = {
@@ -62,20 +62,33 @@ function buildSkillIndex(s){
     id: '__ceo',
     name: (cfg.ownerName || '').trim() || 'YOU',
     color: (s.ceo && s.ceo.color) || '#ff5168',
-    skills: (s.ceo && s.ceo.skills) || ['วางแผนงาน', 'ตัดสินใจ', 'อนุมัติงบ', 'สั่งงานเลขา']
+    skills: (s.ceo && s.ceo.skills) || []
   };
   const roster = [ceo, ...(s.agents||[])].filter(a=>a && a.name);
   const idx = {}; // name -> { name, cluster, users:[{agent,calls}], calls }
   roster.forEach(a=>{
     (a.skills||[]).forEach(name=>{
       if(!idx[name]) idx[name]={ name, cluster:skClusterId(name), users:[], calls:0 };
-      const base = 30 + (skHash(a.id+'·'+name) % 360);
-      const lvBoost = Math.round((a.lv||10) * 1.6);
-      const calls = base + lvBoost;
+      const calls = 0;
       idx[name].users.push({ agent:a, calls });
       idx[name].calls += calls;
     });
   });
+
+  // Also include syncedSkills as constellation nodes
+  (s.syncedSkills || []).forEach(syn => {
+    const name = syn.name;
+    const cluster = syn.cluster || skClusterId(name);
+    if (!idx[name]) {
+      const calls = 0;
+      idx[name] = { name, cluster, users: [{ agent: ceo, calls }], calls, isSynced: true, synId: syn.id };
+    } else {
+      idx[name].isSynced = true;
+      idx[name].synId = syn.id;
+    }
+    if (syn.desc) SK_DESC[name] = syn.desc;
+  });
+
   Object.values(idx).forEach(sk=>sk.users.sort((x,y)=>y.calls-x.calls));
   return idx;
 }
@@ -148,12 +161,12 @@ function skFiles(sk){
   return [...refs, 'evals/evals.json', 'SKILL.md'];
 }
 function skInvo(sk){
-  const calls=sk.calls;
+  const calls=sk.calls || 0;
   return {
-    total:calls, sessions:Math.max(1,Math.round(calls/12)),
+    total:calls, sessions:calls > 0 ? Math.max(1,Math.round(calls/12)) : 0,
     toolUse:Math.round(calls*0.22), command:Math.round(calls*0.05),
-    last:['2d ago','5h ago','1d ago','3d ago','6h ago'][skHash(sk.name)%5],
-    firstSeen:'2026-0'+(1+skHash(sk.name)%5)+'-'+String(10+skHash(sk.name)%18).padStart(2,'0'),
+    last: calls > 0 ? 'Recently' : 'Never',
+    firstSeen: '—',
     from:sk.users.slice(0,3).map(u=>u.agent.name),
   };
 }
@@ -176,16 +189,20 @@ function SkillDetail({ name, onBack, onOpenSkill }){
     <div className="sk-wrap"><div className="cs-top"><span className="cs-back" onClick={onBack}>← คลังความรู้</span></div>
       <div className="empty" style={{marginTop:40}}>ไม่พบทักษะนี้แล้ว</div></div>
   );
+  const synDoc = (s.syncedSkills || []).find(x => x.name.toLowerCase() === name.toLowerCase() || x.id === sk.synId);
   const c=SK_CLUSTER_BY[sk.cluster]||SK_CLUSTER_BY.ops;
   const fr=skFreq(sk.calls);
   const tier=skTier(sk.calls);
   const related=Object.values(idx).filter(x=>x.cluster===sk.cluster && x.name!==sk.name).sort((a,b)=>b.calls-a.calls);
-  const desc=SK_DESC[sk.name] || ('ทักษะในกลุ่ม'+c.name+' ที่ทีมเรียกใช้เป็นประจำ');
-  const md=skillMdDoc(sk,c,desc);
+  const desc=SK_DESC[sk.name] || (synDoc && synDoc.desc) || ('ทักษะในกลุ่ม'+c.name+' ที่ทีมเรียกใช้เป็นประจำ');
+  const realFiles = (synDoc && synDoc.files) ? synDoc.files : skFiles(sk).map(f=>({path:f, md:''}));
+  const [activeFileIdx, setActiveFileIdx] = useS(0);
+  const curFile = realFiles[activeFileIdx] || realFiles[0];
+  const md = synDoc ? (curFile.md || synDoc.md || '') : skillMdDoc(sk,c,desc);
   const slug=sk.name.replace(/\s+/g,'-').toLowerCase();
-  const path='skills/'+slug+'/SKILL.md';
-  const lines=120+(skHash(sk.name)%420);
-  const files=skFiles(sk);
+  const path = synDoc ? (synDoc.file + '/' + (curFile.path || '')) : 'skills/'+slug+'/SKILL.md';
+  const lines = md.split('\n').length;
+  const files = realFiles.map(f => typeof f === 'string' ? f : f.path);
   const invo=skInvo(sk);
   const lv=Math.max(1,Math.min(9, Math.floor(sk.calls/80)+1));
   const xpPct=Math.round((sk.calls%80)/80*100);
@@ -255,10 +272,10 @@ function SkillDetail({ name, onBack, onOpenSkill }){
           <div className="skd-panel">
             <div className="skd-panel-h">FILES ({files.length})</div>
             <div style={{display:'flex',flexDirection:'column'}}>
-              {files.map(f=>(
-                <div key={f} className={'skd-file'+(f==='SKILL.md'?' on':'')}>
-                  <span style={{color:f==='SKILL.md'?c.col:'var(--text-mute)'}}>📄</span>
-                  <span style={{color:f==='SKILL.md'?'var(--white)':'var(--text-dim)'}}>{f}</span>
+              {files.map((f, i)=>(
+                <div key={f} className={'skd-file'+(i===activeFileIdx?' on':'')} style={{cursor:'pointer'}} onClick={()=>setActiveFileIdx(i)}>
+                  <span style={{color:i===activeFileIdx?c.col:'var(--text-mute)'}}>📄</span>
+                  <span style={{color:i===activeFileIdx?'var(--white)':'var(--text-dim)'}}>{f}</span>
                 </div>
               ))}
             </div>
@@ -555,7 +572,7 @@ function computeGraph(s, idx, seed){
     id: '__ceo',
     name: (cfg.ownerName || '').trim() || 'YOU',
     color: (s.ceo && s.ceo.color) || '#ff5168',
-    skills: (s.ceo && s.ceo.skills) || ['วางแผนงาน', 'ตัดสินใจ', 'อนุมัติงบ', 'สั่งงานเลขา']
+    skills: (s.ceo && s.ceo.skills) || []
   };
   const roster = [ceo, ...(s.agents||[])].filter(a=>a&&a.name);
   const skills=Object.values(idx);
@@ -598,29 +615,79 @@ function Skills(){
   const svgRef=useR(null);
   const dragRef=useR(null);
 
+  const [customPos, setCustomPos] = useS({});  // node position overrides: name -> {x, y}
+  const nodeDragRef = useR(null);             // active dragged node state
+
   // wheel zoom (centered on cursor) + drag pan
   const svgPt=(ev)=>{ const r=svgRef.current.getBoundingClientRect(); const gW=1000,gH=640;
     const scale=Math.min(r.width/gW, r.height/gH); const offX=(r.width-gW*scale)/2, offY=(r.height-gH*scale)/2;
     return { x:(ev.clientX-r.left-offX)/scale, y:(ev.clientY-r.top-offY)/scale }; };
+  
+  // Transform screen coordinates to transformed SVG space coordinates
+  const svgGraphPt = (ev) => {
+    const pt = svgPt(ev);
+    return { x: (pt.x - view.x) / view.k, y: (pt.y - view.y) / view.k };
+  };
+
   const onWheel=(e)=>{ e.preventDefault(); const p=svgPt(e);
     setView(v=>{ const nk=Math.max(0.5,Math.min(4, v.k*(e.deltaY<0?1.12:0.89)));
       const wx=(p.x - v.x)/v.k, wy=(p.y - v.y)/v.k;
       return { k:nk, x:p.x-wx*nk, y:p.y-wy*nk }; }); };
-  const onDown=(e)=>{ if(e.target.closest('.sk-node')) return; dragRef.current={sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y,moved:false}; };
-  const onMove=(e)=>{ const d=dragRef.current; if(!d) return; const dx=e.clientX-d.sx, dy=e.clientY-d.sy;
+
+  const onDown=(e)=>{
+    if(e.target.closest('.sk-node')) return;
+    dragRef.current={sx:e.clientX,sy:e.clientY,vx:view.x,vy:view.y,moved:false};
+  };
+
+  const onNodeDown=(e, name)=>{
+    e.stopPropagation();
+    const gPt = svgGraphPt(e);
+    const initialPos = customPos[name] || initialGraph.pos[name] || {x:500,y:320};
+    nodeDragRef.current = {
+      name,
+      offX: gPt.x - initialPos.x,
+      offY: gPt.y - initialPos.y,
+      moved: false
+    };
+  };
+
+  const onMove=(e)=>{
+    if (nodeDragRef.current) {
+      const gPt = svgGraphPt(e);
+      const { name, offX, offY } = nodeDragRef.current;
+      nodeDragRef.current.moved = true;
+      const newX = Math.max(20, Math.min(980, gPt.x - offX));
+      const newY = Math.max(20, Math.min(620, gPt.y - offY));
+      setCustomPos(prev => ({ ...prev, [name]: { x: newX, y: newY } }));
+      return;
+    }
+
+    const d=dragRef.current; if(!d) return; const dx=e.clientX-d.sx, dy=e.clientY-d.sy;
     if(Math.abs(dx)+Math.abs(dy)>3) d.moved=true;
     const r=svgRef.current.getBoundingClientRect(); const scale=Math.min(r.width/1000,r.height/640);
-    setView(v=>({...v, x:d.vx+dx/scale, y:d.vy+dy/scale})); };
-  const onUp=()=>{ dragRef.current=null; };
+    setView(v=>({...v, x:d.vx+dx/scale, y:d.vy+dy/scale}));
+  };
+
+  const onUp=()=>{
+    dragRef.current=null;
+    nodeDragRef.current=null;
+  };
+
   const zoomBy=(f)=>setView(v=>{ const nk=Math.max(0.5,Math.min(4,v.k*f)); const cx=500,cy=320;
     const wx=(cx-v.x)/v.k, wy=(cy-v.y)/v.k; return {k:nk,x:cx-wx*nk,y:cy-wy*nk}; });
-  const resetView=()=>setView({k:1,x:0,y:0});
+  const resetView=()=>{ setView({k:1,x:0,y:0}); setCustomPos({}); };
 
   const idx=buildSkillIndex(s);
   const allSkills=Object.values(idx);
   const synced=s.syncedSkills||[];
   const meta=(s.syncMeta&&s.syncMeta.skills)||null;
-  const g=React.useMemo(()=>computeGraph(s,idx,seed),[s.agents,s.ceo,seed]);
+  const initialGraph=React.useMemo(()=>computeGraph(s,idx,seed),[s.agents,s.ceo,seed]);
+  
+  // Merge custom positions into active graph
+  const g = React.useMemo(() => {
+    const pos = { ...initialGraph.pos, ...customPos };
+    return { ...initialGraph, pos };
+  }, [initialGraph, customPos]);
   const wf=SK_WIN[win];
   const wc=k=>Math.max(1,Math.round(idx[k].calls*wf));
   const maxW=allSkills.length ? Math.max(...allSkills.map(x=>wc(x.name))) : 1;
@@ -700,8 +767,9 @@ function Skills(){
           const isHov=k.name===hover;
           const showLabel = isSel || isHov || (sel&&neigh&&neigh.has(k.name)) || (hover&&hoverNeigh&&hoverNeigh.has(k.name)) || (!sel && (r>11 || (q&&isQ(k.name)) || view.k>1.5));
           return (
-            <g key={k.name} className="sk-node" style={{cursor:'pointer',opacity:active?1:(isHov?0.85:0.18),transition:'opacity .15s'}}
-              onClick={e=>{ e.stopPropagation(); if(dragRef.current&&dragRef.current.moved) return; setSel(k.name===sel?null:k.name); }}
+            <g key={k.name} className="sk-node" style={{cursor: (nodeDragRef.current&&nodeDragRef.current.name===k.name)?'grabbing':'pointer',opacity:active?1:(isHov?0.85:0.18),transition: nodeDragRef.current&&nodeDragRef.current.name===k.name ? 'none' : 'opacity .15s'}}
+              onPointerDown={e => onNodeDown(e, k.name)}
+              onClick={e=>{ e.stopPropagation(); if(nodeDragRef.current&&nodeDragRef.current.moved) return; if(dragRef.current&&dragRef.current.moved) return; setSel(k.name===sel?null:k.name); }}
               onPointerEnter={()=>setHover(k.name)} onPointerLeave={()=>setHover(h=>h===k.name?null:h)}>
               {(isSel||isHov||r>11) && <circle cx={p.x} cy={p.y} r={r+(isHov&&!isSel?11:8)} fill={cl.col} opacity={isSel?0.2:(isHov?0.16:0.08)} style={{transition:'r .15s,opacity .15s'}}/>}
               {isHov && !isSel && <circle cx={p.x} cy={p.y} r={r+4} fill="none" stroke={cl.col} strokeWidth={1.4/view.k} strokeOpacity="0.8"/>}
@@ -744,7 +812,12 @@ function Skills(){
         <input className="fld" placeholder="ค้นหาโหนด…" value={query} onChange={e=>setQuery(e.target.value)}
           style={{width:150,padding:'7px 11px',fontSize:13}}/>
         <button className="btn gold sm" onClick={()=>setShowPicker(true)}>⟳ Sync</button>
-        {synced.length>0 && <button className="btn ghost sm" onClick={()=>setShowSync(v=>!v)}>📄 {synced.length}</button>}
+        {synced.length>0 && (
+          <>
+            <button className="btn ghost sm" onClick={()=>setShowSync(v=>!v)}>📄 {synced.length}</button>
+            <button className="btn ghost sm" style={{color:'var(--red)'}} onClick={clearSync} title="ล้างข้อมูลที่ซิงค์ทั้งหมด">🗑 ล้าง</button>
+          </>
+        )}
       </div>
 
       {/* legend (regions + links) */}
