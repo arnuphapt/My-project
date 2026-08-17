@@ -4,7 +4,7 @@ import { Win, Bar, PageHead, Modal, SumCard } from '../components/UI.jsx';
 import '../store/image-slot.js';
 import { createProject, updateProject, deleteProject } from '../api/projects.js';
 import { Plus, Check, X, ArrowLeft, ArrowRight, Rocket } from 'lucide-react';
-import { SyncPicker } from '../components/SyncPicker.jsx';
+import { SYNC_PATHS } from '../store/catalog';
 
 /* ============ PROJECTS / CV DATA ============ */
 const PSTATUS = {
@@ -17,33 +17,85 @@ function Projects() {
   const [s] = useOffice();
   const [open, setOpen] = useS(null);   // project id
   const [create, setCreate] = useS(false);
-  const [showPicker, setShowPicker] = useS(false);
-  const proj = s.projects.find(p => p.id === open);
+  const [syncing, setSyncing] = useS(false);
+  const projects = s.projects || [];
+  const proj = projects.find(p => p.id === open);
 
-  const done = s.projects.filter(p => p.status === 'เสร็จแล้ว').length;
-  const skills = [...new Set(s.projects.flatMap(p => p.tags))];
+  const done = projects.filter(p => p.status === 'เสร็จแล้ว').length;
+  const skills = [...new Set(projects.flatMap(p => p.tags || []))];
 
-  const onImportProjects = (items) => {
-    OfficeStore.setState(st => {
-      const have = new Set((st.projects || []).map(x => x.title.toLowerCase()));
-      const newItems = items.filter(it => !have.has(it.title.toLowerCase())).map(it => ({
-        id: it.id || ('p-' + Date.now() + Math.random().toString(36).slice(2, 5)),
-        title: it.title,
-        role: it.role || 'Builder',
-        status: it.status || 'กำลังทำ',
-        progress: it.progress || 50,
-        period: it.period || '2026',
-        tags: it.tags || ['Project'],
-        summary: it.summary || 'รายละเอียดโปรเจกต์',
-        highlights: it.highlights || [],
-      }));
-      return { ...st, projects: [...(st.projects || []), ...newItems] };
-    }, { now: true });
-  };
+  const handleDirectSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      if (window.electronAPI && window.electronAPI.scanSyncFolder) {
+        const files = await window.electronAPI.scanSyncFolder(SYNC_PATHS.projects);
+        const folderMap = new Map();
+        for (const f of files) {
+          const parts = f.path.split('/');
+          const folderName = parts.length > 1 ? parts[0] : f.name.replace(/\.(md|json)$/i, '');
+          if (!folderMap.has(folderName)) {
+            folderMap.set(folderName, []);
+          }
+          folderMap.get(folderName).push(f);
+        }
 
-  const clearProjects = () => {
-    if (confirm('ล้างรายการโปรเจกต์ทั้งหมดในคลัง?')) {
-      OfficeStore.setState(st => ({ ...st, projects: [] }), { now: true });
+        const existingMap = new Map((projects || []).map(p => [p.id, p]));
+
+        for (const [folderName, fList] of folderMap.entries()) {
+          const relPath = f => f.path.startsWith(folderName + '/') ? f.path.slice(folderName.length + 1) : f.path;
+          const mainFile = fList.find(x => relPath(x).toLowerCase() === 'overview.md')
+                        || fList.find(x => relPath(x).toLowerCase() === 'index.md')
+                        || fList.find(x => x.name.toLowerCase() === 'overview.md')
+                        || fList.find(x => !relPath(x).includes('/') && x.name.toLowerCase().endsWith('.md'))
+                        || fList[0];
+          const text = mainFile ? mainFile.text : '';
+          const title = folderName.trim();
+          const summarySecMatch = (text.match(/##\s+Project Summary\s+([\s\S]*?)(?=\n##|\n#|$)/i) || [])[1];
+          const cleanSummarySec = summarySecMatch ? summarySecMatch.trim().split('\n\n')[0].replace(/\n/g, ' ') : null;
+          const quoteMatch = (text.match(/^>\s+(.+)$/m) || [])[1];
+          const headingMatch = (text.match(/^#\s+(.+)$/m) || [])[1];
+          const sub = cleanSummarySec || quoteMatch || (headingMatch ? headingMatch.trim() : `โปรเจกต์ ${title}`);
+
+          let parsedTags = [];
+          const inlineTagsMatch = text.match(/^tags:\s*\[(.*?)\]/m);
+          if (inlineTagsMatch && inlineTagsMatch[1]) {
+            parsedTags = inlineTagsMatch[1].split(',').map(t => t.trim().replace(/^['"]|['"]$/g, '')).filter(Boolean);
+          } else {
+            const listTagsMatch = [...text.matchAll(/^tags:\s*\n((?:\s*-\s*.+\n?)+)/m)];
+            if (listTagsMatch.length && listTagsMatch[0][1]) {
+              parsedTags = listTagsMatch[0][1].split('\n').map(l => l.replace(/^\s*-\s*/, '').trim()).filter(Boolean);
+            }
+          }
+          const finalTags = parsedTags.length > 0 ? parsedTags : ['Project', 'Dev'];
+          const pid = 'p-' + folderName.toLowerCase();
+
+          const payload = {
+            id: pid,
+            title: title,
+            role: 'Builder / Dev',
+            status: 'กำลังทำ',
+            progress: 50,
+            period: '2026',
+            tags: finalTags,
+            summary: sub,
+            highlights: [],
+          };
+
+          if (existingMap.has(pid)) {
+            const prev = existingMap.get(pid);
+            await updateProject(pid, { ...prev, ...payload });
+          } else {
+            await createProject(payload);
+          }
+        }
+
+        OfficeStore.syncBackendData();
+      }
+    } catch (err) {
+      console.error('Projects sync error:', err);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -54,8 +106,9 @@ function Projects() {
         sub="คลังผลงาน — เก็บสะสมไว้เป็นข้อมูลสร้าง Resume / CV ในอนาคต"
         right={
           <div className="flex gap-2">
-            <button className="btn gold flex items-center gap-1.5" onClick={() => setShowPicker(true)}>⟳ Sync</button>
-            {s.projects.length > 0 && <button className="btn ghost text-red border-red/40 flex items-center gap-1.5" onClick={clearProjects} title="ล้างรายการโปรเจกต์ทั้งหมด">🗑 ล้าง</button>}
+            <button className="btn gold flex items-center gap-1.5" onClick={handleDirectSync} disabled={syncing}>
+              {syncing ? '⟳ กำลังซิงค์...' : '⟳ Sync Projects'}
+            </button>
             <button className="btn flex items-center gap-1.5" onClick={() => setCreate(true)}><Plus className="w-3.5 h-3.5" /> เพิ่มโปรเจกต์</button>
           </div>
         }
@@ -63,14 +116,14 @@ function Projects() {
 
       {/* stat strip */}
       <div className="grid grid-cols-4 gap-3 mb-[18px]">
-        <SumCard label="โปรเจกต์ทั้งหมด" main={s.projects.length + ''} sub="ในคลังผลงาน" tone="cyan" />
-        <SumCard label="เสร็จสมบูรณ์" main={done + ''} sub={'จาก ' + s.projects.length + ' โปรเจกต์'} tone="pos" />
+        <SumCard label="โปรเจกต์ทั้งหมด" main={projects.length + ''} sub="ในคลังผลงาน" tone="cyan" />
+        <SumCard label="เสร็จสมบูรณ์" main={done + ''} sub={'จาก ' + projects.length + ' โปรเจกต์'} tone="pos" />
         <SumCard label="ทักษะที่สะสม" main={skills.length + ''} sub="แท็กไม่ซ้ำ" tone="gold" />
         <SumCard label="พร้อมทำ CV" main={done > 0 ? <Check className="w-6 h-6 text-green inline-block" /> : '…'} sub={done > 0 ? 'ส่งออกได้' : 'ยังไม่พอ'} tone={done > 0 ? 'pos' : 'cyan'} />
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3.5">
-        {s.projects.map(p => (
+        {projects.map(p => (
           <ProjectCard key={p.id} p={p} onClick={() => setOpen(p.id)} />
         ))}
         <div
@@ -92,7 +145,7 @@ function Projects() {
         <div className="flex flex-wrap gap-2">
           {skills.length === 0 && <div className="empty">ยังไม่มีแท็ก — เพิ่มโปรเจกต์เพื่อสะสมทักษะ</div>}
           {skills.map(sk => {
-            const n = s.projects.filter(p => p.tags.includes(sk)).length;
+            const n = projects.filter(p => (p.tags || []).includes(sk)).length;
             return (
               <span
                 key={sk}
@@ -108,13 +161,13 @@ function Projects() {
 
       {proj && <ProjectDrawer p={proj} onClose={() => setOpen(null)} />}
       {create && <CreateProject onClose={() => setCreate(false)} />}
-      {showPicker && <SyncPicker kind="projects" existing={new Set(s.projects.map(p => p.title.toLowerCase()))} onClose={() => setShowPicker(false)} onImport={onImportProjects} />}
     </div>
   );
 }
 
 function ProjectCard({ p, onClick }) {
   const [c] = PSTATUS[p.status] || PSTATUS['พัก'];
+  const tags = p.tags || [];
   return (
     <div
       onClick={onClick}
@@ -124,7 +177,7 @@ function ProjectCard({ p, onClick }) {
         <image-slot
           id={'proj-' + p.id}
           shape="rect"
-          placeholder={'cover · ' + p.title}
+          placeholder={'cover · ' + (p.title || 'Project')}
           className="absolute inset-0 w-full h-full"
         />
         <div className="absolute top-2.25 right-2.25">
@@ -132,7 +185,7 @@ function ProjectCard({ p, onClick }) {
             className="chip bg-[#060a1e]/80"
             style={{ color: c, borderColor: c + '66' }}
           >
-            {p.status}
+            {p.status || 'กำลังทำ'}
           </span>
         </div>
         <div className="absolute left-0 right-0 bottom-0 h-[46px] bg-gradient-to-b from-transparent to-[#080c24]/92"></div>
@@ -144,13 +197,13 @@ function ProjectCard({ p, onClick }) {
         </div>
         <div className="text-[12px] text-cyan mt-1 font-mono">{p.role}</div>
         <div className="text-[13px] text-text-dim mt-2 leading-normal line-clamp-2">{p.summary}</div>
-        <div className="mt-[11px] mb-[9px]"><Bar pct={p.progress} tone={p.progress >= 100 ? 'green' : ''} /></div>
+        <div className="mt-[11px] mb-[9px]"><Bar pct={p.progress || 0} tone={(p.progress || 0) >= 100 ? 'green' : ''} /></div>
         <div className="flex justify-between items-center">
           <div className="flex flex-wrap gap-1.25">
-            {p.tags.slice(0, 3).map(t => <span key={t} className="chip text-[10px] px-1.75 py-0.5">{t}</span>)}
-            {p.tags.length > 3 && <span className="text-[11px] text-text-mute font-mono">+{p.tags.length - 3}</span>}
+            {tags.slice(0, 3).map(t => <span key={t} className="chip text-[10px] px-1.75 py-0.5">{t}</span>)}
+            {tags.length > 3 && <span className="text-[11px] text-text-mute font-mono">+{tags.length - 3}</span>}
           </div>
-          <span className="font-mono text-[12px]" style={{ color: c }}>{p.progress}%</span>
+          <span className="font-mono text-[12px]" style={{ color: c }}>{p.progress || 0}%</span>
         </div>
       </div>
     </div>
@@ -160,7 +213,7 @@ function ProjectCard({ p, onClick }) {
 function ProjectDrawer({ p, onClose }) {
   const [c] = PSTATUS[p.status] || PSTATUS['พัก'];
   const [hl, setHl] = useS('');
-  const live = OfficeStore.getState().projects.find(x => x.id === p.id) || p;
+  const live = (OfficeStore.getState().projects || []).find(x => x.id === p.id) || p;
   const upd = async (patch) => {
     const updated = { ...live, ...patch };
     try {
@@ -274,8 +327,6 @@ function ProjectDrawer({ p, onClose }) {
               </button>
             ))}
           </div>
-
-          <button className="btn red w-full mt-6" onClick={del}>ลบโปรเจกต์นี้</button>
         </div>
       </div>
     </div>

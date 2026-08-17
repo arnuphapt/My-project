@@ -1,8 +1,9 @@
 export const SYNC_PATHS = {
   skills: 'C:\\Users\\Asus\\.claude\\skills',
   agents: 'C:\\Users\\Asus\\.claude\\agents',
+  canonicalYuri: 'E:\\WorkSpace\\Joryui-agent',
   projects: 'E:\\WorkSpace\\Joryui-agent\\projects',
-  tasks: 'E:\\WorkSpace\\Joryui-agent\\🐹\\inbox\\tasks',
+  tasks: 'E:\\WorkSpace\\Joryui-agent\\glassy-vault\\inbox\\tasks',
 };
 
 /* ---- helpers to fabricate bundle file contents ---- */
@@ -187,49 +188,7 @@ export const SKILL_CATALOG = [
     {skill:'automation',cases:16,pass:15,notes:'ทดสอบ error path ทุกครั้ง'}),
 ];
 
-/* ---------------- AGENTS in claude-master/agents ---------------- */
-function agentDoc(name, role, desc, skills){
-  return `# ${name}
-> ${role} — ${desc}
 
-## บทบาท
-${desc}
-
-## ทักษะ
-${skills.map(s=>'- **'+s+'**').join('\n')}
-
-## หมายเหตุ
-นำเข้าจาก claude-master/agents`;
-}
-
-export const AGENT_CATALOG = [
-  { id:'nova', name:'NOVA', role:'นักวิจัยตลาด', cluster:'research', model:'sonnet',
-    skills:['หาข้อมูล','เปรียบเทียบ','สรุปบทความ'],
-    desc:'ขุดข้อมูลเชิงลึกและสรุปให้พร้อมตัดสินใจ' },
-  { id:'forge', name:'FORGE', role:'วิศวกรระบบ', cluster:'eng', model:'opus',
-    skills:['เขียนโค้ด','แก้บั๊ก','ออโตเมชัน'],
-    desc:'สร้างและดูแลระบบหลังบ้านให้เสถียร' },
-  { id:'lumen', name:'LUMEN', role:'ดีไซเนอร์', cluster:'design', model:'sonnet',
-    skills:['ออกแบบ UI','โลโก้','แบนเนอร์'],
-    desc:'ออกแบบงานภาพที่สวยและสื่อสารตรงจุด' },
-  { id:'verse', name:'VERSE', role:'นักเขียนคอนเทนต์', cluster:'content', model:'haiku',
-    skills:['เขียนคอนเทนต์','คิดแคปชั่น','วางแผนโพสต์'],
-    desc:'ผลิตคอนเทนต์ต่อเนื่องตามโทนแบรนด์' },
-  { id:'tally', name:'TALLY', role:'นักบัญชี', cluster:'finance', model:'sonnet',
-    skills:['ทำบัญชี','สรุปงบ','เตือนบิล'],
-    desc:'ดูแลตัวเลขการเงินให้เป๊ะและตรงเวลา' },
-  { id:'atlas', name:'ATLAS', role:'ผู้ช่วยวางแผน', cluster:'coord', model:'opus',
-    skills:['วางแผนงาน','สรุปสถานะ','มอบหมายงาน'],
-    desc:'แตกเป้าหมายใหญ่เป็นแผนที่ลงมือได้' },
-  { id:'pixelle', name:'PIXELLE', role:'พิกเซลอาร์ทิสต์', cluster:'design', model:'sonnet',
-    skills:['พิกเซลอาร์ต','ออกแบบ UI'],
-    desc:'วาดตัวละครและไอคอนสไตล์เกม' },
-  { id:'riley', name:'RILEY', role:'ผู้ดูแลระบบ', cluster:'ops', model:'haiku',
-    skills:['จัดไฟล์','ตั้งนัด','เก็บกวาด'],
-    desc:'จัดระเบียบและดูแลงานปฏิบัติการ' },
-];
-AGENT_CATALOG.forEach(a=>{ a.kind='agent'; a.md=agentDoc(a.name,a.role,a.desc,a.skills);
-  a.files=[{path:'AGENT.md',main:true,md:a.md}]; });
 
 /* build a synced-skill record (for store.syncedSkills) from a catalog skill */
 export function syncedFromCatalog(it){

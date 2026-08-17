@@ -8,8 +8,8 @@ import { Plus, ArrowRight, Headphones, SkipBack, Pause, Play, SkipForward, Send 
 /* ============ DASHBOARD / WARROOM ============ */
 function Dashboard() {
   const [s, set] = useOffice();
-  const v = OfficeStore.valuation();
-  const FX = OfficeStore.FX;
+  const v = OfficeStore.valuation() || {};
+  const FX = OfficeStore.FX || 32.61;
 
   return (
     <div className="h-full grid grid-cols-[288px_minmax(0,1fr)_322px] gap-3 p-3 box-border">
@@ -35,7 +35,6 @@ function Dashboard() {
         <div className="mt-3 flex-none">
           <TeamChatMini />
         </div>
-
       </div>
 
       {/* RIGHT RAIL */}
@@ -50,21 +49,21 @@ function Dashboard() {
 }
 
 function NetWorthPanel({ v }) {
-  const FX = OfficeStore.FX;
-  const totalTHB = v.totalUSD * FX;
-  const dayPos = v.dayPnlUSD >= 0;
+  const FX = OfficeStore.FX || 32.61;
+  const totalTHB = (v?.totalUSD || 0) * FX;
+  const dayPos = (v?.dayPnlUSD || 0) >= 0;
   return (
     <Win title="NET WORTH" th={false} right={<span className="tag mr-1.5">วันนี้</span>}>
       <div className="font-mono text-[30px] text-gold tracking-[0.5px] leading-none">
         ฿{fmt.n(totalTHB, 2)}
       </div>
       <div className="font-mono text-[17px] text-white mt-1.5">
-        ${fmt.n(v.totalUSD, 2)} <span className="text-text-mute text-[12px]">USD</span>
+        ${fmt.n(v?.totalUSD || 0, 2)} <span className="text-text-mute text-[12px]">USD</span>
       </div>
       <div className="text-[12px] text-text-mute mt-1.5 font-mono">@ {FX} THB/USD · sim</div>
       <div className="mt-2.5 border-t border-[#274292]/40 pt-2">
-        <Row k="กำไร/ขาดทุนวันนี้" v={fmt.money(v.dayPnlUSD, 'USD')} cls={dayPos ? 'pos' : 'neg'} />
-        <Row k="เงินสดพร้อมลงทุน" v={fmt.money(v.cashUSD, 'USD')} />
+        <Row k="กำไร/ขาดทุนวันนี้" v={fmt.money(v?.dayPnlUSD || 0, 'USD')} cls={dayPos ? 'pos' : 'neg'} />
+        <Row k="เงินสดพร้อมลงทุน" v={fmt.money(v?.cashUSD || 0, 'USD')} />
       </div>
     </Win>
   );
@@ -72,10 +71,11 @@ function NetWorthPanel({ v }) {
 
 function AgentsPanel() {
   const [s, set] = useOffice();
+  const agents = s.agents || [];
   return (
     <Win title="AI AGENTS" right={<span className="win-dots mr-1"><i onClick={() => set({ route: 'team' })} className="flex items-center justify-center"><Plus className="w-2 h-2" /></i></span>}>
       <div className="flex flex-col gap-0.5">
-        {s.agents.slice(0, 6).map(a => (
+        {agents.slice(0, 6).map(a => (
           <div
             key={a.id}
             onClick={() => set({ route: 'team' })}
@@ -101,12 +101,16 @@ function AgentsPanel() {
 }
 
 function QuantBotPanel({ v }) {
+  const unrealPct = v?.unrealPct || 0;
+  const unrealUSD = v?.unrealUSD || 0;
+  const mvUSD = v?.mvUSD || 0;
+  const rowCount = v?.rows ? v.rows.length : 0;
   return (
     <Win title="QUANT BOT" accent="purple">
-      <Row k="ROI รวม" v={fmt.pct(v.unrealPct)} cls={v.unrealPct >= 0 ? 'pos' : 'neg'} />
-      <Row k="กำไรลอยตัว" v={fmt.money(v.unrealUSD, 'USD')} cls={v.unrealUSD >= 0 ? 'pos' : 'neg'} />
-      <Row k="มูลค่าถือครอง" v={fmt.money(v.mvUSD, 'USD')} />
-      <Row k="จำนวนสินทรัพย์" v={v.rows.length + ' รายการ'} />
+      <Row k="ROI รวม" v={fmt.pct(unrealPct)} cls={unrealPct >= 0 ? 'pos' : 'neg'} />
+      <Row k="กำไรลอยตัว" v={fmt.money(unrealUSD, 'USD')} cls={unrealUSD >= 0 ? 'pos' : 'neg'} />
+      <Row k="มูลค่าถือครอง" v={fmt.money(mvUSD, 'USD')} />
+      <Row k="จำนวนสินทรัพย์" v={rowCount + ' รายการ'} />
       <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-[#274292]/40">
         <span className="text-text-dim text-[13px]">สถานะ</span>
         <span className="font-pixel text-[10px] text-green [text-shadow:0_0_10px_rgba(60,229,148,0.6)]">RUNNING</span>
@@ -116,17 +120,18 @@ function QuantBotPanel({ v }) {
 }
 
 function CompanyStatusPanel({ v }) {
-  const FX = OfficeStore.FX;
-  const realizedUSD = v && (OfficeStore.getState().realized.usd + OfficeStore.getState().realized.thb / FX);
-  const totalPnl = v.unrealUSD + realizedUSD;
+  const FX = OfficeStore.FX || 32.61;
+  const realized = OfficeStore.getState().realized || { usd: 0, thb: 0 };
+  const realizedUSD = (realized.usd || 0) + ((realized.thb || 0) / FX);
+  const totalPnl = (v?.unrealUSD || 0) + realizedUSD;
   return (
     <Win title="COMPANY STATUS">
       <Row k="Realized PnL" v={fmt.money(realizedUSD, 'USD')} cls={realizedUSD >= 0 ? 'pos' : 'neg'} />
       <Row k="Total PnL" v={fmt.money(totalPnl, 'USD')} cls={totalPnl >= 0 ? 'pos' : 'neg'} />
-      <Row k="Net Worth" v={fmt.money(v.totalUSD, 'USD')} cls="gold" />
-      <Row k="Holdings" v={fmt.money(v.mvUSD, 'USD')} />
-      <Row k="Cash" v={fmt.money(v.cashUSD, 'USD')} />
-      <Row k="วันนี้" v={fmt.money(v.dayPnlUSD, 'USD')} cls={v.dayPnlUSD >= 0 ? 'pos' : 'neg'} />
+      <Row k="Net Worth" v={fmt.money(v?.totalUSD || 0, 'USD')} cls="gold" />
+      <Row k="Holdings" v={fmt.money(v?.mvUSD || 0, 'USD')} />
+      <Row k="Cash" v={fmt.money(v?.cashUSD || 0, 'USD')} />
+      <Row k="วันนี้" v={fmt.money(v?.dayPnlUSD || 0, 'USD')} cls={(v?.dayPnlUSD || 0) >= 0 ? 'pos' : 'neg'} />
       <div className="font-mono text-[11px] text-text-mute mt-2">อัปเดต {new Date().toTimeString().slice(0, 5)}</div>
     </Win>
   );
@@ -134,7 +139,7 @@ function CompanyStatusPanel({ v }) {
 
 function MarketPanel() {
   const [s] = useOffice();
-  const items = Object.values(s.market);
+  const items = Object.values(s.market || {});
   return (
     <Win title="MARKET PRICES" className="min-h-0">
       <div className="grid grid-cols-[1fr_auto_auto] gap-[2px_12px] font-mono text-[13px]">
@@ -142,7 +147,7 @@ function MarketPanel() {
         <div className="text-text-mute text-[11px] text-right">ราคา</div>
         <div className="text-text-mute text-[11px] text-right">24ชม</div>
         {items.map(m => {
-          const ch = (m.price - m.prevClose) / m.prevClose * 100;
+          const ch = m.prevClose ? (m.price - m.prevClose) / m.prevClose * 100 : 0;
           return (
             <React.Fragment key={m.symbol}>
               <div className="text-white py-1 whitespace-nowrap overflow-hidden text-ellipsis">{m.symbol}</div>
@@ -198,34 +203,36 @@ function LofiPanel() {
   );
 }
 
-
 function TeamChatMini() {
   const [s] = useOffice();
   const [txt, setTxt] = useS('');
   const boxRef = useR(null);
+  const teamChat = s.teamChat || [];
+  const agents = s.agents || [];
+
   useE(() => {
     if (boxRef.current) boxRef.current.scrollTop = boxRef.current.scrollHeight;
-  }, [s.teamChat.length]);
+  }, [teamChat.length]);
 
   const send = () => {
     const t = txt.trim();
     if (!t) return;
-    OfficeStore.setState(st => ({ ...st, teamChat: [...st.teamChat, { who: 'you', text: t, t: OfficeStore.clock() }] }), { now: true });
+    OfficeStore.setState(st => ({ ...st, teamChat: [...(st.teamChat || []), { who: 'you', text: t, t: OfficeStore.clock() }] }), { now: true });
     setTxt('');
     setTimeout(() => {
-      const a = s.agents[Math.floor(Math.random() * 4)];
+      const a = agents[Math.floor(Math.random() * 4)];
       if (!a) return;
-      const reps = ['รับทราบครับเจ้านาย！', 'จัดให้เลย 💪', 'โอเค เดี๋ยวลุยต่อ', '555 ได้เลย', 'กำลังทำอยู่นะ'];
-      OfficeStore.setState(st => ({ ...st, teamChat: [...st.teamChat, { who: a.id, text: reps[Math.floor(Math.random() * reps.length)], t: OfficeStore.clock() }] }), { now: true });
+      const reps = ['รับทราบค่ะเจ้านาย！', 'จัดให้เลยค่ะ 💪', 'โอเค เดี๋ยวลุยต่อค่ะ', 'กำลังทำอยู่นะคะ'];
+      OfficeStore.setState(st => ({ ...st, teamChat: [...(st.teamChat || []), { who: a.id, text: reps[Math.floor(Math.random() * reps.length)], t: OfficeStore.clock() }] }), { now: true });
     }, 700);
   };
 
-  const nameOf = id => id === 'you' ? 'คุณ' : (s.agents.find(a => a.id === id)?.name || id);
-  const colOf = id => id === 'you' ? 'var(--cyan)' : (s.agents.find(a => a.id === id)?.color || 'var(--text-dim)');
+  const nameOf = id => id === 'you' ? 'คุณ' : (agents.find(a => a.id === id)?.name || id);
+  const colOf = id => id === 'you' ? 'var(--cyan)' : (agents.find(a => a.id === id)?.color || 'var(--text-dim)');
   return (
     <Win title="TEAM CHAT" bodyStyle={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
       <div ref={boxRef} className="flex-1 overflow-auto p-[10px_12px] flex flex-col gap-1.75 max-h-[130px]">
-        {s.teamChat.map((m, i) => (
+        {teamChat.map((m, i) => (
           <div key={i} className="text-[13px] leading-normal">
             <span className="font-mono text-[11px]" style={{ color: colOf(m.who) }}>{nameOf(m.who)}: </span>
             <span className="text-text">{m.text}</span>
@@ -254,7 +261,6 @@ function ApiStatusPanel() {
     let active = true;
     const check = async () => {
       try {
-        const start = Date.now();
         const res = await checkApiHealth();
         if (active && res.status === 'online') {
           setStatus('online');

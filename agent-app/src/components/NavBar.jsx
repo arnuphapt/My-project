@@ -19,10 +19,12 @@ import {
   Activity,
   BookOpen,
   TerminalSquare,
+  Bot,
 } from 'lucide-react';
 
 const NAV = [
   ['dashboard','DASHBOARD'],
+  ['secretary','SECRETARY'],
   ['warroom','WARROOM'],
   ['weblive','WEBLIVE'],
   ['tasks','TASKS'],
@@ -30,7 +32,6 @@ const NAV = [
   ['projects','PROJECTS'],
   ['team','TEAM'],
   ['orgchart','ORG CHART'],
-  ['secretary','SECRETARY'],
   ['skills','SKILLS'],
   ['health','HEALTH'],
   ['assets','ASSETS'],
@@ -41,6 +42,7 @@ const NAV = [
 function NavIcon({ id, className }) {
   switch (id) {
     case 'dashboard': return <LayoutDashboard className={className} />;
+    case 'secretary': return <MessageSquare className={className} />;
     case 'warroom': return <Radio className={className} />;
     case 'weblive': return <TerminalSquare className={className} />;
     case 'tasks': return <CheckSquare className={className} />;
@@ -48,7 +50,6 @@ function NavIcon({ id, className }) {
     case 'projects': return <Briefcase className={className} />;
     case 'team': return <Users className={className} />;
     case 'orgchart': return <Network className={className} />;
-    case 'secretary': return <MessageSquare className={className} />;
     case 'skills': return <BookOpen className={className} />;
     case 'health': return <Activity className={className} />;
     case 'assets': return <FolderOpen className={className} />;
@@ -62,12 +63,12 @@ export function NavBar(){
   const [s, set] = useOffice();
   const navigate = useNavigate();
   const location = useLocation();
-  const p = s.player;
+  const p = s.player || { name: 'BOSS', level: 1, xp: 0, xpMax: 2000, coins: 0, gems: 0 };
   const cfg = s.settings || {};
 
-  let playerLevel = p.level;
-  let xp = p.xp;
-  let xpMax = p.xpMax;
+  let playerLevel = p.level || 1;
+  let xp = p.xp || 0;
+  let xpMax = p.xpMax || 2000;
   if (cfg.ownerBirth || cfg.birthdate) {
     const birth = new Date(cfg.ownerBirth || cfg.birthdate);
     const now = new Date();
@@ -122,10 +123,10 @@ export function NavBar(){
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-[7px] font-mono text-[15px] text-gold">
-          <Coins className="w-4 h-4 text-gold" />{fmt.n(p.coins, 0)}
+          <Coins className="w-4 h-4 text-gold" />{fmt.n(p?.coins || 0, 0)}
         </div>
         <div className="flex items-center gap-[7px] font-mono text-[15px] text-purple">
-          <Gem className="w-4 h-4 text-purple" />{p.gems}
+          <Gem className="w-4 h-4 text-purple" />{p?.gems || 0}
         </div>
         <div className="flex items-center gap-2.5">
           <div className="w-[42px] h-[42px] rounded-[9px] relative flex-none">

@@ -1,6 +1,6 @@
 import React, { useState as useS, useEffect as useE } from 'react';
 import { SK_CLUSTER_BY } from '../pages/Skills';
-import { SYNC_PATHS, SKILL_CATALOG, AGENT_CATALOG } from '../store/catalog';
+import { SYNC_PATHS, SKILL_CATALOG } from '../store/catalog';
 
 /* ---------------- import picker modal ---------------- */
 export function SyncPicker({ kind, existing, onClose, onImport }) {
@@ -166,22 +166,51 @@ export function SyncPicker({ kind, existing, onClose, onImport }) {
           for (const f of files) {
             if (!f.name.toLowerCase().endsWith('.md')) continue;
             const text = f.text;
+            let name = '';
+            let desc = '';
+            let model = 'sonnet';
+            let tools = [];
+
+            if (text.startsWith('---')) {
+              const fmMatch = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+              if (fmMatch) {
+                const fm = fmMatch[1];
+                const nameMatch = fm.match(/^name:\s*(.+)$/m);
+                const modelMatch = fm.match(/^model:\s*(.+)$/m);
+                const descMatch = fm.match(/^description:\s*(.+)$/m);
+                const toolsMatch = fm.match(/^tools:\s*(.+)$/m);
+                if (nameMatch) name = nameMatch[1].trim();
+                if (modelMatch) model = modelMatch[1].trim();
+                if (descMatch) desc = descMatch[1].trim();
+                if (toolsMatch) tools = toolsMatch[1].split(',').map(t => t.trim()).filter(Boolean);
+              }
+            }
+
             const heading = (text.match(/^#\s+(.+)$/m) || [])[1];
-            const rawName = (heading || f.name.replace(/\.md$/i, '')).trim().split('·')[0].trim();
-            const name = rawName.split(/\s+/).slice(0, 2).join(' ');
+            if (!name) {
+              const rawName = (heading || f.name.replace(/\.md$/i, '')).trim().split('·')[0].trim();
+              name = rawName.split(/\s+/).slice(0, 2).join(' ');
+            }
             if (!name) continue;
-            const sub = (text.match(/^>\s+(.+)$/m) || [])[1] || 'นำเข้าจากโฟลเดอร์';
-            const roleTh = sub.split('—')[0].trim().slice(0, 40);
+            if (!desc) {
+              desc = (text.match(/^>\s+(.+)$/m) || [])[1] || `ผู้เชี่ยวชาญ ${name}`;
+            }
+            const roleTh = desc.split('—')[0].trim().slice(0, 40);
             const sk = [...text.matchAll(/^[-*]\s+\*\*(.+?)\*\*/gm)].map(m => m[1].trim()).slice(0, 5);
+            const finalSkills = sk.length > 0 ? sk : (tools.length > 0 ? tools : ['งานทั่วไป']);
+
             parsed.push({
               id: f.name.replace(/\.md$/i, '').toLowerCase().replace(/\s+/g, '-'),
               name,
               role: roleTh,
+              roleTh,
+              roleEn: f.name.replace(/\.md$/i, '').toUpperCase(),
               cluster: 'ops',
-              model: 'sonnet',
-              skills: sk,
-              desc: sub,
+              model: model || 'sonnet',
+              skills: finalSkills,
+              desc,
               md: text,
+              skillMd: text,
               files: [{ path: f.name, main: true, md: text }]
             });
           }

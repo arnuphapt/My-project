@@ -18,13 +18,15 @@ function OrgAva({ slot, letter, c }) {
 }
 
 function MemberNode({ a, onClick }) {
-  const SR = window.SENIOR, MD = window.MODELS;
-  const m = SR[a.seniority] || SR.mid, mm = MD[a.model] || MD.sonnet;
+  const SR = window.SENIOR || { mid: { col: '#4db4ff', glow: 'rgba(77,180,255,.40)', en: 'MID-LEVEL' } };
+  const MD = window.MODELS || { sonnet: { col: '#b06bff', label: 'Sonnet' } };
+  const m = (SR && SR[a.seniority]) || SR.mid || { col: '#4db4ff', glow: 'rgba(77,180,255,.40)', en: 'MID-LEVEL' };
+  const mm = (MD && MD[a.model]) || MD.sonnet || { col: '#b06bff', label: 'Sonnet' };
   const open = a.tasks ? a.tasks.filter(t => !t.done).length : 0;
   return (
     <div className="org-node">
       <div className="org-card" onClick={onClick} style={{ '--c': m.col, '--g': m.glow, '--c2': mm.col }}>
-        <OrgAva slot={'card-' + a.id} letter={a.name[0]} c={m.col} />
+        <OrgAva slot={'card-' + a.id} letter={(a.name || 'A')[0]} c={m.col} />
         <div className="org-name"><StatusDot s={a.status} />{a.name}</div>
         <div className="org-role">{a.roleEn}</div>
         <div className="org-badges">
@@ -46,14 +48,14 @@ function MemberNode({ a, onClick }) {
 function OrgChart() {
   const [s, set] = useOffice();
   const cfg = s.settings || {};
-  const agents = s.agents;
-  const sec = agents.find(a => a.seniority === 'secretary') || agents.find(a => a.id === 'mira') || agents[0];
+  const agents = s.agents || [];
+  const sec = agents.find(a => a.seniority === 'secretary' || a.id === 'joyuri') || agents[0];
   const team = agents.filter(a => a !== sec);
   const ceoName = (cfg.ownerName || '').trim() || 'YOU';
   const SR = window.SENIOR || { secretary: { col: '#ffce4a', glow: 'rgba(255,206,74,.45)', en: 'SECRETARY' } };
   const MD = window.MODELS || { opus: { col: '#ffce4a', label: 'Opus' } };
-  const sm = sec ? (SR[sec.seniority] || SR.secretary) : SR.secretary;
-  const smm = sec ? (MD[sec.model] || MD.opus) : MD.opus;
+  const sm = sec ? ((SR && SR[sec.seniority]) || SR.secretary) : SR.secretary;
+  const smm = sec ? ((MD && MD[sec.model]) || MD.opus) : MD.opus;
 
   const openAgent = id => set({ route: 'team', openAgent: id });
 

@@ -2,6 +2,15 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   generateText: (apiKey, prompt) => ipcRenderer.invoke('generate-text', { apiKey, prompt }),
+  dispatchAgent: (params) => ipcRenderer.invoke('dispatch-agent', params),
+  cancelAgent: (runId) => ipcRenderer.invoke('cancel-agent', { runId }),
+  onAgentEvent: (runId, callback) => {
+    const channel = `agent-event-${runId}`;
+    const listener = (event, data) => callback(data);
+    ipcRenderer.on(channel, listener);
+    return () => ipcRenderer.removeListener(channel, listener);
+  },
+  checkCliStatus: () => ipcRenderer.invoke('check-cli-status'),
   getSetting: (key) => ipcRenderer.invoke('get-setting', key),
   saveSetting: (key, value) => ipcRenderer.invoke('save-setting', { key, value }),
   getChatHistory: (agentId) => ipcRenderer.invoke('get-chat-history', agentId),

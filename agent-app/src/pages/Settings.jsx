@@ -98,32 +98,15 @@ function Settings() {
   };
   const delPreset = i => F('teamConfig', { ...tc, ROLE_PRESETS: presets.filter((_, j) => j !== i) });
 
-  const [geminiKey, setGeminiKey] = useS('');
+  const [cliStatus, setCliStatus] = useS({ claude: true, codex: true, agy: true });
 
   useE(() => {
-    if (cfg.gemini_api_key) {
-      setGeminiKey(cfg.gemini_api_key);
-    } else if (window.electronAPI) {
-      window.electronAPI.getSetting('gemini_api_key').then(k => {
-        if (k) {
-          setGeminiKey(k);
-          saveSetting('gemini_api_key', k);
-        }
+    if (window.electronAPI && window.electronAPI.checkCliStatus) {
+      window.electronAPI.checkCliStatus().then(status => {
+        if (status) setCliStatus(status);
       });
     }
-  }, [cfg.gemini_api_key]);
-
-  const handleKeySave = async (val) => {
-    setGeminiKey(val);
-    if (window.electronAPI) {
-      window.electronAPI.saveSetting('gemini_api_key', val);
-    }
-    try {
-      await saveSetting('gemini_api_key', val);
-    } catch (err) {
-      console.error("Failed to save gemini_api_key to backend DB:", err);
-    }
-  };
+  }, []);
 
   const reset = async () => {
     if (confirm('คืนค่าตั้งต้นทั้งหมด? (ระบบจะถูกล้างค่ากลับเป็นค่าพื้นฐาน)')) {
@@ -224,12 +207,65 @@ function Settings() {
             </div>
           </Win>
 
-          <Win title="API CONFIGURATION" accent="purple" bodyStyle={{ padding: 18 }}>
-            <SecTitle>ตั้งค่าการเชื่อมต่อ AI</SecTitle>
-            <label className="lbl">Gemini API Key</label>
-            <input className="fld font-mono" type="password" value={geminiKey} onChange={e => handleKeySave(e.target.value)} placeholder="AIzaSy..."/>
-            <div className="font-mono text-[10px] text-text-mute mt-1.25">
-              บันทึกไว้ในเครื่องของคุณเท่านั้น · จำเป็นสำหรับใช้งานระบบ AI
+          <Win title="AI ORCHESTRATOR & WORKERS" accent="purple" bodyStyle={{ padding: 18 }}>
+            <SecTitle>สถานะการเชื่อมต่อ AI Engine</SecTitle>
+            <div className="flex flex-col gap-3">
+              {/* Claude Code Orchestrator */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#080c1a]/60 border border-line">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-2.5 h-2.5 rounded-full ${cliStatus.claude ? 'bg-green shadow-[0_0_8px_#3ce594]' : 'bg-red shadow-[0_0_8px_#ff5168]'}`} />
+                  <div>
+                    <div className="font-mono text-[13px] text-white font-bold flex items-center gap-1.5">
+                      Claude Code <span className="text-[10px] text-gold font-pixel2 px-1.5 py-0.5 rounded bg-gold/10 border border-gold/30">ORCHESTRATOR · YURI</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-text-mute">
+                      {cliStatus.claude ? 'ใช้งานผ่าน Subscription Login (OAuth ในเครื่อง)' : 'ไม่พบ claude CLI ใน PATH'}
+                    </div>
+                  </div>
+                </div>
+                <span className={`text-[11px] font-mono font-bold ${cliStatus.claude ? 'text-green' : 'text-red'}`}>
+                  {cliStatus.claude ? 'READY' : 'MISSING'}
+                </span>
+              </div>
+
+              {/* Codex CLI */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#080c1a]/60 border border-line">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-2.5 h-2.5 rounded-full ${cliStatus.codex ? 'bg-green shadow-[0_0_8px_#3ce594]' : 'bg-text-mute'}`} />
+                  <div>
+                    <div className="font-mono text-[13px] text-white font-bold flex items-center gap-1.5">
+                      OpenAI Codex <span className="text-[10px] text-cyan font-pixel2 px-1.5 py-0.5 rounded bg-cyan/10 border border-cyan/30">SPECIALIST</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-text-mute">
+                      {cliStatus.codex ? 'พร้อมสำหรับ Dispatch งานเฉพาะทาง (CLI Auth)' : 'ไม่พบ codex CLI ใน PATH'}
+                    </div>
+                  </div>
+                </div>
+                <span className={`text-[11px] font-mono font-bold ${cliStatus.codex ? 'text-green' : 'text-text-mute'}`}>
+                  {cliStatus.codex ? 'READY' : 'OFFLINE'}
+                </span>
+              </div>
+
+              {/* Agy CLI */}
+              <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#080c1a]/60 border border-line">
+                <div className="flex items-center gap-2.5">
+                  <span className={`w-2.5 h-2.5 rounded-full ${cliStatus.agy ? 'bg-green shadow-[0_0_8px_#3ce594]' : 'bg-text-mute'}`} />
+                  <div>
+                    <div className="font-mono text-[13px] text-white font-bold flex items-center gap-1.5">
+                      Google Antigravity (Agy) <span className="text-[10px] text-purple font-pixel2 px-1.5 py-0.5 rounded bg-purple/10 border border-purple/30">SPECIALIST</span>
+                    </div>
+                    <div className="font-mono text-[11px] text-text-mute">
+                      {cliStatus.agy ? 'พร้อมสำหรับ Research / CLI Delegation' : 'ไม่พบ agy CLI ใน PATH'}
+                    </div>
+                  </div>
+                </div>
+                <span className={`text-[11px] font-mono font-bold ${cliStatus.agy ? 'text-green' : 'text-text-mute'}`}>
+                  {cliStatus.agy ? 'READY' : 'OFFLINE'}
+                </span>
+              </div>
+            </div>
+            <div className="font-mono text-[10.5px] text-text-dim mt-3 leading-normal">
+              ✦ ระบบรันผ่าน Vendor CLIs โดยตรง ใช้การเข้าสู่ระบบที่มีอยู่แล้วในเครื่อง ไม่ต้องตั้งค่า API Key
             </div>
           </Win>
         </div>

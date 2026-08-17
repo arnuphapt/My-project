@@ -92,19 +92,20 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dispatch" element={<Navigate to="/secretary" replace />} />
+            <Route path="/secretary" element={<Secretary />} />
             <Route path="/warroom" element={<WarRoom />} />
             <Route path="/weblive" element={<WebLive />} />
+            <Route path="/tasks" element={<Tasks />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/team" element={<Team />} />
             <Route path="/orgchart" element={<OrgChart />} />
-            <Route path="/secretary" element={<Secretary />} />
             <Route path="/skills" element={<Skills />} />
+            <Route path="/health" element={<Health />} />
             <Route path="/assets" element={<Assets />} />
             <Route path="/systemlogs" element={<SystemLogs />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/tasks" element={<Tasks />} />
-            <Route path="/health" element={<Health />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
         </div>

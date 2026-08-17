@@ -19,19 +19,33 @@ function buildEndpoints(s) {
   const L = s.live || {};
   const ex = L.exchange || 'Binance';
   const exHost = { Binance: 'api.binance.com', Bybit: 'api.bybit.com', OKX: 'www.okx.com', MT5: 'mt5.broker.net' }[ex] || 'api.exchange.com';
-  const geminiKey = s.settings?.gemini_api_key || s.settings?.llm_api_key || '';
   return [
-    { id: 'backend',  group: 'AI · ปัญญาประดิษฐ์', name: 'Agent Backend',       url: BASE_URL + '/',              icon: '🤖', realUrl: BASE_URL + '/' },
-    { id: 'agents_ep',group: 'AI · ปัญญาประดิษฐ์', name: 'Agents Endpoint',     url: BASE_URL + '/agents/',       icon: '👥', realUrl: BASE_URL + '/agents/' },
-    { id: 'gemini',   group: 'AI · ปัญญาประดิษฐ์', name: 'Gemini API',          url: 'generativelanguage.googleapis.com', icon: '🧠', realUrl: geminiKey ? `https://generativelanguage.googleapis.com/v1beta/models?key=${geminiKey}` : null, gated: !geminiKey },
-    { id: 'exchange', group: 'การลงทุน',           name: ex + ' API',           url: exHost + '/api/v3',          icon: '📈', base: 120, gated: !L.connected },
-    { id: 'webhook',  group: 'การลงทุน',           name: 'TradingView Webhook', url: 'my-office.app/hook/…-tv',   icon: '🪝', base: 95,  gated: !L.connected },
-    { id: 'storage',  group: 'ระบบ',               name: 'Local Storage',       url: 'browser://localStorage',   icon: '💾', localStorage: true },
-    { id: 'settings', group: 'ระบบ',               name: 'Settings Endpoint',   url: BASE_URL + '/settings/',    icon: '⚙️', realUrl: BASE_URL + '/settings/' },
+    { id: 'claude_cli', group: 'AI · Worker Engines', name: 'Claude Code CLI (Yuri)', url: 'cli://claude --version', icon: '👑', isCli: true, worker: 'claude' },
+    { id: 'codex_cli',  group: 'AI · Worker Engines', name: 'OpenAI Codex CLI',       url: 'cli://codex --version',  icon: '⚡', isCli: true, worker: 'codex' },
+    { id: 'agy_cli',    group: 'AI · Worker Engines', name: 'Google Antigravity CLI',  url: 'cli://agy --version',    icon: '🔮', isCli: true, worker: 'agy' },
+    { id: 'backend',    group: 'ระบบหลังบ้าน',        name: 'FastAPI Backend',        url: BASE_URL + '/',           icon: '🤖', realUrl: BASE_URL + '/' },
+    { id: 'storage',    group: 'ระบบ',                name: 'Local Storage',          url: 'browser://localStorage', icon: '💾', localStorage: true },
+    { id: 'exchange',   group: 'การลงทุน',            name: ex + ' API',              url: exHost + '/api/v3',       icon: '📈', base: 120, gated: !L.connected },
+    { id: 'webhook',    group: 'การลงทุน',            name: 'TradingView Webhook',    url: 'my-office.app/hook/…-tv', icon: '🪝', base: 95,  gated: !L.connected },
   ];
 }
 
 async function pingEndpoint(ep) {
+  // CLI status check via electronAPI
+  if (ep.isCli && window.electronAPI?.checkCliStatus) {
+    const t = performance.now();
+    try {
+      const res = await window.electronAPI.checkCliStatus();
+      const st = res ? res[ep.worker] : null;
+      const lat = Math.round(performance.now() - t);
+      if (st && st.installed) {
+        return { status: 'op', latency: lat, detail: st.version };
+      }
+      return { status: 'down', latency: 0, detail: 'Not installed or not on PATH' };
+    } catch (e) {
+      return { status: 'down', latency: 0 };
+    }
+  }
   // localStorage — real sync test
   if (ep.localStorage) {
     const t = performance.now();

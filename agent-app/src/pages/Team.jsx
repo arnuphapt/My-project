@@ -25,8 +25,8 @@ function Team() {
     seniority: 'ceo',
   };
 
-  const a = openId === '__ceo' ? ceo : s.agents.find(x => x.id === openId);
-
+  const agents = s.agents || [];
+  const a = openId === '__ceo' ? ceo : agents.find(x => x.id === openId);
 
   // open agent requested from another page (e.g. Org Chart)
   useE(() => { if (s.openAgent) { setOpenId(s.openAgent); set({ openAgent: null }); } }, [s.openAgent]);
@@ -36,13 +36,13 @@ function Team() {
 
   const IMPORT_COLORS = ['#4db4ff', '#b06bff', '#3ce594', '#ff5cc8', '#3ad0ff', '#ffce4a', '#ff8a5c', '#7c9cff'];
   const onImportAgents=(items)=>{
-    const existing=new Set(s.agents.map(x=>x.name.toLowerCase()));
+    const existing=new Set(agents.map(x=>x.name.toLowerCase()));
     const news=[];
     items.forEach((it)=>{
       if(existing.has(it.name.toLowerCase())) return;
       existing.add(it.name.toLowerCase());
       const model=it.model||'sonnet';
-      const color=IMPORT_COLORS[(s.agents.length+news.length)%IMPORT_COLORS.length];
+      const color=IMPORT_COLORS[(agents.length+news.length)%IMPORT_COLORS.length];
       news.push({ id:'imp-'+it.id+'-'+news.length, name:it.name, roleEn:'IMPORTED',
         roleTh:it.role||'นำเข้า', rarity:'rare', color,
         status:'idle', statusTh:'ว่าง', last:'เพิ่งนำเข้า', lv:10, salary:0.8,
@@ -51,9 +51,9 @@ function Team() {
         hp:70, hpMax:100, xp:0, xpMax:100, annotations:[], tasks:[], imported:true, skillMd:it.md });
     });
     if(!news.length){ alert('ไม่มีพนักงานใหม่ (อาจชื่อซ้ำกับที่มีอยู่แล้ว)'); return; }
-    OfficeStore.setState(st=>({...st, agents:[...st.agents,...news],
+    OfficeStore.setState(st=>({...st, agents:[...(st.agents || []),...news],
       syncMeta:{...(st.syncMeta||{}), team:{ folder:SYNC_PATHS.agents, count:news.length, t:OfficeStore.clock() }},
-      log:[{t:OfficeStore.clock(),who:'ระบบ',text:'นำเข้าพนักงาน '+news.length+' คนจาก claude-master/agents',kind:'ok'},...st.log].slice(0,40)}),{now:true});
+      log:[{t:OfficeStore.clock(),who:'ระบบ',text:'นำเข้าพนักงาน '+news.length+' คนจาก claude-master/agents',kind:'ok'},...(st.log || [])].slice(0,40)}),{now:true});
   };
 
   const teamMeta = (s.syncMeta && s.syncMeta.team) || null;
@@ -65,7 +65,7 @@ function Team() {
       <div style={{ maxWidth: 1320, margin: '0 auto', padding: '22px 24px 40px' }}>
         <PageHead
           title="TEAM"
-          sub={'CEO + พนักงาน AI · ' + (s.agents.length + 1) + ' คน' + (teamMeta ? (' · ซิงค์ ' + teamMeta.count + ' คนจาก agents') : '') + ' · กดเพื่อดูโปรไฟล์'}
+          sub={'CEO + พนักงาน AI · ' + (agents.length + 1) + ' คน' + (teamMeta ? (' · ซิงค์ ' + teamMeta.count + ' คนจาก agents') : '') + ' · กดเพื่อดูโปรไฟล์'}
           right={
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn ghost sm flex items-center gap-1.5" onClick={() => setShowPicker(true)}>⟳ Sync</button>
@@ -75,7 +75,7 @@ function Team() {
         />
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(214px,1fr))', gap: 16 }}>
           <CharCard a={ceo} onClick={() => setOpenId('__ceo')} />
-          {s.agents.map(ag => <CharCard key={ag.id} a={ag} onClick={() => setOpenId(ag.id)} />)}
+          {agents.map(ag => <CharCard key={ag.id} a={ag} onClick={() => setOpenId(ag.id)} />)}
           {/* add-new slot */}
           <div onClick={() => setCreate(true)} className="cs-rcard" style={{
             '--rcol': '#33406a', '--rglow': 'rgba(51,64,106,.3)',
@@ -89,7 +89,7 @@ function Team() {
       </div>
 
       {create && <CreateAgent onClose={() => setCreate(false)} />}
-      {showPicker && <SyncPicker kind="agents" existing={new Set(s.agents.map(x=>x.name.toLowerCase()))}
+      {showPicker && <SyncPicker kind="agents" existing={new Set(agents.map(x=>x.name.toLowerCase()))}
         onClose={()=>setShowPicker(false)} onImport={onImportAgents}/>}
     </div>
   );

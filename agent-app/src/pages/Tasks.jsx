@@ -2,7 +2,7 @@ import React, { useState as useS } from 'react';
 import { OfficeStore, useOffice } from '../store';
 import { PageHead } from '../components/UI.jsx';
 import { Bar } from '../components/Bar.jsx';
-import { SyncPicker } from '../components/SyncPicker.jsx';
+import { SYNC_PATHS } from '../store/catalog';
 
 /* ============ TASKS · บอร์ดรวมงานทั้งบริษัท ============ */
 
@@ -36,17 +36,11 @@ export function gatherTasks(s) {
 export function tkMoveStatus(id, status) {
   OfficeStore.setState(st => ({
     ...st,
-    agents: st.agents.map(a => {
+    agents: (st.agents || []).map(a => {
       if (!(a.tasks || []).some(t => t.id === id)) return a;
       return { ...a, tasks: a.tasks.map(t => t.id === id ? { ...t, status, done: status === 'done' } : t) };
     }),
-  }), { now: true });
-}
-
-export function tkDelete(id) {
-  OfficeStore.setState(st => ({
-    ...st,
-    agents: st.agents.map(a => ({ ...a, tasks: (a.tasks || []).filter(t => t.id !== id) })),
+    syncedTasks: (st.syncedTasks || []).map(t => t.id === id ? { ...t, status, done: status === 'done' } : t)
   }), { now: true });
 }
 
@@ -54,14 +48,14 @@ export function tkAdd(agentId, text, status) {
   const id = 't' + Date.now() + Math.random().toString(36).slice(2, 5);
   OfficeStore.setState(st => ({
     ...st,
-    agents: st.agents.map(a => a.id === agentId
+    agents: (st.agents || []).map(a => a.id === agentId
       ? {
           ...a,
           status: a.status === 'idle' && status !== 'done' ? 'working' : a.status,
           tasks: [{ id, text, status, done: status === 'done', t: OfficeStore.clock() }, ...(a.tasks || [])],
         }
       : a),
-    log: [{ t: OfficeStore.clock(), who: 'CEO', text: 'เพิ่มงาน: ' + text, kind: 'ok' }, ...st.log].slice(0, 40),
+    log: [{ t: OfficeStore.clock(), who: 'CEO', text: 'เพิ่มงาน: ' + text, kind: 'ok' }, ...(st.log || [])].slice(0, 40),
   }), { now: true });
 }
 
@@ -72,9 +66,11 @@ const PRIORITY = {
 };
 
 function TaskItem({ tk }) {
-  const a = tk.agent, st = tk.status;
+  const a = tk.agent || { name: 'SYSTEM', color: '#ffce4a' };
+  const st = tk.status;
   const sc = TASK_STATUS[st]?.col || '#9aa6cf';
   const pr = PRIORITY[tk.priority] || PRIORITY.medium;
+
   return (
     <div className="tk-item" style={{ '--sc': sc }}>
       <div className="tk-item-main">
@@ -93,10 +89,10 @@ function TaskItem({ tk }) {
           <span style={{ color: 'var(--text-dim)' }}>{(tk.cat || a.roleEn || 'งาน').toUpperCase()}</span>
           <span style={{ color: 'var(--text-mute)' }}> · </span>
           <span style={{ color: a.color }}>{a.name}</span>
-          <span style={{ color: 'var(--text-mute)' }}> · {tk.t}</span>
+          <span style={{ color: 'var(--text-mute)' }}> · {tk.t || 'Synced'}</span>
         </div>
       </div>
-      {/* right controls */}
+      {/* right controls without delete button */}
       <div className="tk-side">
         <div className="tk-mvrow">
           {TASK_ORDER.map(k => {
@@ -108,8 +104,6 @@ function TaskItem({ tk }) {
               </button>
             );
           })}
-          <i onClick={() => tkDelete(tk.id)} title="ลบงาน"
-            style={{ cursor: 'pointer', color: 'var(--text-mute)', fontFamily: 'var(--mono)', fontSize: 15, padding: '0 3px' }}>×</i>
         </div>
       </div>
     </div>
@@ -118,32 +112,79 @@ function TaskItem({ tk }) {
 
 export default function Tasks() {
   const [s] = useOffice();
-  const [showPicker, setShowPicker] = useS(false);
+  const [syncing, setSyncing] = useS(false);
+
   const all = gatherTasks(s);
   const byStatus = k => all.filter(t => t.status === k);
   const total = all.length, doneN = byStatus('done').length;
   const pct = total ? Math.round(doneN / total * 100) : 0;
 
-  const onImportTasks = (items) => {
-    OfficeStore.setState(st => {
-      const have = new Set((st.syncedTasks || []).map(x => x.text.toLowerCase()));
-      const defaultAgent = (st.agents || [])[0] || { name: 'SYSTEM', roleEn: 'SYSTEM', color: '#ffce4a' };
-      const newItems = items.filter(it => !have.has(it.text.toLowerCase())).map(it => ({
-        id: it.id || ('t-' + Date.now() + Math.random().toString(36).slice(2, 5)),
-        text: it.text || it.title,
-        status: it.status || 'open',
-        priority: it.priority || 'medium',
-        cat: it.cat || it.project || 'General',
-        t: 'Synced',
-        agent: defaultAgent
-      }));
-      return { ...st, syncedTasks: [...(st.syncedTasks || []), ...newItems] };
-    }, { now: true });
-  };
+  const handleDirectSync = async () => {
+    if (syncing) return;
+    setSyncing(true);
+    try {
+      if (window.electronAPI && window.electronAPI.scanSyncFolder) {
+        const files = await window.electronAPI.scanSyncFolder(SYNC_PATHS.tasks);
+        const parsed = [];
+        for (const f of files) {
+          if (!f.name.toLowerCase().endsWith('.md')) continue;
+          const text = f.text || '';
+          const titleMatch = text.match(/title:\s*["']?([^"'\n]+)["']?/i);
+          const title = titleMatch ? titleMatch[1].trim() : f.name.replace(/\.md$/i, '');
+          
+          const projectMatch = text.match(/project:\s*["']?([^"'\n]+)["']?/i);
+          const project = projectMatch ? projectMatch[1].trim() : 'General';
+          
+          const statusMatch = text.match(/status:\s*["']?([^"'\n]+)["']?/i);
+          const rawStatus = statusMatch ? statusMatch[1].trim().toLowerCase() : 'open';
+          let status = 'open';
+          if (rawStatus.includes('progress') || rawStatus.includes('doing')) status = 'progress';
+          else if (rawStatus.includes('pending') || rawStatus.includes('hold')) status = 'pending';
+          else if (rawStatus.includes('done') || rawStatus.includes('complete') || rawStatus.includes('close')) status = 'done';
 
-  const clearTasks = () => {
-    if (confirm('ล้างรายการงานที่ซิงค์มาทั้งหมด?')) {
-      OfficeStore.setState(st => ({ ...st, syncedTasks: [] }), { now: true });
+          const prioMatch = text.match(/priority:\s*["']?([^"'\n]+)["']?/i);
+          const priority = prioMatch && prioMatch[1] !== 'null' ? prioMatch[1].trim().toLowerCase() : 'medium';
+
+          parsed.push({
+            id: 't-' + (f.name.replace(/\.md$/i, '').toLowerCase()),
+            text: title,
+            name: title,
+            title: title,
+            project,
+            cat: project,
+            status,
+            priority,
+            desc: `Task ${project} · ${status}`,
+            cluster: 'ops',
+            md: text,
+            t: 'Synced'
+          });
+        }
+
+        OfficeStore.setState(st => {
+          const defaultAgent = (st.agents || [])[0] || { name: 'SYSTEM', roleEn: 'SYSTEM', color: '#ffce4a' };
+          const existingMap = new Map((st.syncedTasks || []).map(t => [t.text.toLowerCase(), t]));
+          
+          for (const item of parsed) {
+            const key = item.text.toLowerCase();
+            if (existingMap.has(key)) {
+              const prev = existingMap.get(key);
+              existingMap.set(key, { ...prev, ...item, id: prev.id });
+            } else {
+              existingMap.set(key, { ...item, agent: defaultAgent });
+            }
+          }
+          
+          return {
+            ...st,
+            syncedTasks: Array.from(existingMap.values())
+          };
+        }, { now: true });
+      }
+    } catch (err) {
+      console.error('Tasks sync error:', err);
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -152,10 +193,9 @@ export default function Tasks() {
       <PageHead title="TASKS" sub={'รายการงานทั้งบริษัท · ' + total + ' งาน · เสร็จแล้ว ' + doneN + ' (' + pct + '%)'}
         right={
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button className="btn gold sm" onClick={() => setShowPicker(true)}>⟳ Sync Tasks</button>
-            {(s.syncedTasks || []).length > 0 && (
-              <button className="btn ghost sm" style={{ color: 'var(--red)' }} onClick={clearTasks} title="ล้างงานที่ซิงค์มาทั้งหมด">🗑 ล้าง</button>
-            )}
+            <button className="btn gold sm" onClick={handleDirectSync} disabled={syncing}>
+              {syncing ? '⟳ กำลังซิงค์...' : '⟳ Sync Tasks'}
+            </button>
             <span style={{ fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-dim)' }}>{pct}% เสร็จ</span>
             <div style={{ width: 120 }}><Bar pct={pct} tone="green" /></div>
           </div>
@@ -177,17 +217,8 @@ export default function Tasks() {
             </div>
           );
         })}
-        {total === 0 && <div className="empty">ยังไม่มีงานในระบบ</div>}
+        {total === 0 && <div className="empty">ยังไม่มีงานในระบบ (กด Sync Tasks เพื่อดึงข้อมูลทันที)</div>}
       </div>
-
-      {showPicker && (
-        <SyncPicker
-          kind="tasks"
-          existing={new Set((s.syncedTasks || []).map(t => t.text.toLowerCase()))}
-          onClose={() => setShowPicker(false)}
-          onImport={onImportTasks}
-        />
-      )}
     </div>
   );
 }

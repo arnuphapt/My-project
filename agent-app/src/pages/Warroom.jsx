@@ -2,7 +2,7 @@ import React, { useState as useS, useEffect as useE, useRef as useR } from 'reac
 import { OfficeStore, useOffice } from '../store';
 import { Win, StatusDot, Rarity, Modal } from '../components/UI.jsx';
 import '../store/image-slot.js';
-import { Clock, Zap, Check, Move, ChevronRight, Megaphone } from 'lucide-react';
+import { Clock, Zap, Check, Move, ChevronRight, Megaphone, Bot } from 'lucide-react';
 import SpritesheetLib from 'react-responsive-spritesheet';
 const Spritesheet = SpritesheetLib.default || SpritesheetLib;
 
@@ -16,6 +16,7 @@ function WarRoom() {
   const [drag, setDrag] = useS(null);        // {id} being dragged
   const [live, setLive] = useS(null);        // {id,x,y} live drag pos
   const [clock, setClock] = useS(nowHM());
+  const [broadcasting, setBroadcasting] = useS(false);
   const stageRef = useR(null);
 
   useE(() => {
@@ -23,45 +24,53 @@ function WarRoom() {
     return () => clearInterval(id);
   }, []);
 
-  // ambient thoughts
+  // Listen to live agent speech events dispatched from anywhere in the app
   useE(() => {
-    if (place) return;
-    const id = setInterval(() => {
-      const a = s.agents[Math.floor(Math.random() * s.agents.length)];
-      if (a) popBubble(a.id, IDLE_THOUGHTS[Math.floor(Math.random() * IDLE_THOUGHTS.length)]);
-    }, 5000);
-    return () => clearInterval(id);
-  }, [s.agents.length, place]);
+    const handleSpeech = (e) => {
+      if (e.detail && e.detail.id && e.detail.text) {
+        popBubble(e.detail.id, e.detail.text);
+      }
+    };
+    window.addEventListener('agent-speech', handleSpeech);
+    return () => window.removeEventListener('agent-speech', handleSpeech);
+  }, []);
 
   function popBubble(id, text) {
-    setBubbles(b => ({ ...b, [id]: text }));
+    // Truncate long text for bubble display
+    const cleanText = (text || '').trim();
+    const shortText = cleanText.length > 70 ? cleanText.slice(0, 68) + '…' : cleanText;
+    setBubbles(b => ({ ...b, [id]: shortText }));
     setTimeout(() => setBubbles(b => {
       const n = { ...b };
-      if (n[id] === text) delete n[id];
+      if (n[id] === shortText) delete n[id];
       return n;
-    }), 4200);
+    }), 5000);
   }
 
+  // Simple broadcast note (dispatching is done via DISPATCH tab)
   const broadcast = () => {
     const t = cmd.trim();
     if (!t) return;
+
     OfficeStore.setState(st => ({
       ...st,
-      teamChat: [...st.teamChat, { who: 'you', text: '📢 ' + t, t: OfficeStore.clock() }],
-      log: [{ t: OfficeStore.clock(), who: 'You', text: 'สั่งงานรวม: ' + t, kind: 'sys' }, ...st.log].slice(0, 40),
+      teamChat: [...(st.teamChat || []), { who: 'you', text: '📢 ' + t, t: OfficeStore.clock() }],
+      log: [{ t: OfficeStore.clock(), who: 'You', text: 'ประกาศรวม: ' + t, kind: 'sys' }, ...(st.log || [])].slice(0, 40),
     }), { now: true });
-    s.agents.forEach((a, i) => setTimeout(() => popBubble(a.id, ACK[Math.floor(Math.random() * ACK.length)]), 200 + i * 160));
+
+    (s.agents || []).forEach((a, i) => setTimeout(() => popBubble(a.id, 'รับทราบค่ะ'), 150 + i * 120));
     setCmd('');
   };
 
   /* ----- drag handling ----- */
-  const pos = (id) => (live && live.id === id) ? live : (s.warroomPos[id] || { x: 50, y: 50 });
+  const warroomPos = s.warroomPos || {};
+  const pos = (id) => (live && live.id === id) ? live : (warroomPos[id] || { x: 50, y: 50 });
   function onDown(e, id) {
     if (!place) return;
     e.preventDefault();
     e.stopPropagation();
     setDrag({ id });
-    setLive({ id, ...(s.warroomPos[id] || { x: 50, y: 50 }) });
+    setLive({ id, ...(warroomPos[id] || { x: 50, y: 50 }) });
   }
   function onMove(e) {
     if (!drag) return;
@@ -72,11 +81,13 @@ function WarRoom() {
   }
   function onUp() {
     if (drag && live) {
-      OfficeStore.setState(st => ({ ...st, warroomPos: { ...st.warroomPos, [live.id]: { x: live.x, y: live.y } } }), { now: true });
+      OfficeStore.setState(st => ({ ...st, warroomPos: { ...(st.warroomPos || {}), [live.id]: { x: live.x, y: live.y } } }), { now: true });
     }
     setDrag(null);
     setLive(null);
   }
+
+  const agents = s.agents || [];
 
   return (
     <div
@@ -96,7 +107,7 @@ function WarRoom() {
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(120%_90%_at_50%_18%,transparent_40%,rgba(6,8,14,0.72)_100%)]"></div>
 
       {/* ===== CHARACTER TOKENS ===== */}
-      {s.agents.map(a => {
+      {agents.map(a => {
         const p = pos(a.id);
         return (
           <CharToken
@@ -117,7 +128,7 @@ function WarRoom() {
       <div className="absolute top-2.5 left-1/2 -translate-x-1/2 z-30 flex items-center gap-3.5 px-3.5 py-2 rounded-[11px] bg-[#0c0f18]/82 border border-line-bright backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.5)]">
         <span className="font-pixel text-[10px] text-cyan tracking-[1.5px] [text-shadow:0_0_8px_rgba(70,182,255,0.4)]">WARROOM</span>
         <span className="font-mono text-[13px] text-white flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-cyan" /> {clock}</span>
-        <span className="font-mono text-[13px] text-green flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-green" /> {s.agents.filter(a => a.status !== 'idle').length}/{s.agents.length}</span>
+        <span className="font-mono text-[13px] text-green flex items-center gap-1.5"><Zap className="w-3.5 h-3.5 text-green" /> {agents.filter(a => a.status !== 'idle').length}/{agents.length} กำลังทำงาน</span>
         <button className={'whitespace-nowrap btn sm ' + (place ? 'green' : 'ghost')} onClick={() => setPlace(p => !p)}>
           {place ? <><Check className="w-3.5 h-3.5" /> เสร็จแล้ว</> : <><Move className="w-3.5 h-3.5" /> จัดวางตัวละคร</>}
         </button>
@@ -135,12 +146,16 @@ function WarRoom() {
         <span className="font-pixel text-[8px] text-cyan tracking-[1px] flex-none flex items-center gap-1">ORDER ALL <ChevronRight className="w-3 h-3 text-cyan" /></span>
         <input
           className="fld px-2.75 py-2 text-[13px] flex-1"
-          placeholder="ออกคำสั่งให้ทุกคนในออฟฟิศ..."
+          placeholder="ออกคำสั่งให้ทุกคนในออฟฟิศ (ส่งตรงถึง Orchestrator)..."
           value={cmd}
+          disabled={broadcasting}
           onChange={e => setCmd(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && broadcast()}
         />
-        <button className="btn sm" onClick={broadcast}><Megaphone className="w-3.5 h-3.5" /></button>
+        <button className="btn sm gold flex items-center gap-1" disabled={broadcasting || !cmd.trim()} onClick={broadcast}>
+          <Megaphone className="w-3.5 h-3.5" />
+          {broadcasting ? 'สั่งการ...' : 'ส่ง'}
+        </button>
       </div>
 
       {open && (
@@ -157,8 +172,6 @@ function WarRoom() {
 function nowHM() {
   return new Date().toTimeString().slice(0, 5);
 }
-const IDLE_THOUGHTS = ['☕', 'พิมพ์ๆ...', '📊', 'อืม น่าสน', 'เกือบเสร็จละ', '555', 'focus 🎧', 'เช็คตลาดแป๊บ', '📝', '✦'];
-const ACK = ['รับทราบ! 💪', 'จัดให้เลย', 'โอเค ลุยต่อ', '555 ได้เลย', 'กำลังทำ ✦', 'เคลียร์ทันที'];
 
 /* ---- speech bubble ---- */
 function Speech({ text, color }) {
@@ -207,41 +220,47 @@ function CharToken({ a, x, y, bubble, place, dragging, onDown, onClick }) {
       {/* nameplate */}
       <div
         className="mt-0.5 px-2 py-0.5 rounded-[7px] bg-[#0c0f18]/90 text-center whitespace-nowrap"
-        style={{ border: '1px solid ' + a.color + '55' }}
+        style={{ border: '1px solid ' + (a.color || '#46b6ff') + '55' }}
       >
         <span className="font-mono text-[11px] text-white">{a.name}</span>
-        <span className="font-mono text-[10px] ml-1.25" style={{ color: a.color }}>Lv{a.lv}</span>
       </div>
     </div>
   );
 }
 
-/* ---- popover: assign task / set status / chat ---- */
+/* ---- popover: assign task / set status / profile link ---- */
 function DeskPopover({ agent, onClose, onAssigned }) {
   const [task, setTask] = useS(agent.task || '');
   const [, set] = useOffice();
+
+  if (!agent) return null;
+
   const upd = patch => OfficeStore.setState(st => ({ ...st, agents: st.agents.map(x => x.id === agent.id ? { ...x, ...patch } : x) }), { now: true });
+  
   const assign = () => {
     const t = task.trim();
     if (!t) return;
-    upd({ task: t, status: 'working', statusTh: t, last: 'เมื่อสักครู่' });
+    
+    upd({ task: t, status: 'working', statusTh: 'ทำงาน: ' + t, last: 'เมื่อสักครู่' });
+    
     OfficeStore.setState(st => ({
       ...st,
-      teamChat: [...st.teamChat, { who: 'you', text: '@' + agent.name + ' ' + t, t: OfficeStore.clock() },
-      { who: agent.id, text: ACK[Math.floor(Math.random() * ACK.length)], t: OfficeStore.clock() }],
-      log: [{ t: OfficeStore.clock(), who: agent.name, text: 'รับงาน: ' + t, kind: 'ok' }, ...st.log].slice(0, 40),
+      teamChat: [...(st.teamChat || []), { who: 'you', text: '@' + agent.name + ' ' + t, t: OfficeStore.clock() }],
+      log: [{ t: OfficeStore.clock(), who: agent.name, text: 'รับงาน: ' + t, kind: 'ok' }, ...(st.log || [])].slice(0, 40),
     }), { now: true });
-    if (onAssigned) onAssigned(ACK[Math.floor(Math.random() * ACK.length)]);
+
+    if (onAssigned) onAssigned(`รับงาน: ${t}`);
     onClose();
   };
+
   return (
-    <Modal title={agent.roleEn + ' · ' + agent.name} onClose={onClose} width={460}>
+    <Modal title={(agent.roleEn || 'AGENT') + ' · ' + agent.name} onClose={onClose} width={460}>
       <div className="flex gap-3.5 items-center mb-3.5">
         <div
           className="w-16 h-[70px] rounded-xl relative overflow-hidden flex-none bg-gradient-to-b from-[#1b2236] to-[#10141f]"
-          style={{ border: '2px solid ' + agent.color + '66' }}
+          style={{ border: '2px solid ' + (agent.color || '#46b6ff') + '66' }}
         >
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[24px]" style={{ color: agent.color }}>{agent.name[0]}</div>
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none font-pixel text-[24px]" style={{ color: agent.color || '#46b6ff' }}>{agent.name[0]}</div>
           <image-slot
             id={'agent-' + agent.id}
             shape="rounded"
@@ -250,19 +269,16 @@ function DeskPopover({ agent, onClose, onAssigned }) {
           />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-2">
-            <Rarity r={agent.rarity} />
-            <span className="font-mono text-[12px]" style={{ color: agent.color }}>Lv{agent.lv}</span>
-          </div>
-          <div className="text-[13px] text-text-dim mt-1.5 leading-normal">{agent.roleTh}</div>
+          <div className="text-[14px] text-white font-bold">{agent.name}</div>
+          <div className="text-[12.5px] text-text-dim mt-0.5 leading-normal">{agent.roleTh || agent.desc}</div>
           <div className="flex items-center gap-1.75 mt-1.75">
             <span className={'sdot s-' + agent.status}></span>
-            <span className="text-[12px] text-text">{agent.statusTh}</span>
+            <span className="text-[12px] text-text">{agent.statusTh || 'ว่าง'}</span>
           </div>
         </div>
       </div>
-      <label className="lbl">มอบหมายงาน</label>
-      <textarea className="fld" rows="2" placeholder={'สั่งงาน ' + agent.name + '...'} value={task} onChange={e => setTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) assign(); }} />
+      <label className="lbl">มอบหมายงานประจำโต๊ะ</label>
+      <textarea className="fld" rows={3} placeholder={'บันทึกงาน ' + agent.name + '...'} value={task} onChange={e => setTask(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) assign(); }} />
       <div className="flex gap-2 mt-2">
         <span className="font-mono text-[11px] text-text-mute self-center">สถานะ:</span>
         {[['working', 'ทำงาน', '#3ce594'], ['thinking', 'คิดอยู่', '#46b6ff'], ['idle', 'ว่าง', '#9aa6cf']].map(([st, lb, c]) => (
@@ -277,8 +293,13 @@ function DeskPopover({ agent, onClose, onAssigned }) {
         ))}
       </div>
       <div className="flex gap-2 mt-4">
-        <button className="btn green flex-1" onClick={assign}>มอบหมายงาน</button>
-        <button className="btn ghost" onClick={() => { onClose(); set({ route: 'team' }); }}>ดูโปรไฟล์</button>
+        <button className="btn green flex-1" onClick={assign} disabled={!task.trim()}>
+          บันทึกงาน
+        </button>
+        <button className="btn gold" onClick={() => { onClose(); set({ route: 'secretary' }); }}>
+          สั่งงานผ่านเลขา
+        </button>
+        <button className="btn ghost" onClick={() => { onClose(); set({ route: 'team', openAgent: agent.id }); }}>โปรไฟล์</button>
       </div>
     </Modal>
   );
