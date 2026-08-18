@@ -101,8 +101,10 @@ function isTrustedCwd(targetPath) {
   return TRUSTED_ROOTS.some(root => resolved === root || resolved.startsWith(root + path.sep));
 }
 
+const knownClaudeSessions = new Set();
+
 // ── Multi-Agent Vendor CLI Runner ───────────────────────────────────────
-function runCLI(worker, { runId, prompt, agentName, permissionMode, cwd, allowedTools, timeout = 180000, onEvent = () => {} }) {
+function runCLI(worker, { runId, prompt, agentName, permissionMode, cwd, allowedTools, sessionId, timeout = 180000, onEvent = () => {} }) {
   return new Promise((resolve, reject) => {
     let executable = worker;
     let args = [];
@@ -122,6 +124,14 @@ function runCLI(worker, { runId, prompt, agentName, permissionMode, cwd, allowed
         '--forward-subagent-text',
         '--include-partial-messages'
       ];
+      if (sessionId) {
+        if (knownClaudeSessions.has(sessionId)) {
+          args.push('--resume', sessionId);
+        } else {
+          args.push('--session-id', sessionId);
+          knownClaudeSessions.add(sessionId);
+        }
+      }
       if (permissionMode && permissionMode !== 'default') {
         args.push('--permission-mode', permissionMode);
       }
@@ -453,6 +463,15 @@ ipcMain.handle('check-cli-status', async () => {
     checkExecutable('agy')
   ]);
   return { claude: hasClaude, codex: hasCodex, agy: hasAgy };
+});
+
+ipcMain.handle('reset-claude-session', (event, sessionId) => {
+  if (sessionId) {
+    knownClaudeSessions.delete(sessionId);
+  } else {
+    knownClaudeSessions.clear();
+  }
+  return true;
 });
 
 // DB IPC handlers

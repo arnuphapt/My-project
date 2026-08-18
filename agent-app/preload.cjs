@@ -11,6 +11,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener(channel, listener);
   },
   checkCliStatus: () => ipcRenderer.invoke('check-cli-status'),
+  resetClaudeSession: (sessionId) => ipcRenderer.invoke('reset-claude-session', sessionId),
   getSetting: (key) => ipcRenderer.invoke('get-setting', key),
   saveSetting: (key, value) => ipcRenderer.invoke('save-setting', { key, value }),
   getChatHistory: (agentId) => ipcRenderer.invoke('get-chat-history', agentId),

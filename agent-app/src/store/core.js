@@ -325,6 +325,50 @@ export async function loadRealAgentsOnStartup() {
           }
         });
 
+        // Ensure specialist subagents (Codex & AGY) are always present in the team
+        const SPECIALISTS = [
+          {
+            id: 'codex',
+            name: 'CODEX',
+            roleEn: 'CODE SPECIALIST',
+            roleTh: 'ผู้เชี่ยวชาญโค้ดและคำสั่ง (Codex)',
+            seniority: 'senior',
+            status: 'idle',
+            statusTh: 'ว่าง',
+            color: '#46b6ff',
+            desc: 'ผู้เชี่ยวชาญรันคำสั่ง terminal, สร้างโค้ด และประมวลผลงานโครงสร้างผ่าน OpenAI Codex CLI',
+            model: 'codex',
+            worker: 'codex',
+            skills: ['Terminal Execution', 'Code Generation', 'Autonomous Workflow'],
+            tasks: [],
+            skillMd: '# OPENAI CODEX — ผู้เชี่ยวชาญงานโค้ด\n\n> Specialist AI Subagent ขับเคลื่อนด้วย Codex Engine\n\n## หน้าที่\n- ประมวลผลและรันคำสั่ง command execution อัตโนมัติ\n- เขียนและแก้ไขโค้ดที่ต้องการความแม่นยำสูง'
+          },
+          {
+            id: 'agy',
+            name: 'AGY',
+            roleEn: 'RESEARCH SPECIALIST',
+            roleTh: 'ผู้เชี่ยวชาญค้นคว้า (Antigravity)',
+            seniority: 'senior',
+            status: 'idle',
+            statusTh: 'ว่าง',
+            color: '#b06bff',
+            desc: 'ผู้เชี่ยวชาญค้นหาข้อมูลเชิงลึก Web-Grounded Search และ Cross-Model Verification ผ่าน Antigravity CLI',
+            model: 'agy',
+            worker: 'agy',
+            skills: ['Web Search', 'Research Sweep', 'Cross-Model Verification'],
+            tasks: [],
+            skillMd: '# GOOGLE ANTIGRAVITY (AGY) — ผู้เชี่ยวชาญงานวิจัย\n\n> Specialist AI Subagent ขับเคลื่อนด้วย Google Antigravity CLI\n\n## หน้าที่\n- ค้นคว้าข้อมูลสดจากเว็บ (Web-Grounded Search)\n- รีวิวและตรวจสอบข้อเท็จจริงแบบ Cross-Model Check'
+          }
+        ];
+
+        SPECIALISTS.forEach(sp => {
+          if (!existingIds.has(sp.id)) {
+            existingIds.add(sp.id);
+            const existing = curAgents.find(a => a.id === sp.id);
+            otherAgents.push(existing ? { ...sp, ...existing } : sp);
+          }
+        });
+
         return { ...st, agents: [secAgent, ...otherAgents] };
       }, { now: true });
     }

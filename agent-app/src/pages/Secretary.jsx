@@ -43,12 +43,6 @@ function ChatAvatar({ slot, letter, color }) {
   );
 }
 
-const WORKERS = [
-  { id: 'claude', name: 'Claude Code', role: 'Orchestrator (Yuri)', col: '#ffce4a', desc: 'Default orchestrator, handles subagents & multi-step execution' },
-  { id: 'codex', name: 'OpenAI Codex', role: 'Specialist Worker', col: '#46b6ff', desc: 'Direct task execution via codex CLI' },
-  { id: 'agy', name: 'Google Antigravity', role: 'Specialist Worker', col: '#b06bff', desc: 'Fast web-grounded research & CLI tasks' },
-];
-
 const PERMISSION_MODES = [
   { id: 'default', label: 'Default', desc: 'Prompts before running non-preapproved tools (Safest)' },
   { id: 'acceptEdits', label: 'Accept Edits', desc: 'Auto-accepts file edits without prompting' },
@@ -74,6 +68,19 @@ function isTrustedCwd(p) {
   return TRUSTED_PATHS.some(tp => norm.startsWith(tp.replace(/\\/g, '/')));
 }
 
+function getInitialSessionId() {
+  try {
+    let id = localStorage.getItem('joyuri_active_session_id');
+    if (!id) {
+      id = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('sess-' + Date.now());
+      localStorage.setItem('joyuri_active_session_id', id);
+    }
+    return id;
+  } catch (_) {
+    return 'sess-' + Date.now();
+  }
+}
+
 export default function Secretary() {
   const [s] = useOffice();
   const [txt, setTxt] = useS('');
@@ -81,10 +88,10 @@ export default function Secretary() {
   const [activeTab, setActiveTab] = useS('chat'); // 'chat' | 'stream' | 'split'
   
   // Dispatch configuration
-  const [worker, setWorker] = useS('claude');
   const [selectedAgent, setSelectedAgent] = useS('joyuri');
   const [permissionMode, setPermissionMode] = useS('default');
   const [cwd, setCwd] = useS('E:\\WorkSpace\\My-project');
+  const [sessionId, setSessionId] = useS(getInitialSessionId);
   
   // Realtime Execution State
   const [runId, setRunId] = useS(null);
@@ -107,6 +114,11 @@ export default function Secretary() {
     a.id === 'joyuri'
   ) || agents[0];
   const log = s.secChat || [];
+
+  // Determine effective worker engine automatically based on target agent
+  const effectiveWorker = selectedAgent === 'codex' ? 'codex' : (selectedAgent === 'agy' ? 'agy' : 'claude');
+  const effectiveWorkerLabel = effectiveWorker === 'codex' ? 'OpenAI Codex' : (effectiveWorker === 'agy' ? 'Google Antigravity' : 'Claude Code');
+  const targetAgentObj = agents.find(a => a.id === selectedAgent) || sec;
 
   // Pre-fill from CEO directive
   useE(() => {
@@ -143,9 +155,21 @@ export default function Secretary() {
 
   const push = (m) => OfficeStore.setState(st => ({ ...st, secChat: [...(st.secChat || []), m] }), { now: true });
 
-  const clearChat = () => {
-    if (window.confirm('คุณต้องการล้างประวัติการสนทนากับเลขาใช่หรือไม่?')) {
+  const clearChat = async () => {
+    if (window.confirm('คุณต้องการล้างประวัติการสนทนาและเริ่ม Session การสนทนาใหม่ใช่หรือไม่?')) {
+      try {
+        if (window.electronAPI && window.electronAPI.resetClaudeSession) {
+          await window.electronAPI.resetClaudeSession(sessionId);
+        }
+      } catch (_) {}
+      const newId = (typeof crypto !== 'undefined' && crypto.randomUUID) ? crypto.randomUUID() : ('sess-' + Date.now());
+      try {
+        localStorage.setItem('joyuri_active_session_id', newId);
+      } catch (_) {}
+      setSessionId(newId);
       OfficeStore.setState(st => ({ ...st, secChat: [] }), { now: true });
+      setEvents([]);
+      push({ from: 'a', text: 'เริ่มบทสนทนา Session ใหม่เรียบร้อยแล้วค่ะ มีอะไรให้พี่ช่วยไหมคะ' });
     }
   };
 
@@ -163,14 +187,12 @@ export default function Secretary() {
     setEvents([]);
     setPendingApproval(null);
 
-    // Target agent resolution
-    const targetAgentObj = agents.find(a => a.id === selectedAgent) || sec;
     const isYuri = !selectedAgent || selectedAgent === 'joyuri' || selectedAgent === sec?.id;
 
     OfficeStore.setState(st => ({
       ...st,
       agents: st.agents.map(a => a.id === targetAgentObj.id ? { ...a, status: 'working', statusTh: 'กำลังทำงาน...' } : a),
-      log: [{ t: OfficeStore.clock(), who: (sec?.name || 'YURI').toUpperCase(), text: `[Dispatch] ${t.slice(0, 60)}...`, kind: 'sys' }, ...(st.log || [])].slice(0, 40)
+      log: [{ t: OfficeStore.clock(), who: (sec?.name || 'YURI').toUpperCase(), text: `[Dispatch → ${targetAgentObj.name}] ${t.slice(0, 60)}...`, kind: 'sys' }, ...(st.log || [])].slice(0, 40)
     }), { now: true });
 
     let cleanupListener = null;
@@ -204,11 +226,12 @@ export default function Secretary() {
       if (window.electronAPI && window.electronAPI.dispatchAgent) {
         const res = await window.electronAPI.dispatchAgent({
           runId: newRunId,
-          worker,
+          worker: effectiveWorker,
           agentName: isYuri ? undefined : selectedAgent,
           permissionMode,
           cwd,
-          prompt: t
+          prompt: t,
+          sessionId: effectiveWorker === 'claude' ? sessionId : undefined
         });
 
         if (res.canceled) {
@@ -262,7 +285,6 @@ export default function Secretary() {
   };
 
   const isTrusted = isTrustedCwd(cwd);
-  const activeWorkerObj = WORKERS.find(w => w.id === worker) || WORKERS[0];
   const activeAgentObj = agents.find(a => a.id === selectedAgent) || sec;
 
   return (
@@ -294,7 +316,7 @@ export default function Secretary() {
             <button
               className="btn sm ghost flex items-center gap-1.5 text-text-mute hover:text-red border-line hover:border-red/30 cursor-pointer"
               onClick={clearChat}
-              title="ล้างประวัติการสนทนา"
+              title="ล้างประวัติการสนทนาและเริ่ม Session ใหม่"
             >
               <Trash2 className="w-3.5 h-3.5" /> Clear Session
             </button>
@@ -332,35 +354,9 @@ export default function Secretary() {
             </div>
           </Win>
 
-          {/* Worker Engine Picker */}
-          <Win title="1. WORKER ENGINE" accent="gold" bodyStyle={{ padding: 12 }}>
-            <div className="flex flex-col gap-1.5">
-              {WORKERS.map(w => (
-                <div
-                  key={w.id}
-                  onClick={() => !busy && setWorker(w.id)}
-                  className={`p-2 rounded-lg border cursor-pointer transition-all ${
-                    worker === w.id
-                      ? 'bg-gold/10 border-gold shadow-[0_0_10px_rgba(255,206,74,0.2)]'
-                      : 'bg-[#080c1a]/50 border-line hover:border-line-bright'
-                  } ${busy ? 'opacity-50 pointer-events-none' : ''}`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-pixel text-[12px] text-white flex items-center gap-1.5">
-                      <Cpu className="w-3 h-3" style={{ color: w.col }} /> {w.name}
-                    </span>
-                    <span className="text-[9.5px] font-mono font-bold px-1.5 py-0.5 rounded" style={{ color: w.col, background: w.col + '15' }}>
-                      {w.role}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Win>
-
-          {/* Target Subagent Picker */}
-          <Win title="2. TARGET AGENT" accent="cyan" bodyStyle={{ padding: 12 }}>
-            <div className="flex flex-col gap-2">
+          {/* Target Agent & Engine Info */}
+          <Win title="1. TARGET AGENT" accent="gold" bodyStyle={{ padding: 12 }}>
+            <div className="flex flex-col gap-2.5">
               <select
                 className="fld font-mono text-[12.5px]"
                 value={selectedAgent}
@@ -370,15 +366,31 @@ export default function Secretary() {
                 <option value="joyuri">👑 {sec.name} (Direct / Chief of Staff)</option>
                 {agents.filter(a => a.id !== sec.id).map(a => (
                   <option key={a.id} value={a.id}>
-                    🤖 {a.name} ({a.roleTh || a.roleEn})
+                    {a.id === 'codex' ? '⚡' : (a.id === 'agy' ? '🌐' : '🤖')} {a.name} ({a.roleTh || a.roleEn})
                   </option>
                 ))}
               </select>
+
+              {/* Automatic Engine Card */}
+              <div className="p-2.5 rounded-lg bg-[#080c1a]/70 border border-line flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-3.5 h-3.5" style={{ color: effectiveWorker === 'codex' ? '#46b6ff' : (effectiveWorker === 'agy' ? '#b06bff' : '#ffce4a') }} />
+                  <span className="font-pixel text-[12px] text-white">
+                    {effectiveWorkerLabel}
+                  </span>
+                </div>
+                <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded" style={{
+                  color: effectiveWorker === 'codex' ? '#46b6ff' : (effectiveWorker === 'agy' ? '#b06bff' : '#ffce4a'),
+                  background: (effectiveWorker === 'codex' ? '#46b6ff' : (effectiveWorker === 'agy' ? '#b06bff' : '#ffce4a')) + '18'
+                }}>
+                  {effectiveWorker === 'claude' ? (selectedAgent === 'joyuri' ? 'Orchestrator' : 'Claude Subagent') : 'Specialist Engine'}
+                </span>
+              </div>
             </div>
           </Win>
 
           {/* Run Configuration (Permission & CWD) */}
-          <Win title="3. RUN CONFIGURATION" bodyStyle={{ padding: 12 }}>
+          <Win title="2. RUN CONFIGURATION" bodyStyle={{ padding: 12 }}>
             <div className="flex flex-col gap-2.5">
               <div>
                 <label className="lbl flex items-center gap-1 text-[11px] mb-1">
@@ -501,7 +513,7 @@ export default function Secretary() {
                     Permission Prompt: Tool Execution [{pendingApproval.text || pendingApproval.raw?.name}]
                   </div>
                   <div className="font-mono text-[11px] text-text-dim">
-                    Worker: {worker.toUpperCase()} · Mode: {permissionMode} · Target: {selectedAgent}
+                    Worker: {effectiveWorker.toUpperCase()} · Mode: {permissionMode} · Target: {selectedAgent}
                   </div>
                 </div>
               </div>
@@ -635,7 +647,7 @@ export default function Secretary() {
             />
             <div className="flex items-center justify-between gap-3">
               <span className="font-mono text-[11px] text-text-mute">
-                Ctrl + Enter เพื่อส่งคำสั่ง · Target: <strong className="text-cyan">{activeAgentObj.name}</strong> · Engine: <strong className="text-gold">{activeWorkerObj.name}</strong>
+                Ctrl + Enter เพื่อส่งคำสั่ง · Target: <strong className="text-cyan">{activeAgentObj.name}</strong> · Engine: <strong className="text-gold">{effectiveWorkerLabel}</strong>
               </span>
               <div className="flex items-center gap-2">
                 {busy ? (
